@@ -26,35 +26,9 @@ export interface GeoLoc {
   [propName: string]: any;
 }
 
-/**
- * Workaround commiting api keys to git for this exercise.
- */
-async function getApiKeys() {
-  console.log(__dirname);
-  const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
-    .then((response) => response.json())
-    .then((json) => {
-      //   api_keys = json;
-      return json;
-    })
-    .catch((error) => console.log(error));
-  console.log(api_keys);
-  return api_keys;
-}
-// async function waitAndMaybeReject(): Promise<string> {
-//   // Wait one second
-//   await new Promise((r) => setTimeout(r, 1000));
-//   // Toss a coin
-//   const isHeads = Boolean(Math.round(Math.random()));
-
-//   if (isHeads) return 'yay';
-//   throw Error('Boo!');
-// }
 
 async function geoIp(api_key: string): Promise<GeoIpData> {
   try {
-    // const response: Promise<string> = waitAndMaybeReject();
-    console.log(`https://api.ipdata.co?api-key=${api_key}`);
     const response: Response = await fetch(
       `https://api.ipdata.co?api-key=${api_key}`,
       {
@@ -76,9 +50,6 @@ async function geoReverse(
   api_key: string
 ): Promise<[string | null, string | null]> {
   try {
-    console.log(
-      `https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`
-    );
     const response: Response = await fetch(
       `https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`
     );
@@ -110,19 +81,19 @@ async function geoCoords(): Promise<GeoLoc | null> {
   });
 }
 
-export async function geoLocate(): Promise<GeoInfo | null> {
+export async function geoLocate(api_keys : any): Promise<GeoInfo | null> {
   let lat = null;
   let lon = null;
   let city = null;
   let country_code = null;
-  const api_keys = await getApiKeys();
+
 
   let coords = null;
   if (navigator.geolocation) {
     try {
       coords = await geoCoords();
     } catch (err) {
-      console.log('Unable to retrieve coords using geolocation API.');
+      console.log('Unable to retrieve coords using geolocation API. Using ip.');
     }
   }
 

@@ -1,6 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const geo_1 = require("./geo");
+/**
+ * Workaround commiting api keys to git for this exercise.
+ */
+async function getApiKeys() {
+    // console.log(__dirname);
+    const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
+        .then((response) => response.json())
+        .then((json) => {
+        //   api_keys = json;
+        return json;
+    })
+        .catch((error) => console.log(error));
+    // console.log(api_keys);
+    return api_keys;
+}
 //----------------------------------------------------------------- main ---
 /**
  * Run the app !
@@ -15,7 +30,8 @@ window.addEventListener('DOMContentLoaded', async function (event) {
     // owm_api_link.textContent = `lat : ${lat} | lon : ${lon}`;
     // board.appendChild(owm_api_link);
     // geoLocate().then((value) => console.log(value));
-    const geo_loc = await geo_1.geoLocate();
+    const api_keys = await getApiKeys();
+    const geo_loc = await geo_1.geoLocate(api_keys);
     console.log(geo_loc);
 }); /* DOMContentLoaded */
 // })(); /* IIFE */
