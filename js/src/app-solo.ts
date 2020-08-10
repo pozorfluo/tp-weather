@@ -335,7 +335,7 @@ export function newContext(): Context {
         /**
          * Activate this context pin collection.
          *
-         * @todo Deal with incomple Observable-less pins.
+         * @todo Deal with incomplete Observable-less pins.
          */
         activatePins: function (): Context {
             for (let i = 0, length = this.pins.length; i < length; i++) {

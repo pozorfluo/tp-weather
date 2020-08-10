@@ -232,7 +232,7 @@ function newContext() {
         /**
          * Activate this context pin collection.
          *
-         * @todo Deal with incomple Observable-less pins.
+         * @todo Deal with incomplete Observable-less pins.
          */
         activatePins: function () {
             for (let i = 0, length = this.pins.length; i < length; i++) {
