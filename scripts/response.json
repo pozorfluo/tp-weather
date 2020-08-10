@@ -1,0 +1,35 @@
+{
+    "coord": { "lon": 4.07, "lat": 46.03 },
+    "weather": [
+        {
+            "id": 800,
+            "main": "Clear",
+            "description": "ciel dégagé",
+            "icon": "01d"
+        }
+    ],
+    "base": "stations",
+    "main": {
+        "temp": 26.68,
+        "feels_like": 27.04,
+        "temp_min": 25,
+        "temp_max": 27.78,
+        "pressure": 1019,
+        "humidity": 44
+    },
+    "visibility": 10000,
+    "wind": { "speed": 1, "deg": 0 },
+    "clouds": { "all": 0 },
+    "dt": 1596789471,
+    "sys": {
+        "type": 1,
+        "id": 6499,
+        "country": "FR",
+        "sunrise": 1596774820,
+        "sunset": 1596827117
+    },
+    "timezone": 7200,
+    "id": 2983362,
+    "name": "Roanne",
+    "cod": 200
+}
