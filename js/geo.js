@@ -8,6 +8,9 @@ async function geoIp(api_key) {
                 Accept: 'application/json',
             },
         });
+        if (response.status >= 400 && response.status < 600) {
+            throw new Error("Something went wrong contacting 'api.ipdata.co'.");
+        }
         return response.json();
     }
     catch (err) {
@@ -18,6 +21,9 @@ async function geoIp(api_key) {
 async function geoReverse(lat, lon, api_key) {
     try {
         const response = await fetch(`https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`);
+        if (response.status >= 400 && response.status < 600) {
+            throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
+        }
         const result = await response.json();
         return [result.address.country_code, result.address.town];
     }

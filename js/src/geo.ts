@@ -26,7 +26,6 @@ export interface GeoLoc {
   [propName: string]: any;
 }
 
-
 async function geoIp(api_key: string): Promise<GeoIpData> {
   try {
     const response: Response = await fetch(
@@ -37,6 +36,9 @@ async function geoIp(api_key: string): Promise<GeoIpData> {
         },
       }
     );
+    if (response.status >= 400 && response.status < 600) {
+      throw new Error("Something went wrong contacting 'api.ipdata.co'.");
+    }
     return response.json();
   } catch (err) {
     console.log(err);
@@ -53,6 +55,9 @@ async function geoReverse(
     const response: Response = await fetch(
       `https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`
     );
+    if (response.status >= 400 && response.status < 600) {
+      throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
+    }
     const result = await response.json();
     return [result.address.country_code, result.address.town];
   } catch (err) {
@@ -81,12 +86,11 @@ async function geoCoords(): Promise<GeoLoc | null> {
   });
 }
 
-export async function geoLocate(api_keys : any): Promise<GeoInfo | null> {
+export async function geoLocate(api_keys: any): Promise<GeoInfo | null> {
   let lat = null;
   let lon = null;
   let city = null;
   let country_code = null;
-
 
   let coords = null;
   if (navigator.geolocation) {

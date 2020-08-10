@@ -27,14 +27,14 @@ function newObservable(value) {
         subscribers: [],
         value: value,
         notify: async function () {
-            // const queue = []; // rate-limit-ish
-            // console.log(this.subscribers);
+            const tasks = [];
+            console.log(this.subscribers);
             for (let i = 0, length = this.subscribers.length; i < length; i++) {
-                // console.log('notifying ' + this.subscribers[i]);
-                // queue.push(this.subscribers[i](this.value)); // rate-limit-ish
-                await this.subscribers[i](this.value);
+                console.log('notifying ' + this.subscribers[i]);
+                tasks.push(this.subscribers[i](this.value));
+                // await this.subscribers[i](this.value);
             }
-            // await Promise.all(queue); // rate-limit-ish
+            await Promise.all(tasks);
             /**
              * @todo consider ES2020 Promise.allSettled
              */
@@ -275,6 +275,9 @@ async function geoIp(api_key) {
                 Accept: 'application/json',
             },
         });
+        if (response.status >= 400 && response.status < 600) {
+            throw new Error("Something went wrong contacting 'api.ipdata.co'.");
+        }
         return response.json();
     }
     catch (err) {
@@ -285,6 +288,9 @@ async function geoIp(api_key) {
 async function geoReverse(lat, lon, api_key) {
     try {
         const response = await fetch(`https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`);
+        if (response.status >= 400 && response.status < 600) {
+            throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
+        }
         const result = await response.json();
         return [result.address.country_code, result.address.town];
     }
@@ -406,6 +412,7 @@ function extendCopy(object, trait) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const geo_1 = require("./geo");
+const weather_1 = require("./weather");
 /**
  * Workaround commiting api keys to git for this exercise.
  */
@@ -421,6 +428,14 @@ async function getApiKeys() {
     // console.log(api_keys);
     return api_keys;
 }
+async function getWeather() {
+    const api_keys = await getApiKeys();
+    const loc = await geo_1.geoLocate(api_keys);
+    const forecasts = loc !== null ? weather_1.getDailyForecasts(loc, api_keys) : null;
+    // throw 'boom';
+    // console.log(forecasts);
+    return forecasts;
+}
 //----------------------------------------------------------------- main ---
 /**
  * Run the app !
@@ -428,18 +443,38 @@ async function getApiKeys() {
  */
 window.addEventListener('DOMContentLoaded', async function (event) {
     var _a;
-    const board = (_a = document.querySelector('.weather')) !== null && _a !== void 0 ? _a : document.createElement('section');
-    // owm_api_link.href = `https://api.openweathermap.org/data/2.5/weather?lang=fr&units=metric&lat=${lat}&lon=${lon}&appid=${owm_api_key}`;
-    // owm_api_link.textContent = `lat : ${lat} | lon : ${lon}`;
-    // owm_api_link.href = `https://api.openweathermap.org/data/2.5/weather?lang=fr&units=metric&lat=${lat}&lon=${lon}&appid=${api_key}`;
-    // owm_api_link.textContent = `lat : ${lat} | lon : ${lon}`;
-    // board.appendChild(owm_api_link);
-    // geoLocate().then((value) => console.log(value));
-    const api_keys = await getApiKeys();
-    const geo_loc = await geo_1.geoLocate(api_keys);
-    console.log(geo_loc);
+    const app = (_a = document.querySelector('.weather')) !== null && _a !== void 0 ? _a : document.createElement('section');
+    const owm_response = document.createElement('pre');
+    owm_response.textContent = 'pending';
+    app.appendChild(owm_response);
+    getWeather().then((forecasts) => {
+        owm_response.textContent = JSON.stringify(forecasts);
+    }).catch((err) => {
+        owm_response.textContent = err;
+    });
+    owm_response.textContent = 'working ...';
+    // console.log(await getWeather());
+    // owm_response.textContent = JSON.stringify(await getWeather());
 }); /* DOMContentLoaded */
 // })(); /* IIFE */
-https: ; //api.openweathermap.org/data/2.5/onecall?lang=${country_code}&units=metric&lat=${lat}&lon=${lon}&exclude=minutely,hourly&appid=${api_key}`
 
-},{"./geo":2}]},{},[3,1,4]);
+},{"./geo":2,"./weather":5}],5:[function(require,module,exports){
+'use strict';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getDailyForecasts = void 0;
+async function getDailyForecasts(loc, api_keys) {
+    try {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/onecall?lang=${loc.countryCode}&units=metric&lat=${loc.latitude}&lon=${loc.longitude}&exclude=minutely,hourly&appid=${api_keys.owm}`);
+        if (response.status >= 400 && response.status < 600) {
+            throw new Error("Something went wrong contacting 'api.openweathermap.org'.");
+        }
+        return response.json();
+    }
+    catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+exports.getDailyForecasts = getDailyForecasts;
+
+},{}]},{},[3,1,4]);

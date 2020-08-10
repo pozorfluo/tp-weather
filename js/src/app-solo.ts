@@ -52,14 +52,14 @@ export function newObservable<T>(value: T): Observable<T> {
         value: value,
 
         notify: async function (): Promise<Observable<T>> {
-            // const queue = []; // rate-limit-ish
-            // console.log(this.subscribers);
+            const tasks = [];
+            console.log(this.subscribers);
             for (let i = 0, length = this.subscribers.length; i < length; i++) {
-                // console.log('notifying ' + this.subscribers[i]);
-                // queue.push(this.subscribers[i](this.value)); // rate-limit-ish
-                await this.subscribers[i](this.value);
+                console.log('notifying ' + this.subscribers[i]);
+                tasks.push(this.subscribers[i](this.value));
+                // await this.subscribers[i](this.value);
             }
-            // await Promise.all(queue); // rate-limit-ish
+            await Promise.all(tasks);
             /**
              * @todo consider ES2020 Promise.allSettled
              */
