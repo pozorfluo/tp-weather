@@ -26,15 +26,19 @@ function newObservable(value) {
     const observable = {
         subscribers: [],
         value: value,
-        notify: async function () {
-            const tasks = [];
-            console.log(this.subscribers);
+        // notify: async function (): Promise<Observable<T>> {
+        notify: function () {
+            // const length = this.subscribers.length;
+            // const tasks = new Array(length);
+            // console.log(this.subscribers);
             for (let i = 0, length = this.subscribers.length; i < length; i++) {
-                console.log('notifying ' + this.subscribers[i]);
-                tasks.push(this.subscribers[i](this.value));
+                // console.log('notifying ' + this.subscribers[i]);
+                // tasks.push(this.subscribers[i](this.value));
+                // tasks[i] = this.subscribers[i](this.value);
                 // await this.subscribers[i](this.value);
+                this.subscribers[i](this.value);
             }
-            await Promise.all(tasks);
+            // await Promise.all(tasks);
             /**
              * @todo consider ES2020 Promise.allSettled
              */
@@ -130,12 +134,20 @@ exports.link = link;
 function newContext() {
     const context = {
         observables: {},
+        observables_iterator: [],
         pins: [],
         links: [],
+        /**
+         * Register observable in this context.
+         */
         put: function (name, observable) {
             this.observables[name] = observable;
+            this.observables_iterator.push([name, observable]);
             return this;
         },
+        /**
+         * Remove observable from this context.
+         */
         remove: function (name) {
             if (this.observables[name] !== undefined) {
                 delete this.observables[name];
@@ -162,9 +174,7 @@ function newContext() {
          */
         musterPins: function () {
             var _a, _b, _c;
-            const pin_nodes = [
-                ...document.querySelectorAll('[data-pin]'),
-            ];
+            const pin_nodes = [...document.querySelectorAll('[data-pin]')];
             const length = pin_nodes.length;
             const pins = Array(length);
             for (let i = 0; i < length; i++) {
@@ -249,13 +259,22 @@ function newContext() {
         /**
          * Activate this context link collection.
          *
-         * @todo Deal with incomple Observable-less links.
+         * @todo Deal with incomple observable-less links.
          */
         activateLinks: function () {
             for (let i = 0, length = this.links.length; i < length; i++) {
                 if (typeof this.links[i].source !== 'string') {
                     link(this.links[i].source, this.links[i].node, this.links[i].target, this.links[i].event);
                 }
+            }
+            return this;
+        },
+        /**
+         * Force refresh by triggering notification on all observables.
+         */
+        refresh: function () {
+            for (let i = 0, length = this.observables_iterator.length; i < length; i++) {
+                this.observables_iterator[i][1].notify();
             }
             return this;
         },
@@ -411,6 +430,7 @@ function extendCopy(object, trait) {
 },{}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 /**
@@ -444,29 +464,38 @@ async function getWeather() {
  * Run the app !
  *
  */
-window.addEventListener('DOMContentLoaded', async function (event) {
-    var _a;
+window.addEventListener('DOMContentLoaded', function (event) {
     const startTime = performance.now();
-    const app = (_a = document.querySelector('.weather')) !== null && _a !== void 0 ? _a : document.createElement('section');
-    const owm_response = document.createElement('pre');
-    console.log((performance.now() - startTime) + 'ms : setting textContent : pending');
-    owm_response.textContent = 'pending';
-    console.log((performance.now() - startTime) + 'ms : appendChild');
-    app.appendChild(owm_response);
-    console.log((performance.now() - startTime) + 'ms : getWeather()');
-    getWeather().then((forecasts) => {
-        owm_response.textContent = JSON.stringify(forecasts);
-    }).catch((err) => {
-        owm_response.textContent = err;
-    });
-    console.log((performance.now() - startTime) + 'ms : setting textContent : working ...');
-    owm_response.textContent = 'working ...';
-    // console.log(await getWeather());
-    // owm_response.textContent = JSON.stringify(await getWeather());
+    const context = app_solo_1.newContext()
+        .put('city', app_solo_1.newObservable('city pending'))
+        .put('icon', app_solo_1.newObservable('icons/snowy.svg'))
+        .put('temp', app_solo_1.newObservable('temperature pending'))
+        .put('wind', app_solo_1.newObservable({ speed: 'speed pending', deg: 'direction pending' }))
+        .put('date', app_solo_1.newObservable(new Date))
+        .put('day', app_solo_1.newObservable('day pending'))
+        .musterPins()
+        .activatePins()
+        .refresh();
+    // context.observables.city.set('hello');
+    // context.observables.icon.set('icons/rainy.svg');
+    console.log(context);
+    // const app =
+    //   document.querySelector('.weather') ?? document.createElement('section');
+    // const owm_response = document.createElement('pre');
+    // owm_response.textContent = 'pending';
+    // app.appendChild(owm_response);
+    // getWeather()
+    //   .then((forecasts) => {
+    //     owm_response.textContent = JSON.stringify(forecasts);
+    //   })
+    //   .catch((err) => {
+    //     owm_response.textContent = err;
+    //   });
+    //   owm_response.textContent = 'working ...';
 }); /* DOMContentLoaded */
 // })(); /* IIFE */
 
-},{"./geo":2,"./weather":5}],5:[function(require,module,exports){
+},{"./app-solo":1,"./geo":2,"./weather":5}],5:[function(require,module,exports){
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = void 0;

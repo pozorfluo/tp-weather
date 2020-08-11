@@ -25,15 +25,19 @@ function newObservable(value) {
     const observable = {
         subscribers: [],
         value: value,
-        notify: async function () {
-            const tasks = [];
-            console.log(this.subscribers);
+        // notify: async function (): Promise<Observable<T>> {
+        notify: function () {
+            // const length = this.subscribers.length;
+            // const tasks = new Array(length);
+            // console.log(this.subscribers);
             for (let i = 0, length = this.subscribers.length; i < length; i++) {
-                console.log('notifying ' + this.subscribers[i]);
-                tasks.push(this.subscribers[i](this.value));
+                // console.log('notifying ' + this.subscribers[i]);
+                // tasks.push(this.subscribers[i](this.value));
+                // tasks[i] = this.subscribers[i](this.value);
                 // await this.subscribers[i](this.value);
+                this.subscribers[i](this.value);
             }
-            await Promise.all(tasks);
+            // await Promise.all(tasks);
             /**
              * @todo consider ES2020 Promise.allSettled
              */
@@ -129,12 +133,20 @@ exports.link = link;
 function newContext() {
     const context = {
         observables: {},
+        observables_iterator: [],
         pins: [],
         links: [],
+        /**
+         * Register observable in this context.
+         */
         put: function (name, observable) {
             this.observables[name] = observable;
+            this.observables_iterator.push([name, observable]);
             return this;
         },
+        /**
+         * Remove observable from this context.
+         */
         remove: function (name) {
             if (this.observables[name] !== undefined) {
                 delete this.observables[name];
@@ -161,9 +173,7 @@ function newContext() {
          */
         musterPins: function () {
             var _a, _b, _c;
-            const pin_nodes = [
-                ...document.querySelectorAll('[data-pin]'),
-            ];
+            const pin_nodes = [...document.querySelectorAll('[data-pin]')];
             const length = pin_nodes.length;
             const pins = Array(length);
             for (let i = 0; i < length; i++) {
@@ -248,13 +258,22 @@ function newContext() {
         /**
          * Activate this context link collection.
          *
-         * @todo Deal with incomple Observable-less links.
+         * @todo Deal with incomple observable-less links.
          */
         activateLinks: function () {
             for (let i = 0, length = this.links.length; i < length; i++) {
                 if (typeof this.links[i].source !== 'string') {
                     link(this.links[i].source, this.links[i].node, this.links[i].target, this.links[i].event);
                 }
+            }
+            return this;
+        },
+        /**
+         * Force refresh by triggering notification on all observables.
+         */
+        refresh: function () {
+            for (let i = 0, length = this.observables_iterator.length; i < length; i++) {
+                this.observables_iterator[i][1].notify();
             }
             return this;
         },

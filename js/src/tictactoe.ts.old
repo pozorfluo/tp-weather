@@ -302,7 +302,3 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
      */
 }); /* DOMContentLoaded */
 // })(); /* IIFE */
-
-export function sum(a: number, b: number): number {
-    return a + b;
-}

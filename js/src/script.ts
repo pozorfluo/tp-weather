@@ -37,34 +37,47 @@ async function getWeather(): Promise<OWMOneCallResponse | null> {
   return forecasts;
 }
 
-
 //----------------------------------------------------------------- main ---
 /**
  * Run the app !
  *
  */
-window.addEventListener('DOMContentLoaded', async function (event: Event) {
+window.addEventListener('DOMContentLoaded', function (event: Event) {
   const startTime = performance.now();
-  const app =
-    document.querySelector('.weather') ?? document.createElement('section');
-  const owm_response = document.createElement('pre');
-  console.log((performance.now() - startTime) + 'ms : setting textContent : pending');
-  owm_response.textContent = 'pending';
-  console.log((performance.now() - startTime) + 'ms : appendChild');
-  app.appendChild(owm_response);
 
-  console.log((performance.now() - startTime) + 'ms : getWeather()');
-  getWeather().then((forecasts) => {
-    owm_response.textContent = JSON.stringify(forecasts);
-  }).catch((err) => {
-    owm_response.textContent = err;
-  });
+  const context = newContext()
+    .put('city', newObservable<string>('city pending'))
+    .put('icon', newObservable<string>('icons/snowy.svg'))
+    .put('temp', newObservable<string>('temperature pending'))
+    .put('wind', newObservable<Object>({speed: 'speed pending', deg: 'direction pending'}))
+    .put('date', newObservable<Date>(new Date))
+    .put('day', newObservable<string>('day pending'))
+    .musterPins()
+    .activatePins()
+    .refresh()
+  ;
 
-  console.log((performance.now() - startTime) + 'ms : setting textContent : working ...');
-  owm_response.textContent = 'working ...';
+  // context.observables.city.set('hello');
+  // context.observables.icon.set('icons/rainy.svg');
+  console.log(context);
+  // const app =
+  //   document.querySelector('.weather') ?? document.createElement('section');
+  // const owm_response = document.createElement('pre');
 
-  
-  // console.log(await getWeather());
-  // owm_response.textContent = JSON.stringify(await getWeather());
+
+  // owm_response.textContent = 'pending';
+  // app.appendChild(owm_response);
+
+  // getWeather()
+  //   .then((forecasts) => {
+  //     owm_response.textContent = JSON.stringify(forecasts);
+  //   })
+  //   .catch((err) => {
+  //     owm_response.textContent = err;
+  //   });
+
+  //   owm_response.textContent = 'working ...';
+
+
 }); /* DOMContentLoaded */
 // })(); /* IIFE */

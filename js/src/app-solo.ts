@@ -55,9 +55,9 @@ export function newObservable<T>(value: T): Observable<T> {
     notify: function (): Observable<T> {
       // const length = this.subscribers.length;
       // const tasks = new Array(length);
-      console.log(this.subscribers);
+      // console.log(this.subscribers);
       for (let i = 0, length = this.subscribers.length; i < length; i++) {
-        console.log('notifying ' + this.subscribers[i]);
+        // console.log('notifying ' + this.subscribers[i]);
         // tasks.push(this.subscribers[i](this.value));
         // tasks[i] = this.subscribers[i](this.value);
         // await this.subscribers[i](this.value);
@@ -198,9 +198,12 @@ export function link(
  *       ObservableCollection.
  * @todo Add deactivatePins method.
  * @todo Add deactivateLinks method.
+ * @todo Consider looking for memory efficient alternatives to
+ *       observables_iterator.
  */
 export interface Context {
   readonly observables: { [name: string]: Observable<any> };
+  readonly observables_iterator: [string, Observable<any>][];
   readonly pins: Pin<any>[];
   readonly links: Link<any>[];
   put: (name: string, observable: Observable<any>) => this;
@@ -214,6 +217,7 @@ export interface Context {
   setLinks: (links: Link<any>[]) => this;
   activatePins: () => this;
   activateLinks: () => this;
+  refresh: () => this;
   [extension: string]: any; // open for extension.
 }
 
@@ -225,13 +229,20 @@ export interface Context {
 export function newContext(): Context {
   const context: any = {
     observables: {},
+    observables_iterator: [],
     pins: [],
     links: [],
+    /**
+     * Register observable in this context.
+     */
     put: function (name: string, observable: Observable<any>): Context {
       this.observables[name] = observable;
+      this.observables_iterator.push([name, observable]);
       return this;
     },
-
+    /**
+     * Remove observable from this context.
+     */
     remove: function (name: string): Context {
       if (this.observables[name] !== undefined) {
         delete this.observables[name];
@@ -354,7 +365,7 @@ export function newContext(): Context {
     /**
      * Activate this context link collection.
      *
-     * @todo Deal with incomple Observable-less links.
+     * @todo Deal with incomple observable-less links.
      */
     activateLinks: function (): Context {
       for (let i = 0, length = this.links.length; i < length; i++) {
@@ -367,6 +378,20 @@ export function newContext(): Context {
           );
         }
       }
+      return this;
+    },
+    /**
+     * Force refresh by triggering notification on all observables.
+     */
+    refresh: function (): Context {
+      for (
+        let i = 0, length = this.observables_iterator.length;
+        i < length;
+        i++
+      ) {
+        this.observables_iterator[i][1].notify();
+      }
+
       return this;
     },
   };

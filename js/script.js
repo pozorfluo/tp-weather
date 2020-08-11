@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 /**
@@ -33,24 +34,33 @@ async function getWeather() {
  * Run the app !
  *
  */
-window.addEventListener('DOMContentLoaded', async function (event) {
-    var _a;
+window.addEventListener('DOMContentLoaded', function (event) {
     const startTime = performance.now();
-    const app = (_a = document.querySelector('.weather')) !== null && _a !== void 0 ? _a : document.createElement('section');
-    const owm_response = document.createElement('pre');
-    console.log((performance.now() - startTime) + 'ms : setting textContent : pending');
-    owm_response.textContent = 'pending';
-    console.log((performance.now() - startTime) + 'ms : appendChild');
-    app.appendChild(owm_response);
-    console.log((performance.now() - startTime) + 'ms : getWeather()');
-    getWeather().then((forecasts) => {
-        owm_response.textContent = JSON.stringify(forecasts);
-    }).catch((err) => {
-        owm_response.textContent = err;
-    });
-    console.log((performance.now() - startTime) + 'ms : setting textContent : working ...');
-    owm_response.textContent = 'working ...';
-    // console.log(await getWeather());
-    // owm_response.textContent = JSON.stringify(await getWeather());
+    const context = app_solo_1.newContext()
+        .put('city', app_solo_1.newObservable('city pending'))
+        .put('icon', app_solo_1.newObservable('icons/snowy.svg'))
+        .put('temp', app_solo_1.newObservable('temperature pending'))
+        .put('wind', app_solo_1.newObservable({ speed: 'speed pending', deg: 'direction pending' }))
+        .put('date', app_solo_1.newObservable(new Date))
+        .put('day', app_solo_1.newObservable('day pending'))
+        .musterPins()
+        .activatePins()
+        .refresh();
+    // context.observables.city.set('hello');
+    // context.observables.icon.set('icons/rainy.svg');
+    console.log(context);
+    // const app =
+    //   document.querySelector('.weather') ?? document.createElement('section');
+    // const owm_response = document.createElement('pre');
+    // owm_response.textContent = 'pending';
+    // app.appendChild(owm_response);
+    // getWeather()
+    //   .then((forecasts) => {
+    //     owm_response.textContent = JSON.stringify(forecasts);
+    //   })
+    //   .catch((err) => {
+    //     owm_response.textContent = err;
+    //   });
+    //   owm_response.textContent = 'working ...';
 }); /* DOMContentLoaded */
 // })(); /* IIFE */
