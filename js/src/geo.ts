@@ -7,7 +7,7 @@ export interface GeoIpData {
   country_code?: string;
   latitude?: number;
   longitude?: number;
-  [propName: string]: any;
+  [prop: string]: any;
 }
 
 export interface GeoInfo {
@@ -21,9 +21,9 @@ export interface GeoLoc {
   coords: {
     latitude: number;
     longitude: number;
-    [propName: string]: any;
+    [prop: string]: any;
   };
-  [propName: string]: any;
+  [prop: string]: any;
 }
 
 async function geoIp(api_key: string): Promise<GeoIpData> {

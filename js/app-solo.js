@@ -138,6 +138,8 @@ function newContext() {
         links: [],
         /**
          * Register observable in this context.
+         *
+         *
          */
         put: function (name, observable) {
             this.observables[name] = observable;

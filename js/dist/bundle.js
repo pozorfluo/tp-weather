@@ -139,6 +139,8 @@ function newContext() {
         links: [],
         /**
          * Register observable in this context.
+         *
+         *
          */
         put: function (name, observable) {
             this.observables[name] = observable;
@@ -454,10 +456,9 @@ async function getWeather() {
     console.log('geoLocate()');
     const loc = await geo_1.geoLocate(api_keys);
     console.log('getDailyForecasts()');
-    const forecasts = loc !== null ? weather_1.getDailyForecasts(loc, api_keys) : null;
-    // throw 'boom';
-    // console.log(forecasts);
-    return forecasts;
+    const forecasts = loc !== null ? await weather_1.getDailyForecasts(loc, api_keys) : null;
+    /** newForecast not called if loc === null, safe to cast to quiet linter */
+    return forecasts !== null ? weather_1.newForecast(loc, forecasts) : null;
 }
 //----------------------------------------------------------------- main ---
 /**
@@ -466,31 +467,36 @@ async function getWeather() {
  */
 window.addEventListener('DOMContentLoaded', function (event) {
     const startTime = performance.now();
-    const context = app_solo_1.newContext()
-        .put('city', app_solo_1.newObservable('city pending'))
-        .put('icon', app_solo_1.newObservable('icons/snowy.svg'))
-        .put('temp', app_solo_1.newObservable('temperature pending'))
-        .put('wind', app_solo_1.newObservable({ speed: 'speed pending', deg: 'direction pending' }))
-        .put('date', app_solo_1.newObservable(new Date))
-        .put('day', app_solo_1.newObservable('day pending'))
+    const view = app_solo_1.newContext()
+        .put('city', app_solo_1.newObservable('...'))
+        .put('icon', app_solo_1.newObservable('icons/cloudy.svg'))
+        .put('temp', app_solo_1.newObservable('...°'))
+        .put('wind', app_solo_1.newObservable('Vent ...km/h (...°)')) //newObservable<Object>({ speed: '', deg: '' })
+        .put('date', app_solo_1.newObservable(new Date()))
+        .put('day', app_solo_1.newObservable(0))
         .musterPins()
         .activatePins()
         .refresh();
+    console.log(performance.now() - startTime + 'ms : context set and view refreshed.');
+    const app = app_solo_1.newContext()
+        .put('forecasts', app_solo_1.newObservable(null));
+    getWeather()
+        .then((forecasts) => {
+        app.observables.forecasts.set(forecasts);
+        console.log(forecasts);
+        console.log(Object.is(app.observables.forecasts, app.observables_iterator[0][1]));
+        console.log(app.observables.forecasts === app.observables_iterator[0][1]);
+    })
+        .catch((err) => {
+        console.log(err);
+    });
     // context.observables.city.set('hello');
     // context.observables.icon.set('icons/rainy.svg');
-    console.log(context);
     // const app =
     //   document.querySelector('.weather') ?? document.createElement('section');
     // const owm_response = document.createElement('pre');
     // owm_response.textContent = 'pending';
     // app.appendChild(owm_response);
-    // getWeather()
-    //   .then((forecasts) => {
-    //     owm_response.textContent = JSON.stringify(forecasts);
-    //   })
-    //   .catch((err) => {
-    //     owm_response.textContent = err;
-    //   });
     //   owm_response.textContent = 'working ...';
 }); /* DOMContentLoaded */
 // })(); /* IIFE */
@@ -498,7 +504,45 @@ window.addEventListener('DOMContentLoaded', function (event) {
 },{"./app-solo":1,"./geo":2,"./weather":5}],5:[function(require,module,exports){
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDailyForecasts = void 0;
+exports.getDailyForecasts = exports.newForecast = void 0;
+const iconTable = {
+    '01d': 'sun.svg',
+    '02d': 'cloudy-sun.svg',
+    '03d': 'cloudy.svg',
+    '04d': 'cloudy.svg',
+    '09d': 'rainy.svg',
+    '10d': 'rainy.svg',
+    '11d': 'thunderstorm.svg',
+    '13d': 'snowy.svg',
+    '50d': 'mist.svg',
+};
+function newForecast(loc, owm) {
+    const forecast = {
+        countryCode: loc.countryCode,
+        city: loc.city,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        timezone: owm.timezone,
+        timezoneOffset: owm.timezone_offset,
+        current: {
+            temperature: owm.current.temp,
+            windSpeed: owm.current.wind_speed,
+            windDeg: owm.current.wind_deg,
+            icon: iconTable[owm.current.weather[0].icon],
+        },
+        daily: [],
+    };
+    for (let i = 0, length = owm.daily.length; i < length; i++) {
+        forecast.daily.push({
+            temperature: owm.daily[i].temp.day,
+            windSpeed: owm.daily[i].wind_speed,
+            windDeg: owm.daily[i].wind_deg,
+            icon: iconTable[owm.daily[i].weather[0].icon],
+        });
+    }
+    return forecast;
+}
+exports.newForecast = newForecast;
 async function getDailyForecasts(loc, api_keys) {
     try {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/onecall?lang=${loc.countryCode}&units=metric&lat=${loc.latitude}&lon=${loc.longitude}&exclude=minutely,hourly&appid=${api_keys.owm}`);

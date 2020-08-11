@@ -200,6 +200,8 @@ export function link(
  * @todo Add deactivateLinks method.
  * @todo Consider looking for memory efficient alternatives to
  *       observables_iterator.
+ *       Object.is(app.observables.forecasts, 
+ *                 app.observables_iterator[0][1])) is true though.
  */
 export interface Context {
   readonly observables: { [name: string]: Observable<any> };
@@ -234,6 +236,8 @@ export function newContext(): Context {
     links: [],
     /**
      * Register observable in this context.
+     * 
+     * 
      */
     put: function (name: string, observable: Observable<any>): Context {
       this.observables[name] = observable;
@@ -394,6 +398,13 @@ export function newContext(): Context {
 
       return this;
     },
+
+    // refresh: function (): Context {
+    //   for (const [key, value] of Object.entries(this.observables)){
+    //     (<Observable<any>>value).notify();
+    //   }
+    //   return this;
+    // }
   };
   return <Context>context;
 }

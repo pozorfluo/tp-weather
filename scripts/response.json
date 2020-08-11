@@ -1,35 +1,304 @@
 {
-    "coord": { "lon": 4.07, "lat": 46.03 },
-    "weather": [
+    "lat": 46.06,
+    "lon": 4.08,
+    "timezone": "Europe/Paris",
+    "timezone_offset": 7200,
+    "current": {
+      "dt": 1597130084,
+      "sunrise": 1597120711,
+      "sunset": 1597172358,
+      "temp": 20.74,
+      "feels_like": 21.47,
+      "pressure": 1016,
+      "humidity": 77,
+      "dew_point": 16.56,
+      "uvi": 7.58,
+      "clouds": 0,
+      "visibility": 10000,
+      "wind_speed": 2.1,
+      "wind_deg": 170,
+      "weather": [
         {
-            "id": 800,
-            "main": "Clear",
-            "description": "ciel dégagé",
-            "icon": "01d"
+          "id": 800,
+          "main": "Clear",
+          "description": "ciel dégagé",
+          "icon": "01d"
         }
-    ],
-    "base": "stations",
-    "main": {
-        "temp": 26.68,
-        "feels_like": 27.04,
-        "temp_min": 25,
-        "temp_max": 27.78,
-        "pressure": 1019,
-        "humidity": 44
+      ]
     },
-    "visibility": 10000,
-    "wind": { "speed": 1, "deg": 0 },
-    "clouds": { "all": 0 },
-    "dt": 1596789471,
-    "sys": {
-        "type": 1,
-        "id": 6499,
-        "country": "FR",
-        "sunrise": 1596774820,
-        "sunset": 1596827117
-    },
-    "timezone": 7200,
-    "id": 2983362,
-    "name": "Roanne",
-    "cod": 200
-}
+    "daily": [
+      {
+        "dt": 1597143600,
+        "sunrise": 1597120711,
+        "sunset": 1597172358,
+        "temp": {
+          "day": 29.84,
+          "min": 20.74,
+          "max": 32.97,
+          "night": 21.29,
+          "eve": 28.68,
+          "morn": 20.74
+        },
+        "feels_like": {
+          "day": 31.37,
+          "night": 21.66,
+          "eve": 29.67,
+          "morn": 21.93
+        },
+        "pressure": 1015,
+        "humidity": 46,
+        "dew_point": 16.98,
+        "wind_speed": 1.19,
+        "wind_deg": 135,
+        "weather": [
+          {
+            "id": 500,
+            "main": "Rain",
+            "description": "légère pluie",
+            "icon": "10d"
+          }
+        ],
+        "clouds": 27,
+        "pop": 0.66,
+        "rain": 0.2,
+        "uvi": 7.58
+      },
+      {
+        "dt": 1597230000,
+        "sunrise": 1597207186,
+        "sunset": 1597258664,
+        "temp": {
+          "day": 33.57,
+          "min": 18.84,
+          "max": 33.57,
+          "night": 18.84,
+          "eve": 28.09,
+          "morn": 20.35
+        },
+        "feels_like": {
+          "day": 31.24,
+          "night": 18.33,
+          "eve": 27.3,
+          "morn": 20.45
+        },
+        "pressure": 1013,
+        "humidity": 27,
+        "dew_point": 12.04,
+        "wind_speed": 4.2,
+        "wind_deg": 165,
+        "weather": [
+          {
+            "id": 500,
+            "main": "Rain",
+            "description": "légère pluie",
+            "icon": "10d"
+          }
+        ],
+        "clouds": 73,
+        "pop": 0.21,
+        "rain": 0.33,
+        "uvi": 7.73
+      },
+      {
+        "dt": 1597316400,
+        "sunrise": 1597293662,
+        "sunset": 1597344969,
+        "temp": {
+          "day": 27.63,
+          "min": 17.1,
+          "max": 27.63,
+          "night": 17.1,
+          "eve": 20.57,
+          "morn": 19.53
+        },
+        "feels_like": {
+          "day": 27.99,
+          "night": 17.87,
+          "eve": 21.39,
+          "morn": 20.75
+        },
+        "pressure": 1015,
+        "humidity": 49,
+        "dew_point": 16.23,
+        "wind_speed": 2.29,
+        "wind_deg": 317,
+        "weather": [
+          {
+            "id": 501,
+            "main": "Rain",
+            "description": "pluie modérée",
+            "icon": "10d"
+          }
+        ],
+        "clouds": 50,
+        "pop": 0.89,
+        "rain": 9.14,
+        "uvi": 7.03
+      },
+      {
+        "dt": 1597402800,
+        "sunrise": 1597380137,
+        "sunset": 1597431272,
+        "temp": {
+          "day": 26.75,
+          "min": 16.3,
+          "max": 28.17,
+          "night": 16.3,
+          "eve": 23.58,
+          "morn": 17.07
+        },
+        "feels_like": {
+          "day": 27.19,
+          "night": 16.2,
+          "eve": 23.12,
+          "morn": 18.33
+        },
+        "pressure": 1016,
+        "humidity": 43,
+        "dew_point": 13.41,
+        "wind_speed": 0.75,
+        "wind_deg": 28,
+        "weather": [
+          { "id": 803, "main": "Clouds", "description": "nuageux", "icon": "04d" }
+        ],
+        "clouds": 63,
+        "pop": 0,
+        "uvi": 6.7
+      },
+      {
+        "dt": 1597489200,
+        "sunrise": 1597466612,
+        "sunset": 1597517575,
+        "temp": {
+          "day": 29.68,
+          "min": 17.47,
+          "max": 31.31,
+          "night": 18.55,
+          "eve": 26.1,
+          "morn": 17.47
+        },
+        "feels_like": {
+          "day": 29.05,
+          "night": 18.45,
+          "eve": 26.46,
+          "morn": 17.6
+        },
+        "pressure": 1013,
+        "humidity": 33,
+        "dew_point": 12.09,
+        "wind_speed": 1.64,
+        "wind_deg": 145,
+        "weather": [
+          {
+            "id": 500,
+            "main": "Rain",
+            "description": "légère pluie",
+            "icon": "10d"
+          }
+        ],
+        "clouds": 0,
+        "pop": 0.37,
+        "rain": 0.58,
+        "uvi": 6.79
+      },
+      {
+        "dt": 1597575600,
+        "sunrise": 1597553088,
+        "sunset": 1597603876,
+        "temp": {
+          "day": 26.9,
+          "min": 16.57,
+          "max": 26.9,
+          "night": 16.57,
+          "eve": 21.75,
+          "morn": 17.86
+        },
+        "feels_like": {
+          "day": 26.69,
+          "night": 17.11,
+          "eve": 22.29,
+          "morn": 18.42
+        },
+        "pressure": 1013,
+        "humidity": 51,
+        "dew_point": 16.03,
+        "wind_speed": 3.08,
+        "wind_deg": 355,
+        "weather": [
+          {
+            "id": 501,
+            "main": "Rain",
+            "description": "pluie modérée",
+            "icon": "10d"
+          }
+        ],
+        "clouds": 50,
+        "pop": 0.91,
+        "rain": 3.44,
+        "uvi": 6.8
+      },
+      {
+        "dt": 1597662000,
+        "sunrise": 1597639563,
+        "sunset": 1597690176,
+        "temp": {
+          "day": 25.89,
+          "min": 16.64,
+          "max": 26.98,
+          "night": 17.26,
+          "eve": 23.81,
+          "morn": 16.64
+        },
+        "feels_like": { "day": 26.56, "night": 17.95, "eve": 24.6, "morn": 17.4 },
+        "pressure": 1014,
+        "humidity": 50,
+        "dew_point": 14.93,
+        "wind_speed": 1.17,
+        "wind_deg": 2,
+        "weather": [
+          {
+            "id": 501,
+            "main": "Rain",
+            "description": "pluie modérée",
+            "icon": "10d"
+          }
+        ],
+        "clouds": 100,
+        "pop": 0.71,
+        "rain": 3.47,
+        "uvi": 6.66
+      },
+      {
+        "dt": 1597748400,
+        "sunrise": 1597726039,
+        "sunset": 1597776476,
+        "temp": {
+          "day": 22.88,
+          "min": 16.79,
+          "max": 24.25,
+          "night": 21.09,
+          "eve": 21.09,
+          "morn": 16.79
+        },
+        "feels_like": { "day": 24.33, "night": 22.5, "eve": 22.5, "morn": 17.11 },
+        "pressure": 1014,
+        "humidity": 63,
+        "dew_point": 15.52,
+        "wind_speed": 0.48,
+        "wind_deg": 351,
+        "weather": [
+          {
+            "id": 501,
+            "main": "Rain",
+            "description": "pluie modérée",
+            "icon": "10d"
+          }
+        ],
+        "clouds": 95,
+        "pop": 0.89,
+        "rain": 5.32,
+        "uvi": 6.37
+      }
+    ]
+  }
+  
