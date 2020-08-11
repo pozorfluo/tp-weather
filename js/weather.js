@@ -11,8 +11,18 @@ const iconTable = {
     '11d': 'thunderstorm.svg',
     '13d': 'snowy.svg',
     '50d': 'mist.svg',
+    '01n': 'sun.svg',
+    '02n': 'cloudy-sun.svg',
+    '03n': 'cloudy.svg',
+    '04n': 'cloudy.svg',
+    '09n': 'rainy.svg',
+    '10n': 'rainy.svg',
+    '11n': 'thunderstorm.svg',
+    '13n': 'snowy.svg',
+    '50n': 'mist.svg',
 };
 function newForecast(loc, owm) {
+    console.log(owm);
     const forecast = {
         countryCode: loc.countryCode,
         city: loc.city,

@@ -194,7 +194,7 @@ async function geoReverse(lat, lon, api_key) {
             throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
         }
         const result = await response.json();
-        return [result.address.country_code, result.address.town];
+        return [result.address.country_code, result.address.city];
     }
     catch (err) {
         console.log(err);
@@ -323,7 +323,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         const fragment = document.createDocumentFragment();
         const button = document.createElement('a');
         button.classList.add('day-button');
-        for (let i = 0, length = f.daily.length; i < length; i++) {
+        for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
             const day = new Date(f.daily[i].timestamp * 1000);
             const day_button = button.cloneNode(true);
             day_button.textContent = day.toLocaleDateString(navigator.language, {
@@ -372,8 +372,18 @@ const iconTable = {
     '11d': 'thunderstorm.svg',
     '13d': 'snowy.svg',
     '50d': 'mist.svg',
+    '01n': 'sun.svg',
+    '02n': 'cloudy-sun.svg',
+    '03n': 'cloudy.svg',
+    '04n': 'cloudy.svg',
+    '09n': 'rainy.svg',
+    '10n': 'rainy.svg',
+    '11n': 'thunderstorm.svg',
+    '13n': 'snowy.svg',
+    '50n': 'mist.svg',
 };
 function newForecast(loc, owm) {
+    console.log(owm);
     const forecast = {
         countryCode: loc.countryCode,
         city: loc.city,

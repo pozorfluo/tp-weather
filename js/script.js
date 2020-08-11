@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         const fragment = document.createDocumentFragment();
         const button = document.createElement('a');
         button.classList.add('day-button');
-        for (let i = 0, length = f.daily.length; i < length; i++) {
+        for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
             const day = new Date(f.daily[i].timestamp * 1000);
             const day_button = button.cloneNode(true);
             day_button.textContent = day.toLocaleDateString(navigator.language, {

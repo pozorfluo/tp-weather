@@ -49,9 +49,19 @@ const iconTable: { [prop: string]: string } = {
   '11d': 'thunderstorm.svg',
   '13d': 'snowy.svg',
   '50d': 'mist.svg',
+  '01n': 'sun.svg',
+  '02n': 'cloudy-sun.svg',
+  '03n': 'cloudy.svg',
+  '04n': 'cloudy.svg',
+  '09n': 'rainy.svg',
+  '10n': 'rainy.svg',
+  '11n': 'thunderstorm.svg',
+  '13n': 'snowy.svg',
+  '50n': 'mist.svg',
 };
 
 export function newForecast(loc: GeoInfo, owm: OWMOneCallResponse): Forecast {
+    console.log(owm);
   const forecast: any = {
     countryCode: loc.countryCode,
     city: loc.city,

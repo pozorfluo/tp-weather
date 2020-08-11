@@ -25,7 +25,7 @@ async function geoReverse(lat, lon, api_key) {
             throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
         }
         const result = await response.json();
-        return [result.address.country_code, result.address.town];
+        return [result.address.country_code, result.address.city];
     }
     catch (err) {
         console.log(err);
