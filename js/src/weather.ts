@@ -24,12 +24,14 @@ export interface Forecast {
   timezone: string;
   timezone_offset: number;
   current: {
+    timestamp: number;
     temperature: string;
     windSpeed: string;
     windDeg: string;
     icon: string;
   };
   daily: {
+    timestamp: number;
     temperature: string;
     windSpeed: string;
     windDeg: string;
@@ -58,6 +60,7 @@ export function newForecast(loc: GeoInfo, owm: OWMOneCallResponse): Forecast {
     timezone: owm.timezone,
     timezoneOffset: owm.timezone_offset,
     current: {
+      timestamp : owm.current.dt,
       temperature: owm.current.temp,
       windSpeed: owm.current.wind_speed,
       windDeg: owm.current.wind_deg,
@@ -68,6 +71,7 @@ export function newForecast(loc: GeoInfo, owm: OWMOneCallResponse): Forecast {
 
   for (let i = 0, length = owm.daily.length; i < length; i++) {
     forecast.daily.push({
+      timestamp : owm.daily[i].dt,
       temperature: owm.daily[i].temp.day,
       windSpeed: owm.daily[i].wind_speed,
       windDeg: owm.daily[i].wind_deg,

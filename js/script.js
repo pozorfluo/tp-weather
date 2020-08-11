@@ -3,9 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-/**
- * Workaround commiting api keys to git for this exercise.
- */
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -19,13 +16,8 @@ async function getWeather() {
     const api_keys = await getApiKeys();
     const loc = await geo_1.geoLocate(api_keys);
     const forecasts = loc !== null ? await weather_1.getDailyForecasts(loc, api_keys) : null;
-    /** newForecast not called if loc === null, safe to cast to quiet linter */
     return forecasts !== null ? weather_1.newForecast(loc, forecasts) : null;
 }
-//----------------------------------------------------------------- main ---
-/**
- * Run the app !
- */
 window.addEventListener('DOMContentLoaded', function (event) {
     getWeather()
         .then((forecasts) => {
@@ -55,6 +47,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const app = app_solo_1.newContext()
         .put('forecasts', app_solo_1.newObservable(null), (f) => {
         updateForecast(f, 0);
+        updateDaysNav(f);
     })
         .put('day', app_solo_1.newObservable(0), (d) => {
         updateForecast(app.observables.forecasts.value, d);
@@ -63,7 +56,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const updateDaysNav = function (f) {
         for (let i = 0, length = f.daily.length; i < length; i++) {
             const day = new Date();
-            console.log();
+            console.log(f.daily[i].timestamp);
         }
     };
-}); /* DOMContentLoaded */
+});

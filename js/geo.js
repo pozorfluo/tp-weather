@@ -32,13 +32,6 @@ async function geoReverse(lat, lon, api_key) {
         return [null, null];
     }
 }
-// function geoSuccess(position: any): [number, number] {
-//   return [position.coords.latitude, position.coords.longitude];
-// }
-// function geoError(): string {
-//   console.log('geoError');
-//   return 'geoError';
-// }
 async function geoCoords() {
     const options = {
         maximumAge: 30000,

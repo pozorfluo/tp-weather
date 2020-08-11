@@ -4,44 +4,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.newContext = exports.link = exports.withObservable = exports.newObservable = void 0;
 const komrad_1 = require("./komrad");
 'use strict';
-/**
- * Create a new Observable object.
- *
- * @note Optional parameter priority in subscribe method is the index where
- *       given Subscriber is going to be 'spliced' in the subscribers list.
- *       If no paramater is supplied, given Subscriber is appended.
- *
- * @note To resolve notifications according to subscribers priority and
- *       insertion order, notify() Awaits each subscriber's callback in
- *       turn.
- *
- * @todo Research which approach is favored to prevent notification cascade.
- * @todo Defer render to after all compositions/updates are done.
- * @todo Consider using a binary heap for finer grain control of subscribers
- *       priority.
- * @todo Add unsubscribe method.
- * @todo Consider tracking Observables in a list.
- */
 function newObservable(value) {
     const observable = {
         subscribers: [],
         value: value,
-        // notify: async function (): Promise<Observable<T>> {
         notify: function () {
-            // const length = this.subscribers.length;
-            // const tasks = new Array(length);
-            // console.log(this.subscribers);
             for (let i = 0, length = this.subscribers.length; i < length; i++) {
-                // console.log('notifying ' + this.subscribers[i]);
-                // tasks.push(this.subscribers[i](this.value));
-                // tasks[i] = this.subscribers[i](this.value);
-                // await this.subscribers[i](this.value);
                 this.subscribers[i](this.value);
             }
-            // await Promise.all(tasks);
-            /**
-             * @todo consider ES2020 Promise.allSettled
-             */
             return this;
         },
         subscribe: function (subscriber, priority) {
@@ -58,11 +28,9 @@ function newObservable(value) {
             return this;
         },
         get: function () {
-            /* Notify that a read is happening here if necessary. */
             return this.value;
         },
         set: function (value) {
-            /* The buck stops here. */
             if (value !== this.value) {
                 this.value = value;
                 this.notify();
@@ -73,73 +41,26 @@ function newObservable(value) {
     return observable;
 }
 exports.newObservable = newObservable;
-/**
- * Define Observable trait.
- */
 function withObservable(name, value) {
-    const trait = { observable: {} }; //  Record<string, Observable<T>>
+    const trait = { observable: {} };
     trait.observable[name] = newObservable(value);
     return trait;
 }
 exports.withObservable = withObservable;
-/**
- * Set a 2-way link between given Observable and given DOM node.
- *
- * @todo Consider that the node emitting the original event probably
- *       does not need to be notified back/updated if it is its only
- *       dependency.
- * @todo Add unlink function.
- * @todo Look for an easier way of keeping tracks of writable properties per
- *       Node descendant type.
- * @todo Consider keeping it unsafe with a cast to <any>node.
- */
-// type WritableProperty<T> = { [ P in keyof T] : 'readonly' extends keyof T[P] ? never : P}[keyof T];
-// WritableProperty<Node>
-// type WritableProperty<T> =
-//     | 'classname'
-//     | 'id'
-//     | 'innerHTML'
-//     | 'outerHTML'
-//     | T extends HTMLFormElement
-//     ?
-//           | 'name'
-//           | 'method'
-//           | 'target'
-//           | 'action'
-//           | 'encoding'
-//           | 'enctype'
-//           | 'acceptCharset'
-//           | 'autocomplete'
-//           | 'noValidate'
-//           | ''
-//           | ''
-//     : 'value';
-// WritableProperty<typeof node>, //'className' | 'id' | 'innerHTML' | 'outerHTML',
 function link(observable, node, property, event = 'input') {
-    // console.log(arguments);
     node[property] = observable.value + '';
-    observable.subscribe(
-    // () => (node[property] = observable.get())
-    () => {
+    observable.subscribe(() => {
         node[property] = observable.value + '';
     });
     node.addEventListener(event, () => observable.set(node[property]));
 }
 exports.link = link;
-/**
- * Create a new Context object.
- *
- * @note put and merge will clobber existing entries.
- */
 function newContext() {
     const context = {
         observables: {},
         observables_iterator: [],
         pins: [],
         links: [],
-        /**
-         * Register observable in this context.
-         */
         put: function (name, observable, ...subscribers) {
             this.observables[name] = observable;
             this.observables_iterator.push([name, observable]);
@@ -148,11 +69,6 @@ function newContext() {
             }
             return this;
         },
-        /**
-         * Remove observable from this context.
-         *
-         * @todo Unsubscribe/delete from observables properly.
-         */
         remove: function (name) {
             if (this.observables[name] !== undefined) {
                 this.observables[name].flush();
@@ -160,9 +76,6 @@ function newContext() {
             }
             return this;
         },
-        /**
-         * Merge observables from another given context.
-         */
         merge: function (another_context) {
             if (another_context.observables !== undefined) {
                 another_context = another_context.observables;
@@ -170,14 +83,6 @@ function newContext() {
             komrad_1.extend(this.observables, another_context);
             return this;
         },
-        /**
-         * Collect data pins declared in the DOM for this Context.
-         *
-         * @note If requested observable source is NOT found or available in
-         *       this Context, record its name as a string placeholder.
-         *
-         * @todo Consider using a dictionnary and an identifier per pin.
-         */
         musterPins: function () {
             var _a, _b, _c;
             const pin_nodes = [...document.querySelectorAll('[data-pin]')];
@@ -199,14 +104,6 @@ function newContext() {
             this.pins = pins;
             return this;
         },
-        /**
-         * Collect data links declared in the DOM for this Context.
-         *
-         * @note If requested observable source is NOT found or available in
-         *       this Context, record its name as a string placeholder.
-         *
-         * @todo Consider using a dictionnary and an identifier per pin.
-         */
         musterLinks: function () {
             var _a, _b, _c, _d;
             const link_nodes = [
@@ -232,41 +129,24 @@ function newContext() {
             this.links = links;
             return this;
         },
-        /**
-         * Reference given pin collection as this context pin collection.
-         */
         setPins: function (pins) {
             this.pins = pins;
             return this;
         },
-        /**
-         * Reference given link collection as this context link collection.
-         */
         setLinks: function (links) {
             this.links = links;
             return this;
         },
-        /**
-         * Activate this context pin collection.
-         *
-         * @todo Deal with incomplete Observable-less pins.
-         */
         activatePins: function () {
             for (let i = 0, length = this.pins.length; i < length; i++) {
                 if (typeof this.pins[i].source !== 'string') {
                     this.pins[i].source.subscribe((value) => {
                         this.pins[i].node[this.pins[i].target] = value;
-                        // console.log('pin['+i+'] notified.');
                     });
                 }
             }
             return this;
         },
-        /**
-         * Activate this context link collection.
-         *
-         * @todo Deal with incomple observable-less links.
-         */
         activateLinks: function () {
             for (let i = 0, length = this.links.length; i < length; i++) {
                 if (typeof this.links[i].source !== 'string') {
@@ -275,9 +155,6 @@ function newContext() {
             }
             return this;
         },
-        /**
-         * Force refresh by triggering notification on all observables.
-         */
         refresh: function () {
             for (let i = 0, length = this.observables_iterator.length; i < length; i++) {
                 this.observables_iterator[i][1].notify();
@@ -324,13 +201,6 @@ async function geoReverse(lat, lon, api_key) {
         return [null, null];
     }
 }
-// function geoSuccess(position: any): [number, number] {
-//   return [position.coords.latitude, position.coords.longitude];
-// }
-// function geoError(): string {
-//   console.log('geoError');
-//   return 'geoError';
-// }
 async function geoCoords() {
     const options = {
         maximumAge: 30000,
@@ -377,28 +247,12 @@ exports.geoLocate = geoLocate;
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cram = exports.extend = void 0;
-/**
- * Extend given object with given trait, clobbering existing properties.
- *
- * @todo Look for ways to update type hint in-place !
- */
 function extend(object, trait) {
     Object.keys(trait).forEach(function (key) {
         object[key] = trait[key];
     });
 }
 exports.extend = extend;
-/**
- * Extend given object with given trait, stacking existing properties as
- * follow :
- *
- *   Merge objects.
- *   Append to arrays.
- *   Clobber scalars.
- *
- * @note Changing the 'shape' of an existing property would most likely be a
- *       recipe for disaster.
- */
 function cram(object, trait) {
     Object.keys(trait).forEach(function (key) {
         switch (typeof object[key]) {
@@ -411,9 +265,7 @@ function cram(object, trait) {
                 }
                 break;
             case undefined:
-            // break;
             default:
-                /* undefined and scalars */
                 object[key] = trait[key];
                 break;
         }
@@ -421,10 +273,6 @@ function cram(object, trait) {
     return object;
 }
 exports.cram = cram;
-/**
- * Extend a shallow copy of given object with given trait, clobbering
- * existing properties.
- */
 function extendCopy(object, trait) {
     const extended_copy = Object.assign({}, object);
     Object.keys(trait).forEach(function (key) {
@@ -439,9 +287,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-/**
- * Workaround commiting api keys to git for this exercise.
- */
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -455,13 +300,8 @@ async function getWeather() {
     const api_keys = await getApiKeys();
     const loc = await geo_1.geoLocate(api_keys);
     const forecasts = loc !== null ? await weather_1.getDailyForecasts(loc, api_keys) : null;
-    /** newForecast not called if loc === null, safe to cast to quiet linter */
     return forecasts !== null ? weather_1.newForecast(loc, forecasts) : null;
 }
-//----------------------------------------------------------------- main ---
-/**
- * Run the app !
- */
 window.addEventListener('DOMContentLoaded', function (event) {
     getWeather()
         .then((forecasts) => {
@@ -491,6 +331,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const app = app_solo_1.newContext()
         .put('forecasts', app_solo_1.newObservable(null), (f) => {
         updateForecast(f, 0);
+        updateDaysNav(f);
     })
         .put('day', app_solo_1.newObservable(0), (d) => {
         updateForecast(app.observables.forecasts.value, d);
@@ -499,10 +340,10 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const updateDaysNav = function (f) {
         for (let i = 0, length = f.daily.length; i < length; i++) {
             const day = new Date();
-            console.log();
+            console.log(f.daily[i].timestamp);
         }
     };
-}); /* DOMContentLoaded */
+});
 
 },{"./app-solo":1,"./geo":2,"./weather":5}],5:[function(require,module,exports){
 'use strict';
@@ -528,6 +369,7 @@ function newForecast(loc, owm) {
         timezone: owm.timezone,
         timezoneOffset: owm.timezone_offset,
         current: {
+            timestamp: owm.current.dt,
             temperature: owm.current.temp,
             windSpeed: owm.current.wind_speed,
             windDeg: owm.current.wind_deg,
@@ -537,6 +379,7 @@ function newForecast(loc, owm) {
     };
     for (let i = 0, length = owm.daily.length; i < length; i++) {
         forecast.daily.push({
+            timestamp: owm.daily[i].dt,
             temperature: owm.daily[i].temp.day,
             windSpeed: owm.daily[i].wind_speed,
             windDeg: owm.daily[i].wind_deg,

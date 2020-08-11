@@ -73,6 +73,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const app = newContext()
     .put('forecasts', newObservable<Forecast | null>(null), (f) => {
       updateForecast(f, 0);
+      updateDaysNav(f);
     })
     .put('day', newObservable<number>(0), (d) => {
       updateForecast(app.observables.forecasts.value, d);
@@ -83,7 +84,8 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const updateDaysNav = function (f: Forecast) : void {
     for (let i = 0, length = f.daily.length; i < length; i++) {
       const day = new Date()
-      console.log()
+      console.log(f.daily[i].timestamp)
     }
   }
+
 }); /* DOMContentLoaded */
