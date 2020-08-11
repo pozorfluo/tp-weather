@@ -138,19 +138,23 @@ function newContext() {
         links: [],
         /**
          * Register observable in this context.
-         *
-         *
          */
-        put: function (name, observable) {
+        put: function (name, observable, ...subscribers) {
             this.observables[name] = observable;
             this.observables_iterator.push([name, observable]);
+            for (let i = 0, length = subscribers.length; i < length; i++) {
+                observable.subscribe(subscribers[i]);
+            }
             return this;
         },
         /**
          * Remove observable from this context.
+         *
+         * @todo Unsubscribe/delete from observables properly.
          */
         remove: function (name) {
             if (this.observables[name] !== undefined) {
+                this.observables[name].flush();
                 delete this.observables[name];
             }
             return this;

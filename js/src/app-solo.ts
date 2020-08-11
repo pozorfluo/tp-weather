@@ -200,7 +200,7 @@ export function link(
  * @todo Add deactivateLinks method.
  * @todo Consider looking for memory efficient alternatives to
  *       observables_iterator.
- *       Object.is(app.observables.forecasts, 
+ *       Object.is(app.observables.forecasts,
  *                 app.observables_iterator[0][1])) is true though.
  */
 export interface Context {
@@ -208,7 +208,11 @@ export interface Context {
   readonly observables_iterator: [string, Observable<any>][];
   readonly pins: Pin<any>[];
   readonly links: Link<any>[];
-  put: (name: string, observable: Observable<any>) => this;
+  put: (
+    name: string,
+    observable: Observable<any>,
+    ...subscribers: Subscriber<any>[]
+  ) => this;
   remove: (name: string) => this;
   merge: (
     another_context: Context | { [name: string]: Observable<any> }
@@ -236,19 +240,27 @@ export function newContext(): Context {
     links: [],
     /**
      * Register observable in this context.
-     * 
-     * 
      */
-    put: function (name: string, observable: Observable<any>): Context {
+    put: function (
+      name: string,
+      observable: Observable<any>,
+      ...subscribers: Subscriber<any>[]
+    ): Context {
       this.observables[name] = observable;
       this.observables_iterator.push([name, observable]);
+      for (let i = 0, length = subscribers.length; i < length; i++) {
+        observable.subscribe(subscribers[i]);
+      }
       return this;
     },
     /**
      * Remove observable from this context.
+     *
+     * @todo Unsubscribe/delete from observables properly.
      */
     remove: function (name: string): Context {
       if (this.observables[name] !== undefined) {
+        this.observables[name].flush();
         delete this.observables[name];
       }
       return this;

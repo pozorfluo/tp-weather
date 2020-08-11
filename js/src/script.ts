@@ -13,26 +13,21 @@ import { getDailyForecasts, Forecast, newForecast } from './weather';
  * Workaround commiting api keys to git for this exercise.
  */
 async function getApiKeys() {
-  // console.log(__dirname);
   const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
     .then((response) => response.json())
     .then((json) => {
-      //   api_keys = json;
       return json;
     })
     .catch((error) => console.log(error));
-  // console.log(api_keys);
   return api_keys;
 }
 
 async function getWeather(): Promise<Forecast | null> {
-  console.log('getApiKeys()');
   const api_keys = await getApiKeys();
-  console.log('geoLocate()');
   const loc = await geoLocate(api_keys);
-  console.log('getDailyForecasts()');
-  const forecasts = loc !== null ? await getDailyForecasts(loc, api_keys) : null;
-  
+  const forecasts =
+    loc !== null ? await getDailyForecasts(loc, api_keys) : null;
+
   /** newForecast not called if loc === null, safe to cast to quiet linter */
   return forecasts !== null ? newForecast(<GeoInfo>loc, forecasts) : null;
 }
@@ -40,53 +35,55 @@ async function getWeather(): Promise<Forecast | null> {
 //----------------------------------------------------------------- main ---
 /**
  * Run the app !
- *
  */
 window.addEventListener('DOMContentLoaded', function (event: Event) {
-  const startTime = performance.now();
+  getWeather()
+    .then((forecasts) => {
+      app.observables.forecasts.set(forecasts);
+      app.observables.day.set(0);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 
   const view = newContext()
     .put('city', newObservable<string>('...'))
-    .put('icon', newObservable<string>('icons/cloudy.svg'))
+    .put(
+      'icon',
+      newObservable<string>(
+        'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
+      )
+    )
     .put('temp', newObservable<string>('...°'))
-    .put('wind', newObservable<string>('Vent ...km/h (...°)')) //newObservable<Object>({ speed: '', deg: '' })
+    .put('wind', newObservable<string>('Vent ...km/h (...°)'))
     .put('date', newObservable<Date>(new Date()))
     .put('day', newObservable<number>(0))
     .musterPins()
     .activatePins()
     .refresh();
 
-
-    console.log(
-      performance.now() - startTime + 'ms : context set and view refreshed.'
-    );
+  const updateForecast = function (f: Forecast, day: number): void {
+    const d = day === 0 ? f.current : f.daily[Math.min(day, 7)];
+    view.observables.city.set(f.city);
+    view.observables.icon.set('icons/' + d.icon);
+    view.observables.temp.set(`${d.temperature}°`);
+    view.observables.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+  };
 
   const app = newContext()
-  .put('forecasts', newObservable<Forecast | null>(null));
+    .put('forecasts', newObservable<Forecast | null>(null), (f) => {
+      updateForecast(f, 0);
+    })
+    .put('day', newObservable<number>(0), (d) => {
+      updateForecast(app.observables.forecasts.value, d);
+    });
 
-  getWeather()
-  .then((forecasts) => {
-    app.observables.forecasts.set(forecasts);
-    console.log(forecasts);
+  const days_nav = document.querySelector('.days-nav');
 
-    console.log(Object.is(app.observables.forecasts, app.observables_iterator[0][1]));
-    console.log(app.observables.forecasts === app.observables_iterator[0][1]);
-  })
-  .catch((err) => {
-    console.log(err);
-  });
-
-  // context.observables.city.set('hello');
-  // context.observables.icon.set('icons/rainy.svg');
-  // const app =
-  //   document.querySelector('.weather') ?? document.createElement('section');
-  // const owm_response = document.createElement('pre');
-
-  // owm_response.textContent = 'pending';
-  // app.appendChild(owm_response);
-
-
-
-  //   owm_response.textContent = 'working ...';
+  const updateDaysNav = function (f: Forecast) : void {
+    for (let i = 0, length = f.daily.length; i < length; i++) {
+      const day = new Date()
+      console.log()
+    }
+  }
 }); /* DOMContentLoaded */
-// })(); /* IIFE */
