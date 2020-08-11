@@ -43,7 +43,7 @@ function appendFromComponent(fragment, component, count) {
 function appendFromClonedComponent(fragment, component, count) {
     const comp = component();
   for (let i = 0; i < count; i++) {
-    keys[i] = comp.cloneNode(true);;
+    keys[i] = comp.cloneNode(true);
     fragment.appendChild(keys[i]);
   }
   return fragment;

@@ -46,6 +46,43 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
       console.log(err);
     });
 
+  const renderForecast = function (f: Forecast, day: number): void {
+    const d = day === 0 ? f.current : f.daily[Math.min(day, 7)];
+    view.observables.city.set(f.city);
+    view.observables.icon.set('icons/' + d.icon);
+    view.observables.temp.set(`${d.temperature}°`);
+    view.observables.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+  };
+
+  const renderDaysNav = function (f: Forecast): void {
+    const fragment = document.createDocumentFragment();
+    const button = document.createElement('a');
+    button.classList.add('day-button');
+
+    for (let i = 0, length = f.daily.length; i < length; i++) {
+      const day = new Date(f.daily[i].timestamp * 1000);
+      const day_button = button.cloneNode(true);
+      day_button.textContent = day.toLocaleDateString(navigator.language, {
+        weekday: 'long',
+      });
+      day_button.addEventListener('click', (e) => {
+        app.observables.day.set(i);
+        e.preventDefault();
+      });
+      fragment.appendChild(day_button);
+    }
+    days_nav.appendChild(fragment);
+  };
+
+  const app = newContext()
+    .put('forecasts', newObservable<Forecast | null>(null), (f) => {
+      renderForecast(f, 0);
+      renderDaysNav(f);
+    })
+    .put('day', newObservable<number>(0), (d) => {
+      renderForecast(app.observables.forecasts.value, d);
+    });
+
   const view = newContext()
     .put('city', newObservable<string>('...'))
     .put(
@@ -62,30 +99,6 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .activatePins()
     .refresh();
 
-  const updateForecast = function (f: Forecast, day: number): void {
-    const d = day === 0 ? f.current : f.daily[Math.min(day, 7)];
-    view.observables.city.set(f.city);
-    view.observables.icon.set('icons/' + d.icon);
-    view.observables.temp.set(`${d.temperature}°`);
-    view.observables.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
-  };
-
-  const app = newContext()
-    .put('forecasts', newObservable<Forecast | null>(null), (f) => {
-      updateForecast(f, 0);
-      updateDaysNav(f);
-    })
-    .put('day', newObservable<number>(0), (d) => {
-      updateForecast(app.observables.forecasts.value, d);
-    });
-
-  const days_nav = document.querySelector('.days-nav');
-
-  const updateDaysNav = function (f: Forecast) : void {
-    for (let i = 0, length = f.daily.length; i < length; i++) {
-      const day = new Date()
-      console.log(f.daily[i].timestamp)
-    }
-  }
-
+  const days_nav =
+    document.querySelector('.day-nav') ?? document.createElement('div');
 }); /* DOMContentLoaded */
