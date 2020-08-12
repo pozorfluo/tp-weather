@@ -39,7 +39,6 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
-        console.log(app.pins.day.set);
         weather_days.setEffect(app.pins.day.set);
         weather_days.render(f, 5);
     })

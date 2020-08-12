@@ -8,33 +8,33 @@ function newObservable(value) {
         subscribers: [],
         value: value,
         notify: function () {
-            for (let i = 0, length = this.subscribers.length; i < length; i++) {
-                this.subscribers[i](this.value);
+            for (let i = 0, length = observable.subscribers.length; i < length; i++) {
+                observable.subscribers[i](observable.value);
             }
-            return this;
+            return observable;
         },
         subscribe: function (subscriber, priority) {
             if (priority === undefined) {
-                this.subscribers.push(subscriber);
+                observable.subscribers.push(subscriber);
             }
             else {
-                this.subscribers.splice(priority, 0, subscriber);
+                observable.subscribers.splice(priority, 0, subscriber);
             }
-            return this;
+            return observable;
         },
         flush: function () {
-            this.subscribers = [];
-            return this;
+            observable.subscribers = [];
+            return observable;
         },
         get: function () {
-            return this.value;
+            return observable.value;
         },
         set: function (value) {
-            if (value !== this.value) {
-                this.value = value;
-                this.notify();
+            if (value !== observable.value) {
+                observable.value = value;
+                observable.notify();
             }
-            return this;
+            return observable;
         },
     };
     return observable;
@@ -51,25 +51,25 @@ function newContext() {
         pins: {},
         subs: [],
         pub: function (name, pin, ...subscribers) {
-            this.pins[name] = pin;
+            context.pins[name] = pin;
             for (let i = 0, length = subscribers.length; i < length; i++) {
                 pin.subscribe(subscribers[i]);
             }
-            return this;
+            return context;
         },
         remove: function (name) {
-            if (this.pins[name] !== undefined) {
-                this.pins[name].flush();
-                delete this.pins[name];
+            if (context.pins[name] !== undefined) {
+                context.pins[name].flush();
+                delete context.pins[name];
             }
-            return this;
+            return context;
         },
         merge: function (another_context) {
             if (another_context.pins !== undefined) {
                 another_context = another_context.pins;
             }
-            komrad_1.extend(this.pins, another_context);
-            return this;
+            komrad_1.extend(context.pins, another_context);
+            return context;
         },
         musterSubs: function (element) {
             var _a, _b, _c;
@@ -81,36 +81,36 @@ function newContext() {
                 const target = (_b = sub_nodes[i].getAttribute('data-property')) !== null && _b !== void 0 ? _b : 'value';
                 const type = (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string';
                 subs[i] = {
-                    source: this.pins[source] !== undefined
-                        ? this.pins[source]
+                    source: context.pins[source] !== undefined
+                        ? context.pins[source]
                         : source,
                     target: target,
                     type: type,
                     node: sub_nodes[i],
                 };
             }
-            this.subs = subs;
-            return this;
+            context.subs = subs;
+            return context;
         },
         setSubs: function (subs) {
-            this.subs = subs;
-            return this;
+            context.subs = subs;
+            return context;
         },
         activateSubs: function () {
-            for (let i = 0, length = this.subs.length; i < length; i++) {
-                if (typeof this.subs[i].source !== 'string') {
-                    this.subs[i].source.subscribe((value) => {
-                        this.subs[i].node[this.subs[i].target] = value;
+            for (let i = 0, length = context.subs.length; i < length; i++) {
+                if (typeof context.subs[i].source !== 'string') {
+                    context.subs[i].source.subscribe((value) => {
+                        context.subs[i].node[context.subs[i].target] = value;
                     });
                 }
             }
-            return this;
+            return context;
         },
         refresh: function () {
-            for (const pin of Object.values(this.pins)) {
+            for (const pin of Object.values(context.pins)) {
                 pin.notify();
             }
-            return this;
+            return context;
         }
     };
     return context;
@@ -275,7 +275,6 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
-        console.log(app.pins.day.set);
         weather_days.setEffect(app.pins.day.set);
         weather_days.render(f, 5);
     })

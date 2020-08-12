@@ -55,16 +55,16 @@ export function newObservable<T>(value: T): Observable<T> {
       // const length = this.subscribers.length;
       // const tasks = new Array(length);
       // console.log(this.subscribers);
-      for (let i = 0, length = this.subscribers.length; i < length; i++) {
+      for (let i = 0, length = observable.subscribers.length; i < length; i++) {
         // console.log('notifying ' + this.subscribers[i]);
         // tasks.push(this.subscribers[i](this.value));
         // tasks[i] = this.subscribers[i](this.value);
         // await this.subscribers[i](this.value);
-        this.subscribers[i](this.value);
+        observable.subscribers[i](observable.value);
       }
       /** @todo consider ES2020 Promise.allSettled */
       // await Promise.all(tasks);
-      return this;
+      return observable;
     },
 
     subscribe: function (
@@ -72,30 +72,38 @@ export function newObservable<T>(value: T): Observable<T> {
       priority?: number
     ): Observable<T> {
       if (priority === undefined) {
-        this.subscribers.push(subscriber);
+        observable.subscribers.push(subscriber);
       } else {
-        this.subscribers.splice(priority, 0, subscriber);
+        observable.subscribers.splice(priority, 0, subscriber);
       }
-      return this;
+      return observable;
     },
 
     flush: function (): Observable<T> {
-      this.subscribers = [];
-      return this;
+      observable.subscribers = [];
+      return observable;
     },
 
     get: function (): T {
       /* Notify that a read is happening here if necessary. */
-      return this.value;
+      return observable.value;
     },
 
+    // set: function (value: T): Observable<T> {
+    //   /* The buck stops here. */
+    //   if (value !== this.value) {
+    //     this.value = value;
+    //     this.notify();
+    //   }
+    //   return this;
+    // },
     set: function (value: T): Observable<T> {
       /* The buck stops here. */
-      if (value !== this.value) {
-        this.value = value;
-        this.notify();
+      if (value !== observable.value) {
+        observable.value = value;
+        observable.notify();
       }
-      return this;
+      return observable;
     },
   };
   return <Observable<T>>observable;
@@ -175,11 +183,11 @@ export function newContext(): Context {
       pin: Observable<any>,
       ...subscribers: Subscriber<any>[]
     ): Context {
-      this.pins[name] = pin;
+      context.pins[name] = pin;
       for (let i = 0, length = subscribers.length; i < length; i++) {
         pin.subscribe(subscribers[i]);
       }
-      return this;
+      return context;
     },
     /**
      * Remove observable from this context.
@@ -187,11 +195,11 @@ export function newContext(): Context {
      * @todo Unsubscribe/delete from observables properly.
      */
     remove: function (name: string): Context {
-      if (this.pins[name] !== undefined) {
-        this.pins[name].flush();
-        delete this.pins[name];
+      if (context.pins[name] !== undefined) {
+        context.pins[name].flush();
+        delete context.pins[name];
       }
-      return this;
+      return context;
     },
 
     /**
@@ -203,8 +211,8 @@ export function newContext(): Context {
       if (another_context.pins !== undefined) {
         another_context = another_context.pins;
       }
-      extend(this.pins, another_context);
-      return this;
+      extend(context.pins, another_context);
+      return context;
     },
 
     /**
@@ -227,23 +235,23 @@ export function newContext(): Context {
         const type: string = sub_nodes[i].getAttribute('data-type') ?? 'string';
         subs[i] = {
           source:
-            this.pins[source] !== undefined
-              ? this.pins[source]
+          context.pins[source] !== undefined
+              ? context.pins[source]
               : source,
           target: target,
           type: type,
           node: sub_nodes[i],
         };
       }
-      this.subs = <Sub<any>[]>subs;
-      return this;
+      context.subs = <Sub<any>[]>subs;
+      return context;
     },
     /**
      * Reference given sub collection as this context sub collection.
      */
     setSubs: function (subs: Sub<any>[]): Context {
-      this.subs = subs;
-      return this;
+      context.subs = subs;
+      return context;
     },
     /**
      * Activate this context sub collection.
@@ -251,21 +259,21 @@ export function newContext(): Context {
      * @todo Deal with incomplete Observable-less subs.
      */
     activateSubs: function (): Context {
-      for (let i = 0, length = this.subs.length; i < length; i++) {
-        if (typeof this.subs[i].source !== 'string') {
-          (<Observable<any>>this.subs[i].source).subscribe((value) => {
-            this.subs[i].node[this.subs[i].target] = value;
+      for (let i = 0, length = context.subs.length; i < length; i++) {
+        if (typeof context.subs[i].source !== 'string') {
+          (<Observable<any>>context.subs[i].source).subscribe((value) => {
+            context.subs[i].node[context.subs[i].target] = value;
           });
         }
       }
-      return this;
+      return context;
     },
 
     refresh: function (): Context {
-      for (const pin of Object.values(this.pins)){
+      for (const pin of Object.values(context.pins)){
         (<Observable<any>>pin).notify();
       }
-      return this;
+      return context;
     }
   };
   return <Context>context;

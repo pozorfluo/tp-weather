@@ -2,7 +2,7 @@ import { newObservable, newContext } from './app-solo';
 import { geoLocate, GeoInfo } from './geo';
 import { getDailyForecasts, Forecast, newForecast } from './weather';
 
-import {WeatherDays} from './weather-days';
+import { WeatherDays } from './weather-days';
 import './weather-days';
 
 /**
@@ -55,8 +55,6 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const app = newContext()
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
-      // console.log(weather_days);
-      console.log(app.pins.day.set);
       weather_days.setEffect(app.pins.day.set);
       weather_days.render(f, 5);
     })
@@ -81,10 +79,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .activateSubs()
     .refresh();
 
-  const weather_days =
-    <WeatherDays>document.querySelector('weather-days');
-    // <WeatherDays>document.querySelector('weather-days') ??
-    // new WeatherDays();
-
-
+  const weather_days = <WeatherDays>document.querySelector('weather-days');
+  // <WeatherDays>document.querySelector('weather-days') ??
+  // new WeatherDays();
 }); /* DOMContentLoaded */
