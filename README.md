@@ -1,3 +1,4 @@
 # [tp-weather](https://pozorfluo.github.io/tp-weather/index.html)
 
-with KOПЯΛD
+vanilla typescript with KOПЯΛD
+![screencap_00](resources/images/screencap_00.png)

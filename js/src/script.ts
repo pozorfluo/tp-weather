@@ -1,7 +1,19 @@
 import { newObservable, newContext } from './app-solo';
 import { geoLocate, GeoInfo } from './geo';
 import { getDailyForecasts, Forecast, newForecast } from './weather';
-import { div, a, button, h1, h2, h3, h4, h5,  header, p, span } from './elements';
+import {
+  div,
+  a,
+  button,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  header,
+  p,
+  span,
+} from './elements';
 
 /**
  * Workaround commiting api keys to git for this exercise.
@@ -74,13 +86,11 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
               e.preventDefault();
             },
           },
-          h4(
-            new Date(f.daily[i].timestamp * 1000).toLocaleDateString(
-              navigator.language,
-              {
-                weekday: 'long',
-              }
-            )
+          new Date(f.daily[i].timestamp * 1000).toLocaleDateString(
+            navigator.language,
+            {
+              weekday: 'long',
+            }
           )
         )
       );

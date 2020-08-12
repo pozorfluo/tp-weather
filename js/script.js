@@ -46,9 +46,9 @@ window.addEventListener('DOMContentLoaded', function (event) {
                     app.pins.day.set(i);
                     e.preventDefault();
                 },
-            }, elements_1.h4(new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
+            }, new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
                 weekday: 'long',
-            }))));
+            })));
         }
         days_nav.appendChild(fragment);
     };
