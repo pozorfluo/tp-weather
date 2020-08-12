@@ -15,6 +15,8 @@ import {
   span,
 } from './elements';
 
+import './weather-days';
+
 /**
  * Workaround commiting api keys to git for this exercise.
  */

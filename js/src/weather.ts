@@ -1,5 +1,3 @@
-'use strict';
-
 import { GeoInfo } from './geo';
 
 export interface OWMOneCallResponse {

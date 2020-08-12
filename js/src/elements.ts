@@ -9,7 +9,6 @@
 //   el.appendChild(textNode);
 // }
 
-'use strict';
 function appendArray(
   elem: Element,
   children: (Element | string | (Element | string)[])[]

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.span = exports.p = exports.header = exports.h5 = exports.h4 = exports.h3 = exports.h2 = exports.h1 = exports.div = exports.button = exports.a = void 0;
 function appendArray(elem, children) {

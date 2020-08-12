@@ -59,21 +59,19 @@ body {
 }
 
 .day-button {
-    margin: 0 auto !important;
+  margin: 0 auto !important;
   padding: 1rem 0;
   flex-basis: 50%;
-  border:1px solid var(--color-bg);
+  border: 1px solid var(--color-bg);
   font-weight: 900;
-  /* font-size: calc(10px + 2vmin); */
   cursor: pointer;
   user-select: none;
   transform: translate(0.5em -0.4em);
   transition: 0.5s;
   transition-timing-function: cubic-bezier(0.74, -0.73, 0.2, 1.67);
-
 }
-.day-button:first-child{
-    flex-basis: 100%;
+.day-button:first-child {
+  flex-basis: 100%;
 }
 .day-button:hover {
   z-index: 3;
@@ -83,10 +81,8 @@ body {
   transform: scale3d(1.02, 1.02, 1);
   transition: 0.1s;
   transition-timing-function: cubic-bezier(0.74, -0.73, 0.2, 1.67);
-  border:1px solid var(--color-bg-muted);
-
+  border: 1px solid var(--color-bg-muted);
 }
-
 
 .day-button:active {
   transform: translate(0, 0);
@@ -94,5 +90,5 @@ body {
 }
 
 a {
-    text-decoration: none;
+  text-decoration: none;
 }

@@ -5,9 +5,6 @@ import {
     newObservable,
     newContext,
 } from './app-solo';
-
-'use strict';
-
 //-------------------------------------------------------- noops-and-crosses
 /**
  * Define Timer object.

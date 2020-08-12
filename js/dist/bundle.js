@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newContext = exports.withObservable = exports.newObservable = void 0;
 const komrad_1 = require("./komrad");
-'use strict';
 function newObservable(value) {
     const observable = {
         subscribers: [],
@@ -119,7 +118,7 @@ function newContext() {
 exports.newContext = newContext;
 
 },{"./komrad":4}],2:[function(require,module,exports){
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.span = exports.p = exports.header = exports.h5 = exports.h4 = exports.h3 = exports.h2 = exports.h1 = exports.div = exports.button = exports.a = void 0;
 function appendArray(elem, children) {
@@ -187,7 +186,7 @@ exports.p = (...args) => makeElement(`p`, ...args);
 exports.span = (...args) => makeElement(`span`, ...args);
 
 },{}],3:[function(require,module,exports){
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geoLocate = void 0;
 async function geoIp(api_key) {
@@ -265,7 +264,7 @@ async function geoLocate(api_keys) {
 exports.geoLocate = geoLocate;
 
 },{}],4:[function(require,module,exports){
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cram = exports.extend = void 0;
 function extend(object, trait) {
@@ -309,6 +308,7 @@ const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 const elements_1 = require("./elements");
+require("./weather-days");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -380,8 +380,21 @@ window.addEventListener('DOMContentLoaded', function (event) {
     console.log(navigator.language);
 });
 
-},{"./app-solo":1,"./elements":2,"./geo":3,"./weather":6}],6:[function(require,module,exports){
-'use strict';
+},{"./app-solo":1,"./elements":2,"./geo":3,"./weather":7,"./weather-days":6}],6:[function(require,module,exports){
+"use strict";
+class WeatherDays extends HTMLElement {
+    constructor() {
+        super();
+        const button = document.createElement('a');
+        button.classList.add('day-button');
+        button.textContent = 'Now';
+        this.appendChild(button);
+    }
+}
+customElements.define('weather-days', WeatherDays);
+
+},{}],7:[function(require,module,exports){
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
 const iconTable = {

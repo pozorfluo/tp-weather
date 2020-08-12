@@ -1,5 +1,3 @@
-'use strict';
-
 //---------------------------------------------------------------- komrad.ts
 /**
  * Manifesto for classless object composition.

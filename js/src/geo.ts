@@ -1,7 +1,3 @@
-'use strict';
-
-// import { checkServerIdentity } from 'tls';
-
 export interface GeoIpData {
   city?: string;
   country_code?: string;

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cram = exports.extend = void 0;
 function extend(object, trait) {

@@ -1,5 +1,4 @@
 import { Trait, extend } from './komrad';
-'use strict';
 
 //------------------------------------------------------------------ app-solo.ts
 /**
