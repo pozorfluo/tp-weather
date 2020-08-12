@@ -11,7 +11,7 @@ export class WeatherNav extends HTMLElement {
     return t;
   })();
 
-  _effect: (i: number) => void = () => {
+  _onClick: (i: number) => void = () => {
     throw 'WeatherDays : effect not set.';
   };
   days: HTMLElement;
@@ -26,8 +26,8 @@ export class WeatherNav extends HTMLElement {
     this.days.textContent = 'Loading ...';
   }
 
-  setEffect(effect: (i: number) => void): this {
-    this._effect = effect;
+  setOnClick(effect: (i: number) => void): this {
+    this._onClick = effect;
     return this;
   }
 
@@ -42,7 +42,7 @@ export class WeatherNav extends HTMLElement {
       });
 
       button.onclick = (e: Event): void => {
-        this._effect(i);
+        this._onClick(i);
         e.preventDefault();
       };
 

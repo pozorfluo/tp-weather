@@ -275,7 +275,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
-        weather_nav.setEffect(app.pins.day.set);
+        weather_nav.setOnClick(app.pins.day.set);
         weather_nav.render(f.daily.map((d) => d.timestamp), 5);
     })
         .pub('day', app_solo_1.newObservable(0), (d) => {
@@ -302,7 +302,7 @@ exports.WeatherNav = void 0;
 class WeatherNav extends HTMLElement {
     constructor() {
         super();
-        this._effect = () => {
+        this._onClick = () => {
             throw 'WeatherDays : effect not set.';
         };
         this.days = WeatherNav._days.cloneNode(true);
@@ -311,8 +311,8 @@ class WeatherNav extends HTMLElement {
     connectedCallback() {
         this.days.textContent = 'Loading ...';
     }
-    setEffect(effect) {
-        this._effect = effect;
+    setOnClick(effect) {
+        this._onClick = effect;
         return this;
     }
     render(timestamps, max) {
@@ -323,7 +323,7 @@ class WeatherNav extends HTMLElement {
                 weekday: 'long',
             });
             button.onclick = (e) => {
-                this._effect(i);
+                this._onClick(i);
                 e.preventDefault();
             };
             days.appendChild(button);

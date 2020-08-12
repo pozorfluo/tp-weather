@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
-        weather_nav.setEffect(app.pins.day.set);
+        weather_nav.setOnClick(app.pins.day.set);
         weather_nav.render(f.daily.map((d) => d.timestamp), 5);
     })
         .pub('day', app_solo_1.newObservable(0), (d) => {

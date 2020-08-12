@@ -13,6 +13,7 @@ export interface OWMOneCallResponse {
   };
   [prop: string]: any;
 }
+
 export interface Daily {
     timestamp: number;
     temperature: string;

@@ -24,7 +24,7 @@ async function getWeather(): Promise<Forecast | null> {
   const forecasts =
     loc !== null ? await getDailyForecasts(loc, api_keys) : null;
 
-  /** newForecast not called if loc === null, safe to cast to quiet linter */
+  /** newForecast not called if loc === null, safe to 'cast' to quiet linter */
   return forecasts !== null ? newForecast(<GeoInfo>loc, forecasts) : null;
 }
 
@@ -55,7 +55,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const app = newContext()
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
-      weather_nav.setEffect(app.pins.day.set);
+      weather_nav.setOnClick(app.pins.day.set);
       weather_nav.render(f.daily.map((d : Daily) => d.timestamp), 5);
     })
     .pub('day', newObservable<number>(0), (d) => {
