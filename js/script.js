@@ -39,8 +39,8 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
-        weather_days.setEffect(app.pins.day.set);
-        weather_days.render(f.daily.map((d) => d.timestamp), 5);
+        weather_nav.setEffect(app.pins.day.set);
+        weather_nav.render(f.daily.map((d) => d.timestamp), 5);
     })
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
@@ -56,5 +56,5 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .musterSubs(document)
         .activateSubs()
         .refresh();
-    const weather_days = document.querySelector('weather-nav');
+    const weather_nav = document.querySelector('weather-nav');
 });
