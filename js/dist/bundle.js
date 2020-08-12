@@ -117,75 +117,7 @@ function newContext() {
 }
 exports.newContext = newContext;
 
-},{"./komrad":4}],2:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.span = exports.p = exports.header = exports.h5 = exports.h4 = exports.h3 = exports.h2 = exports.h1 = exports.div = exports.button = exports.a = void 0;
-function appendArray(elem, children) {
-    for (let i = 0, length = children.length; i < length; i++) {
-        Array.isArray(children[i])
-            ? appendArray(elem, children[i])
-            : elem.append(children[i]);
-    }
-}
-function setStyles(elem, styles) {
-    if (!styles) {
-        elem.removeAttribute(`styles`);
-        return;
-    }
-    Object.keys(styles).forEach((styleName) => {
-        if (styleName in elem.style) {
-            elem.style[styleName] = styles[styleName];
-        }
-        else {
-            console.warn(`${styleName} is not a valid style for a <${elem.tagName.toLowerCase()}>`);
-        }
-    });
-}
-function makeElement(type, ...children) {
-    const elem = document.createElement(type);
-    if (Array.isArray(children[0])) {
-        appendArray(elem, children[0]);
-    }
-    else if (children[0] instanceof window.Element) {
-        elem.appendChild(children[0]);
-    }
-    else if (typeof children[0] === 'string') {
-        elem.append(children[0]);
-    }
-    else if (typeof children[0] === 'object') {
-        Object.keys(children[0]).forEach((propName) => {
-            if (propName in elem) {
-                const value = children[0][propName];
-                if (propName === 'style') {
-                    setStyles(elem, value);
-                }
-                else if (value) {
-                    elem[propName] = value;
-                }
-            }
-            else {
-                console.warn(`${propName} is not a valid property of a <${type}>`);
-            }
-        });
-    }
-    if (children.length >= 1)
-        appendArray(elem, children.slice(1));
-    return elem;
-}
-exports.a = (...args) => makeElement(`a`, ...args);
-exports.button = (...args) => makeElement(`button`, ...args);
-exports.div = (...args) => makeElement(`div`, ...args);
-exports.h1 = (...args) => makeElement(`h1`, ...args);
-exports.h2 = (...args) => makeElement(`h2`, ...args);
-exports.h3 = (...args) => makeElement(`h3`, ...args);
-exports.h4 = (...args) => makeElement(`h4`, ...args);
-exports.h5 = (...args) => makeElement(`h5`, ...args);
-exports.header = (...args) => makeElement(`header`, ...args);
-exports.p = (...args) => makeElement(`p`, ...args);
-exports.span = (...args) => makeElement(`span`, ...args);
-
-},{}],3:[function(require,module,exports){
+},{"./komrad":3}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geoLocate = void 0;
@@ -263,7 +195,7 @@ async function geoLocate(api_keys) {
 }
 exports.geoLocate = geoLocate;
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cram = exports.extend = void 0;
@@ -301,13 +233,12 @@ function extendCopy(object, trait) {
     return extended_copy;
 }
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-const elements_1 = require("./elements");
 require("./weather-days");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
@@ -325,7 +256,6 @@ async function getWeather() {
     return forecasts !== null ? weather_1.newForecast(loc, forecasts) : null;
 }
 window.addEventListener('DOMContentLoaded', function (event) {
-    var _a;
     getWeather()
         .then((forecasts) => {
         app.pins.forecasts.set(forecasts);
@@ -342,25 +272,12 @@ window.addEventListener('DOMContentLoaded', function (event) {
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
         view.pins.loading.set('');
     };
-    const renderDaysNav = function (f) {
-        const fragment = document.createDocumentFragment();
-        for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
-            fragment.appendChild(elements_1.a({
-                className: 'day-button',
-                onclick: (e) => {
-                    app.pins.day.set(i);
-                    e.preventDefault();
-                },
-            }, new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
-                weekday: 'long',
-            })));
-        }
-        days_nav.appendChild(fragment);
-    };
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
-        renderDaysNav(f);
+        console.log(app.pins.day.set);
+        weather_days.setEffect(app.pins.day.set);
+        weather_days.render(f, 5);
     })
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
@@ -376,24 +293,60 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .musterSubs(document)
         .activateSubs()
         .refresh();
-    const days_nav = (_a = document.querySelector('.day-nav')) !== null && _a !== void 0 ? _a : document.createElement('div');
-    console.log(navigator.language);
+    const weather_days = document.querySelector('weather-days');
 });
 
-},{"./app-solo":1,"./elements":2,"./geo":3,"./weather":7,"./weather-days":6}],6:[function(require,module,exports){
+},{"./app-solo":1,"./geo":2,"./weather":6,"./weather-days":5}],5:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WeatherDays = void 0;
 class WeatherDays extends HTMLElement {
     constructor() {
         super();
-        const button = document.createElement('a');
-        button.classList.add('day-button');
-        button.textContent = 'Now';
-        this.appendChild(button);
+        this._effect = () => {
+            throw 'WeatherDays : effect not set.';
+        };
+        this.days = WeatherDays._days.cloneNode(true);
+        this.appendChild(this.days);
+    }
+    connectedCallback() {
+        this.days.textContent = 'Loading ...';
+    }
+    setEffect(effect) {
+        this._effect = effect;
+        return this;
+    }
+    render(f, max) {
+        const days = WeatherDays._days.cloneNode(true);
+        for (let i = 0, length = Math.min(f.daily.length, max); i < length; i++) {
+            const button = WeatherDays._button.cloneNode(true);
+            button.textContent = new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
+                weekday: 'long',
+            });
+            button.onclick = (e) => {
+                this._effect(i);
+                e.preventDefault();
+            };
+            days.appendChild(button);
+        }
+        this.replaceChild(days, this.days);
+        return this;
     }
 }
+exports.WeatherDays = WeatherDays;
+WeatherDays._button = (() => {
+    const t = document.createElement('a');
+    t.classList.add('day-button');
+    return t;
+})();
+WeatherDays._days = (() => {
+    const t = document.createElement('div');
+    t.classList.add('card-action', 'day-nav');
+    return t;
+})();
 customElements.define('weather-days', WeatherDays);
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
@@ -461,4 +414,4 @@ async function getDailyForecasts(loc, api_keys) {
 }
 exports.getDailyForecasts = getDailyForecasts;
 
-},{}]},{},[4,1,5]);
+},{}]},{},[3,1,4]);

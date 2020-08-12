@@ -1,20 +1,8 @@
 import { newObservable, newContext } from './app-solo';
 import { geoLocate, GeoInfo } from './geo';
 import { getDailyForecasts, Forecast, newForecast } from './weather';
-import {
-  div,
-  a,
-  button,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  header,
-  p,
-  span,
-} from './elements';
 
+import {WeatherDays} from './weather-days';
 import './weather-days';
 
 /**
@@ -63,47 +51,14 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     view.pins.loading.set('');
   };
 
-  const renderDaysNav = function (f: Forecast): void {
-    const fragment = document.createDocumentFragment();
-    // const button = document.createElement('a');
-    // button.classList.add('day-button');
-
-    for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
-      //   const day = new Date(f.daily[i].timestamp * 1000);
-      //   const day_button = button.cloneNode(true);
-      //   day_button.textContent = day.toLocaleDateString(navigator.language, {
-      //     weekday: 'long',
-      //   });
-      //   day_button.addEventListener('click', (e) => {
-      //     app.pins.day.set(i);
-      //     e.preventDefault();
-      //   });
-      //   fragment.appendChild(day_button);
-      fragment.appendChild(
-        a(
-          {
-            className: 'day-button',
-            onclick: (e: Event) => {
-              app.pins.day.set(i);
-              e.preventDefault();
-            },
-          },
-          new Date(f.daily[i].timestamp * 1000).toLocaleDateString(
-            navigator.language,
-            {
-              weekday: 'long',
-            }
-          )
-        )
-      );
-    }
-    days_nav.appendChild(fragment);
-  };
   //------------------------------------------------------- contexts ---
   const app = newContext()
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
-      renderDaysNav(f);
+      // console.log(weather_days);
+      console.log(app.pins.day.set);
+      weather_days.setEffect(app.pins.day.set);
+      weather_days.render(f, 5);
     })
     .pub('day', newObservable<number>(0), (d) => {
       renderForecast(app.pins.forecasts.value, d);
@@ -126,8 +81,10 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .activateSubs()
     .refresh();
 
-  const days_nav =
-    document.querySelector('.day-nav') ?? document.createElement('div');
+  const weather_days =
+    <WeatherDays>document.querySelector('weather-days');
+    // <WeatherDays>document.querySelector('weather-days') ??
+    // new WeatherDays();
 
-  console.log(navigator.language);
+
 }); /* DOMContentLoaded */

@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-const elements_1 = require("./elements");
 require("./weather-days");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
@@ -21,7 +20,6 @@ async function getWeather() {
     return forecasts !== null ? weather_1.newForecast(loc, forecasts) : null;
 }
 window.addEventListener('DOMContentLoaded', function (event) {
-    var _a;
     getWeather()
         .then((forecasts) => {
         app.pins.forecasts.set(forecasts);
@@ -38,25 +36,12 @@ window.addEventListener('DOMContentLoaded', function (event) {
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
         view.pins.loading.set('');
     };
-    const renderDaysNav = function (f) {
-        const fragment = document.createDocumentFragment();
-        for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
-            fragment.appendChild(elements_1.a({
-                className: 'day-button',
-                onclick: (e) => {
-                    app.pins.day.set(i);
-                    e.preventDefault();
-                },
-            }, new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
-                weekday: 'long',
-            })));
-        }
-        days_nav.appendChild(fragment);
-    };
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
-        renderDaysNav(f);
+        console.log(app.pins.day.set);
+        weather_days.setEffect(app.pins.day.set);
+        weather_days.render(f, 5);
     })
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
@@ -72,6 +57,5 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .musterSubs(document)
         .activateSubs()
         .refresh();
-    const days_nav = (_a = document.querySelector('.day-nav')) !== null && _a !== void 0 ? _a : document.createElement('div');
-    console.log(navigator.language);
+    const weather_days = document.querySelector('weather-days');
 });
