@@ -1,13 +1,7 @@
-import { extend } from './komrad';
-import {
-  Observable,
-  withObservable,
-  newObservable,
-  newContext,
-} from './app-solo';
-
+import { newObservable, newContext } from './app-solo';
 import { geoLocate, GeoInfo } from './geo';
 import { getDailyForecasts, Forecast, newForecast } from './weather';
+import { div, a, button, h1, h2, h3, h4, h5,  header, p, span } from './elements';
 
 /**
  * Workaround commiting api keys to git for this exercise.
@@ -57,20 +51,39 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
 
   const renderDaysNav = function (f: Forecast): void {
     const fragment = document.createDocumentFragment();
-    const button = document.createElement('a');
-    button.classList.add('day-button');
+    // const button = document.createElement('a');
+    // button.classList.add('day-button');
 
     for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
-      const day = new Date(f.daily[i].timestamp * 1000);
-      const day_button = button.cloneNode(true);
-      day_button.textContent = day.toLocaleDateString(navigator.language, {
-        weekday: 'long',
-      });
-      day_button.addEventListener('click', (e) => {
-        app.pins.day.set(i);
-        e.preventDefault();
-      });
-      fragment.appendChild(day_button);
+      //   const day = new Date(f.daily[i].timestamp * 1000);
+      //   const day_button = button.cloneNode(true);
+      //   day_button.textContent = day.toLocaleDateString(navigator.language, {
+      //     weekday: 'long',
+      //   });
+      //   day_button.addEventListener('click', (e) => {
+      //     app.pins.day.set(i);
+      //     e.preventDefault();
+      //   });
+      //   fragment.appendChild(day_button);
+      fragment.appendChild(
+        a(
+          {
+            className: 'day-button',
+            onclick: (e: Event) => {
+              app.pins.day.set(i);
+              e.preventDefault();
+            },
+          },
+          h4(
+            new Date(f.daily[i].timestamp * 1000).toLocaleDateString(
+              navigator.language,
+              {
+                weekday: 'long',
+              }
+            )
+          )
+        )
+      );
     }
     days_nav.appendChild(fragment);
   };
@@ -104,5 +117,5 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const days_nav =
     document.querySelector('.day-nav') ?? document.createElement('div');
 
-  console.log();
+  console.log(navigator.language);
 }); /* DOMContentLoaded */

@@ -22,7 +22,6 @@ const iconTable = {
     '50n': 'mist.svg',
 };
 function newForecast(loc, owm) {
-    console.log(owm);
     const forecast = {
         countryCode: loc.countryCode,
         city: loc.city,

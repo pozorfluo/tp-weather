@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
+const elements_1 = require("./elements");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -38,19 +39,16 @@ window.addEventListener('DOMContentLoaded', function (event) {
     };
     const renderDaysNav = function (f) {
         const fragment = document.createDocumentFragment();
-        const button = document.createElement('a');
-        button.classList.add('day-button');
         for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
-            const day = new Date(f.daily[i].timestamp * 1000);
-            const day_button = button.cloneNode(true);
-            day_button.textContent = day.toLocaleDateString(navigator.language, {
+            fragment.appendChild(elements_1.a({
+                className: 'day-button',
+                onclick: (e) => {
+                    app.pins.day.set(i);
+                    e.preventDefault();
+                },
+            }, elements_1.h4(new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
                 weekday: 'long',
-            });
-            day_button.addEventListener('click', (e) => {
-                app.pins.day.set(i);
-                e.preventDefault();
-            });
-            fragment.appendChild(day_button);
+            }))));
         }
         days_nav.appendChild(fragment);
     };
@@ -74,5 +72,5 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .activateSubs()
         .refresh();
     const days_nav = (_a = document.querySelector('.day-nav')) !== null && _a !== void 0 ? _a : document.createElement('div');
-    console.log();
+    console.log(navigator.language);
 });

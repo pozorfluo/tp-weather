@@ -61,7 +61,6 @@ const iconTable: { [prop: string]: string } = {
 };
 
 export function newForecast(loc: GeoInfo, owm: OWMOneCallResponse): Forecast {
-    console.log(owm);
   const forecast: any = {
     countryCode: loc.countryCode,
     city: loc.city,

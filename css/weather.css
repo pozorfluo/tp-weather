@@ -1,12 +1,12 @@
 :root {
-    --color-bg: #0b0829;
-    --color-bg-muted: #120944;
-    --color-fg: #1ed760;
-    --color-fg-muted: #1ed75f7f;
-    --color-black: #202629;
-    --text: 1vmin;
-    --board-width: calc(var(--square-container) + var(--text) * 2);
-  }
+  --color-bg: #0b0829;
+  --color-bg-muted: #120944;
+  --color-fg: #1ed760;
+  --color-fg-muted: #1ed75f7f;
+  --color-black: #202629;
+  --text: 1vmin;
+  --board-width: calc(var(--square-container) + var(--text) * 2);
+}
 
 body {
   background: var(--color-black);
@@ -47,10 +47,10 @@ body {
 
 .weather.card .card-action {
   background: var(--color-bg-muted);
+  
 }
 
 .weather .temperature {
-  margin-left: 4vh;
   font-size: 100px;
   margin: 0 auto;
   font-family: 'Roboto', sans-serif;

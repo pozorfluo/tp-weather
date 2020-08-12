@@ -118,7 +118,75 @@ function newContext() {
 }
 exports.newContext = newContext;
 
-},{"./komrad":3}],2:[function(require,module,exports){
+},{"./komrad":4}],2:[function(require,module,exports){
+'use strict';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.span = exports.p = exports.header = exports.h5 = exports.h4 = exports.h3 = exports.h2 = exports.h1 = exports.div = exports.button = exports.a = void 0;
+function appendArray(elem, children) {
+    for (let i = 0, length = children.length; i < length; i++) {
+        Array.isArray(children[i])
+            ? appendArray(elem, children[i])
+            : elem.append(children[i]);
+    }
+}
+function setStyles(elem, styles) {
+    if (!styles) {
+        elem.removeAttribute(`styles`);
+        return;
+    }
+    Object.keys(styles).forEach((styleName) => {
+        if (styleName in elem.style) {
+            elem.style[styleName] = styles[styleName];
+        }
+        else {
+            console.warn(`${styleName} is not a valid style for a <${elem.tagName.toLowerCase()}>`);
+        }
+    });
+}
+function makeElement(type, ...children) {
+    const elem = document.createElement(type);
+    if (Array.isArray(children[0])) {
+        appendArray(elem, children[0]);
+    }
+    else if (children[0] instanceof window.Element) {
+        elem.appendChild(children[0]);
+    }
+    else if (typeof children[0] === 'string') {
+        elem.append(children[0]);
+    }
+    else if (typeof children[0] === 'object') {
+        Object.keys(children[0]).forEach((propName) => {
+            if (propName in elem) {
+                const value = children[0][propName];
+                if (propName === 'style') {
+                    setStyles(elem, value);
+                }
+                else if (value) {
+                    elem[propName] = value;
+                }
+            }
+            else {
+                console.warn(`${propName} is not a valid property of a <${type}>`);
+            }
+        });
+    }
+    if (children.length >= 1)
+        appendArray(elem, children.slice(1));
+    return elem;
+}
+exports.a = (...args) => makeElement(`a`, ...args);
+exports.button = (...args) => makeElement(`button`, ...args);
+exports.div = (...args) => makeElement(`div`, ...args);
+exports.h1 = (...args) => makeElement(`h1`, ...args);
+exports.h2 = (...args) => makeElement(`h2`, ...args);
+exports.h3 = (...args) => makeElement(`h3`, ...args);
+exports.h4 = (...args) => makeElement(`h4`, ...args);
+exports.h5 = (...args) => makeElement(`h5`, ...args);
+exports.header = (...args) => makeElement(`header`, ...args);
+exports.p = (...args) => makeElement(`p`, ...args);
+exports.span = (...args) => makeElement(`span`, ...args);
+
+},{}],3:[function(require,module,exports){
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geoLocate = void 0;
@@ -195,7 +263,7 @@ async function geoLocate(api_keys) {
 }
 exports.geoLocate = geoLocate;
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cram = exports.extend = void 0;
@@ -233,12 +301,13 @@ function extendCopy(object, trait) {
     return extended_copy;
 }
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
+const elements_1 = require("./elements");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -274,19 +343,16 @@ window.addEventListener('DOMContentLoaded', function (event) {
     };
     const renderDaysNav = function (f) {
         const fragment = document.createDocumentFragment();
-        const button = document.createElement('a');
-        button.classList.add('day-button');
         for (let i = 0, length = Math.min(f.daily.length, 5); i < length; i++) {
-            const day = new Date(f.daily[i].timestamp * 1000);
-            const day_button = button.cloneNode(true);
-            day_button.textContent = day.toLocaleDateString(navigator.language, {
+            fragment.appendChild(elements_1.a({
+                className: 'day-button',
+                onclick: (e) => {
+                    app.pins.day.set(i);
+                    e.preventDefault();
+                },
+            }, elements_1.h4(new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
                 weekday: 'long',
-            });
-            day_button.addEventListener('click', (e) => {
-                app.pins.day.set(i);
-                e.preventDefault();
-            });
-            fragment.appendChild(day_button);
+            }))));
         }
         days_nav.appendChild(fragment);
     };
@@ -310,10 +376,10 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .activateSubs()
         .refresh();
     const days_nav = (_a = document.querySelector('.day-nav')) !== null && _a !== void 0 ? _a : document.createElement('div');
-    console.log();
+    console.log(navigator.language);
 });
 
-},{"./app-solo":1,"./geo":2,"./weather":5}],5:[function(require,module,exports){
+},{"./app-solo":1,"./elements":2,"./geo":3,"./weather":6}],6:[function(require,module,exports){
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
@@ -338,7 +404,6 @@ const iconTable = {
     '50n': 'mist.svg',
 };
 function newForecast(loc, owm) {
-    console.log(owm);
     const forecast = {
         countryCode: loc.countryCode,
         city: loc.city,
@@ -382,4 +447,4 @@ async function getDailyForecasts(loc, api_keys) {
 }
 exports.getDailyForecasts = getDailyForecasts;
 
-},{}]},{},[3,1,4]);
+},{}]},{},[4,1,5]);
