@@ -1,5 +1,15 @@
+:root {
+    --color-bg: #0b0829;
+    --color-bg-muted: #120944;
+    --color-fg: #1ed760;
+    --color-fg-muted: #1ed75f7f;
+    --color-black: #202629;
+    --text: 1vmin;
+    --board-width: calc(var(--square-container) + var(--text) * 2);
+  }
+
 body {
-  background: #202629;
+  background: var(--color-black);
 }
 
 .App {
@@ -12,7 +22,7 @@ body {
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: var(--color-bg);
   min-height: 10vh;
   display: flex;
   flex-direction: column;
@@ -28,20 +38,57 @@ body {
 
 /* Weather */
 .weather.card {
-  margin-top: 4vh;
+  margin-top: 3vh;
 }
 
 .weather.card .card-content {
-  background: #0b0829;
+  background: var(--color-bg);
 }
 
 .weather.card .card-action {
-  background: #120944;
+  background: var(--color-bg-muted);
 }
 
 .weather .temperature {
   margin-left: 4vh;
-  font-size: 120px;
+  font-size: 100px;
+  margin: 0 auto;
   font-family: 'Roboto', sans-serif;
   text-shadow: -1px 0 #61dafb, 0 1px #61dafb, 1px 0 #61dafb, 0 -1px #61dafb;
 }
+
+/* a:hover {
+  z-index: 3;
+  opacity: 1;
+  background-color: var(--color-bg);
+  color: var(--color-bg);
+  transform: scale3d(1.02, 1.02, 1);
+  transition: 0.1s;
+  transition-timing-function: cubic-bezier(0.74, -0.73, 0.2, 1.67);
+}
+
+a {
+  padding: 0.5em 1em;
+  margin: 0;
+  border-width: calc(var(--text) / 4);
+  border-style: solid;
+  background: transparent;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: var(--text);
+  user-select: none;
+  transform: translate(0.5em -0.4em);
+  transition: 0.5s;
+  transition-timing-function: cubic-bezier(0.74, -0.73, 0.2, 1.67);
+  color: var(--color-fg);
+  border-color: var(--color-bg-muted);
+}
+
+a:active {
+  transform: translate(0, 0);
+  transition-duration: 0.1s;
+}
+
+a {
+    text-decoration: none;
+} */

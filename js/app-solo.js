@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.newContext = exports.link = exports.withObservable = exports.newObservable = void 0;
+exports.newContext = exports.withObservable = exports.newObservable = void 0;
 const komrad_1 = require("./komrad");
 'use strict';
 function newObservable(value) {
@@ -46,120 +46,72 @@ function withObservable(name, value) {
     return trait;
 }
 exports.withObservable = withObservable;
-function link(observable, node, property, event = 'input') {
-    node[property] = observable.value + '';
-    observable.subscribe(() => {
-        node[property] = observable.value + '';
-    });
-    node.addEventListener(event, () => observable.set(node[property]));
-}
-exports.link = link;
 function newContext() {
     const context = {
-        observables: {},
-        observables_iterator: [],
-        pins: [],
-        links: [],
-        put: function (name, observable, ...subscribers) {
-            this.observables[name] = observable;
-            this.observables_iterator.push([name, observable]);
+        pins: {},
+        subs: [],
+        pub: function (name, pin, ...subscribers) {
+            this.pins[name] = pin;
             for (let i = 0, length = subscribers.length; i < length; i++) {
-                observable.subscribe(subscribers[i]);
+                pin.subscribe(subscribers[i]);
             }
             return this;
         },
         remove: function (name) {
-            if (this.observables[name] !== undefined) {
-                this.observables[name].flush();
-                delete this.observables[name];
+            if (this.pins[name] !== undefined) {
+                this.pins[name].flush();
+                delete this.pins[name];
             }
             return this;
         },
         merge: function (another_context) {
-            if (another_context.observables !== undefined) {
-                another_context = another_context.observables;
+            if (another_context.pins !== undefined) {
+                another_context = another_context.pins;
             }
-            komrad_1.extend(this.observables, another_context);
+            komrad_1.extend(this.pins, another_context);
             return this;
         },
-        musterPins: function () {
+        musterSubs: function (element) {
             var _a, _b, _c;
-            const pin_nodes = [...document.querySelectorAll('[data-pin]')];
-            const length = pin_nodes.length;
-            const pins = Array(length);
+            const sub_nodes = [...element.querySelectorAll('[data-sub]')];
+            const length = sub_nodes.length;
+            const subs = Array(length);
             for (let i = 0; i < length; i++) {
-                const source = (_a = pin_nodes[i].getAttribute('data-pin')) !== null && _a !== void 0 ? _a : 'error';
-                const target = (_b = pin_nodes[i].getAttribute('data-property')) !== null && _b !== void 0 ? _b : 'value';
-                const type = (_c = pin_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string';
-                pins[i] = {
-                    source: this.observables[source] !== undefined
-                        ? this.observables[source]
+                const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'error';
+                const target = (_b = sub_nodes[i].getAttribute('data-property')) !== null && _b !== void 0 ? _b : 'value';
+                const type = (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string';
+                subs[i] = {
+                    source: this.pins[source] !== undefined
+                        ? this.pins[source]
                         : source,
                     target: target,
                     type: type,
-                    node: pin_nodes[i],
+                    node: sub_nodes[i],
                 };
             }
-            this.pins = pins;
+            this.subs = subs;
             return this;
         },
-        musterLinks: function () {
-            var _a, _b, _c, _d;
-            const link_nodes = [
-                ...document.querySelectorAll('[data-link]'),
-            ];
-            const length = link_nodes.length;
-            const links = Array(length);
-            for (let i = 0; i < length; i++) {
-                const source = (_a = link_nodes[i].getAttribute('data-link')) !== null && _a !== void 0 ? _a : 'error';
-                const event = (_b = link_nodes[i].getAttribute('data-event')) !== null && _b !== void 0 ? _b : 'input';
-                const target = (_c = link_nodes[i].getAttribute('data-property')) !== null && _c !== void 0 ? _c : 'value';
-                const type = (_d = link_nodes[i].getAttribute('data-type')) !== null && _d !== void 0 ? _d : 'string';
-                links[i] = {
-                    source: this.observables[source] !== undefined
-                        ? this.observables[source]
-                        : source,
-                    event: event,
-                    target: target,
-                    type: type,
-                    node: link_nodes[i],
-                };
-            }
-            this.links = links;
+        setSubs: function (subs) {
+            this.subs = subs;
             return this;
         },
-        setPins: function (pins) {
-            this.pins = pins;
-            return this;
-        },
-        setLinks: function (links) {
-            this.links = links;
-            return this;
-        },
-        activatePins: function () {
-            for (let i = 0, length = this.pins.length; i < length; i++) {
-                if (typeof this.pins[i].source !== 'string') {
-                    this.pins[i].source.subscribe((value) => {
-                        this.pins[i].node[this.pins[i].target] = value;
+        activateSubs: function () {
+            for (let i = 0, length = this.subs.length; i < length; i++) {
+                if (typeof this.subs[i].source !== 'string') {
+                    this.subs[i].source.subscribe((value) => {
+                        this.subs[i].node[this.subs[i].target] = value;
                     });
                 }
             }
             return this;
         },
-        activateLinks: function () {
-            for (let i = 0, length = this.links.length; i < length; i++) {
-                if (typeof this.links[i].source !== 'string') {
-                    link(this.links[i].source, this.links[i].node, this.links[i].target, this.links[i].event);
-                }
-            }
-            return this;
-        },
         refresh: function () {
-            for (let i = 0, length = this.observables_iterator.length; i < length; i++) {
-                this.observables_iterator[i][1].notify();
+            for (const pin of Object.values(this.pins)) {
+                pin.notify();
             }
             return this;
-        },
+        }
     };
     return context;
 }

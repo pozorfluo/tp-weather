@@ -63,10 +63,8 @@ export function newObservable<T>(value: T): Observable<T> {
         // await this.subscribers[i](this.value);
         this.subscribers[i](this.value);
       }
+      /** @todo consider ES2020 Promise.allSettled */
       // await Promise.all(tasks);
-      /**
-       * @todo consider ES2020 Promise.allSettled
-       */
       return this;
     },
 
@@ -116,7 +114,7 @@ export function withObservable<T>(
   return <Observable<T> & Trait>trait;
 }
 /**
- * Define Pin object.
+ * Define Sub object.
  *
  * @var source Observed source.
  * @var target Property to target with update inside the downstream Node.
@@ -124,78 +122,17 @@ export function withObservable<T>(
  *
  * @todo Add Tag / component / render function callback.
  */
-export interface Pin<T> {
+export interface Sub<T> {
   source: Observable<T> | string;
   target: string;
   type: string;
   node: Node;
 }
 
-/**
- * Define Link object.
- * @var event Node Event type triggering an update of the upstream Observed
- *            source with the downstream Node target value.
- */
-export interface Link<T> extends Pin<T> {
-  event: string;
-}
-
-/**
- * Set a 2-way link between given Observable and given DOM node.
- *
- * @todo Consider that the node emitting the original event probably
- *       does not need to be notified back/updated if it is its only
- *       dependency.
- * @todo Add unlink function.
- * @todo Look for an easier way of keeping tracks of writable properties per
- *       Node descendant type.
- * @todo Consider keeping it unsafe with a cast to <any>node.
- */
-
-// type WritableProperty<T> = { [ P in keyof T] : 'readonly' extends keyof T[P] ? never : P}[keyof T];
-// WritableProperty<Node>
-// type WritableProperty<T> =
-//     | 'classname'
-//     | 'id'
-//     | 'innerHTML'
-//     | 'outerHTML'
-//     | T extends HTMLFormElement
-//     ?
-//           | 'name'
-//           | 'method'
-//           | 'target'
-//           | 'action'
-//           | 'encoding'
-//           | 'enctype'
-//           | 'acceptCharset'
-//           | 'autocomplete'
-//           | 'noValidate'
-//           | ''
-//           | ''
-//     : 'value';
-// WritableProperty<typeof node>, //'className' | 'id' | 'innerHTML' | 'outerHTML',
-export function link(
-  observable: Observable<boolean | string | number>,
-  node: Node,
-  property: string,
-  event = 'input'
-): void {
-  // console.log(arguments);
-  (<any>node)[property] = observable.value + '';
-  observable.subscribe(
-    // () => (node[property] = observable.get())
-    () => {
-      (<any>node)[property] = observable.value + '';
-    }
-  );
-  node.addEventListener(event, () => observable.set((<any>node)[property]));
-}
 
 /**
  * Define Context object.
  *
- * @todo Consider promoting observables definition to interface
- *       ObservableCollection.
  * @todo Add deactivatePins method.
  * @todo Add deactivateLinks method.
  * @todo Consider looking for memory efficient alternatives to
@@ -204,11 +141,9 @@ export function link(
  *                 app.observables_iterator[0][1])) is true though.
  */
 export interface Context {
-  readonly observables: { [name: string]: Observable<any> };
-  readonly observables_iterator: [string, Observable<any>][];
-  readonly pins: Pin<any>[];
-  readonly links: Link<any>[];
-  put: (
+  readonly pins: { [name: string]: Observable<any> };
+  readonly subs: Sub<any>[];
+  pub: (
     name: string,
     observable: Observable<any>,
     ...subscribers: Subscriber<any>[]
@@ -217,12 +152,9 @@ export interface Context {
   merge: (
     another_context: Context | { [name: string]: Observable<any> }
   ) => Context;
-  musterPins: () => this;
-  musterLinks: () => this;
-  setPins: (pins: Pin<any>[]) => this;
-  setLinks: (links: Link<any>[]) => this;
-  activatePins: () => this;
-  activateLinks: () => this;
+  musterSubs: (element : Document | Element) => this;
+  setSubs: (pins: Sub<any>[]) => this;
+  activateSubs: () => this;
   refresh: () => this;
   [extension: string]: any; // open for extension.
 }
@@ -230,26 +162,23 @@ export interface Context {
 /**
  * Create a new Context object.
  *
- * @note put and merge will clobber existing entries.
+ * @note pub and merge will clobber existing entries.
  */
 export function newContext(): Context {
   const context: any = {
-    observables: {},
-    observables_iterator: [],
-    pins: [],
-    links: [],
+    pins: {},
+    subs: [],
     /**
      * Register observable in this context.
      */
-    put: function (
+    pub: function (
       name: string,
-      observable: Observable<any>,
+      pin: Observable<any>,
       ...subscribers: Subscriber<any>[]
     ): Context {
-      this.observables[name] = observable;
-      this.observables_iterator.push([name, observable]);
+      this.pins[name] = pin;
       for (let i = 0, length = subscribers.length; i < length; i++) {
-        observable.subscribe(subscribers[i]);
+        pin.subscribe(subscribers[i]);
       }
       return this;
     },
@@ -259,9 +188,9 @@ export function newContext(): Context {
      * @todo Unsubscribe/delete from observables properly.
      */
     remove: function (name: string): Context {
-      if (this.observables[name] !== undefined) {
-        this.observables[name].flush();
-        delete this.observables[name];
+      if (this.pins[name] !== undefined) {
+        this.pins[name].flush();
+        delete this.pins[name];
       }
       return this;
     },
@@ -272,151 +201,73 @@ export function newContext(): Context {
     merge: function (
       another_context: Context | { [name: string]: Observable<any> }
     ): Context {
-      if (another_context.observables !== undefined) {
-        another_context = another_context.observables;
+      if (another_context.pins !== undefined) {
+        another_context = another_context.pins;
       }
-      extend(this.observables, another_context);
+      extend(this.pins, another_context);
       return this;
     },
 
     /**
-     * Collect data pins declared in the DOM for this Context.
+     * Collect data subs declared in given element for this Context.
      *
      * @note If requested observable source is NOT found or available in
      *       this Context, record its name as a string placeholder.
      *
-     * @todo Consider using a dictionnary and an identifier per pin.
+     * @todo Consider using a dictionnary and an identifier per sub.
      */
-    musterPins: function (): Context {
-      const pin_nodes: Element[] = [...document.querySelectorAll('[data-pin]')];
-      const length: number = pin_nodes.length;
-      const pins: Pin<any>[] = Array(length);
+    musterSubs: function (element : Document | Element): Context {
+      const sub_nodes: Element[] = [...element.querySelectorAll('[data-sub]')];
+      const length: number = sub_nodes.length;
+      const subs: Sub<any>[] = Array(length);
 
       for (let i = 0; i < length; i++) {
-        const source: string = pin_nodes[i].getAttribute('data-pin') ?? 'error';
+        const source: string = sub_nodes[i].getAttribute('data-sub') ?? 'error';
         const target: string =
-          pin_nodes[i].getAttribute('data-property') ?? 'value';
-        const type: string = pin_nodes[i].getAttribute('data-type') ?? 'string';
-        pins[i] = {
+          sub_nodes[i].getAttribute('data-property') ?? 'value';
+        const type: string = sub_nodes[i].getAttribute('data-type') ?? 'string';
+        subs[i] = {
           source:
-            this.observables[source] !== undefined
-              ? this.observables[source]
+            this.pins[source] !== undefined
+              ? this.pins[source]
               : source,
           target: target,
           type: type,
-          node: pin_nodes[i],
+          node: sub_nodes[i],
         };
       }
-      this.pins = <Pin<any>[]>pins;
+      this.subs = <Sub<any>[]>subs;
       return this;
     },
     /**
-     * Collect data links declared in the DOM for this Context.
+     * Reference given sub collection as this context sub collection.
+     */
+    setSubs: function (subs: Sub<any>[]): Context {
+      this.subs = subs;
+      return this;
+    },
+    /**
+     * Activate this context sub collection.
      *
-     * @note If requested observable source is NOT found or available in
-     *       this Context, record its name as a string placeholder.
-     *
-     * @todo Consider using a dictionnary and an identifier per pin.
+     * @todo Deal with incomplete Observable-less subs.
      */
-    musterLinks: function (): Context {
-      const link_nodes: Element[] = [
-        ...document.querySelectorAll('[data-link]'),
-      ];
-      const length: number = link_nodes.length;
-      const links: Link<any>[] = Array(length);
-
-      for (let i = 0; i < length; i++) {
-        const source: string =
-          link_nodes[i].getAttribute('data-link') ?? 'error';
-        const event: string =
-          link_nodes[i].getAttribute('data-event') ?? 'input';
-        const target: string =
-          link_nodes[i].getAttribute('data-property') ?? 'value';
-        const type: string =
-          link_nodes[i].getAttribute('data-type') ?? 'string';
-        links[i] = {
-          source:
-            this.observables[source] !== undefined
-              ? this.observables[source]
-              : source,
-          event: event,
-          target: target,
-          type: type,
-          node: link_nodes[i],
-        };
-      }
-      this.links = links;
-      return this;
-    },
-    /**
-     * Reference given pin collection as this context pin collection.
-     */
-    setPins: function (pins: Pin<any>[]): Context {
-      this.pins = pins;
-      return this;
-    },
-    /**
-     * Reference given link collection as this context link collection.
-     */
-    setLinks: function (links: Link<any>[]): Context {
-      this.links = links;
-      return this;
-    },
-    /**
-     * Activate this context pin collection.
-     *
-     * @todo Deal with incomplete Observable-less pins.
-     */
-    activatePins: function (): Context {
-      for (let i = 0, length = this.pins.length; i < length; i++) {
-        if (typeof this.pins[i].source !== 'string') {
-          (<Observable<any>>this.pins[i].source).subscribe((value) => {
-            this.pins[i].node[this.pins[i].target] = value;
-            // console.log('pin['+i+'] notified.');
+    activateSubs: function (): Context {
+      for (let i = 0, length = this.subs.length; i < length; i++) {
+        if (typeof this.subs[i].source !== 'string') {
+          (<Observable<any>>this.subs[i].source).subscribe((value) => {
+            this.subs[i].node[this.subs[i].target] = value;
           });
         }
       }
       return this;
     },
-    /**
-     * Activate this context link collection.
-     *
-     * @todo Deal with incomple observable-less links.
-     */
-    activateLinks: function (): Context {
-      for (let i = 0, length = this.links.length; i < length; i++) {
-        if (typeof this.links[i].source !== 'string') {
-          link(
-            <Observable<any>>this.links[i].source,
-            this.links[i].node,
-            this.links[i].target,
-            this.links[i].event
-          );
-        }
-      }
-      return this;
-    },
-    /**
-     * Force refresh by triggering notification on all observables.
-     */
+
     refresh: function (): Context {
-      for (
-        let i = 0, length = this.observables_iterator.length;
-        i < length;
-        i++
-      ) {
-        this.observables_iterator[i][1].notify();
+      for (const pin of Object.values(this.pins)){
+        (<Observable<any>>pin).notify();
       }
-
       return this;
-    },
-
-    // refresh: function (): Context {
-    //   for (const [key, value] of Object.entries(this.observables)){
-    //     (<Observable<any>>value).notify();
-    //   }
-    //   return this;
-    // }
+    }
   };
   return <Context>context;
 }

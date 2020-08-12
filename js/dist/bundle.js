@@ -1,7 +1,7 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.newContext = exports.link = exports.withObservable = exports.newObservable = void 0;
+exports.newContext = exports.withObservable = exports.newObservable = void 0;
 const komrad_1 = require("./komrad");
 'use strict';
 function newObservable(value) {
@@ -47,120 +47,72 @@ function withObservable(name, value) {
     return trait;
 }
 exports.withObservable = withObservable;
-function link(observable, node, property, event = 'input') {
-    node[property] = observable.value + '';
-    observable.subscribe(() => {
-        node[property] = observable.value + '';
-    });
-    node.addEventListener(event, () => observable.set(node[property]));
-}
-exports.link = link;
 function newContext() {
     const context = {
-        observables: {},
-        observables_iterator: [],
-        pins: [],
-        links: [],
-        put: function (name, observable, ...subscribers) {
-            this.observables[name] = observable;
-            this.observables_iterator.push([name, observable]);
+        pins: {},
+        subs: [],
+        pub: function (name, pin, ...subscribers) {
+            this.pins[name] = pin;
             for (let i = 0, length = subscribers.length; i < length; i++) {
-                observable.subscribe(subscribers[i]);
+                pin.subscribe(subscribers[i]);
             }
             return this;
         },
         remove: function (name) {
-            if (this.observables[name] !== undefined) {
-                this.observables[name].flush();
-                delete this.observables[name];
+            if (this.pins[name] !== undefined) {
+                this.pins[name].flush();
+                delete this.pins[name];
             }
             return this;
         },
         merge: function (another_context) {
-            if (another_context.observables !== undefined) {
-                another_context = another_context.observables;
+            if (another_context.pins !== undefined) {
+                another_context = another_context.pins;
             }
-            komrad_1.extend(this.observables, another_context);
+            komrad_1.extend(this.pins, another_context);
             return this;
         },
-        musterPins: function () {
+        musterSubs: function (element) {
             var _a, _b, _c;
-            const pin_nodes = [...document.querySelectorAll('[data-pin]')];
-            const length = pin_nodes.length;
-            const pins = Array(length);
+            const sub_nodes = [...element.querySelectorAll('[data-sub]')];
+            const length = sub_nodes.length;
+            const subs = Array(length);
             for (let i = 0; i < length; i++) {
-                const source = (_a = pin_nodes[i].getAttribute('data-pin')) !== null && _a !== void 0 ? _a : 'error';
-                const target = (_b = pin_nodes[i].getAttribute('data-property')) !== null && _b !== void 0 ? _b : 'value';
-                const type = (_c = pin_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string';
-                pins[i] = {
-                    source: this.observables[source] !== undefined
-                        ? this.observables[source]
+                const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'error';
+                const target = (_b = sub_nodes[i].getAttribute('data-property')) !== null && _b !== void 0 ? _b : 'value';
+                const type = (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string';
+                subs[i] = {
+                    source: this.pins[source] !== undefined
+                        ? this.pins[source]
                         : source,
                     target: target,
                     type: type,
-                    node: pin_nodes[i],
+                    node: sub_nodes[i],
                 };
             }
-            this.pins = pins;
+            this.subs = subs;
             return this;
         },
-        musterLinks: function () {
-            var _a, _b, _c, _d;
-            const link_nodes = [
-                ...document.querySelectorAll('[data-link]'),
-            ];
-            const length = link_nodes.length;
-            const links = Array(length);
-            for (let i = 0; i < length; i++) {
-                const source = (_a = link_nodes[i].getAttribute('data-link')) !== null && _a !== void 0 ? _a : 'error';
-                const event = (_b = link_nodes[i].getAttribute('data-event')) !== null && _b !== void 0 ? _b : 'input';
-                const target = (_c = link_nodes[i].getAttribute('data-property')) !== null && _c !== void 0 ? _c : 'value';
-                const type = (_d = link_nodes[i].getAttribute('data-type')) !== null && _d !== void 0 ? _d : 'string';
-                links[i] = {
-                    source: this.observables[source] !== undefined
-                        ? this.observables[source]
-                        : source,
-                    event: event,
-                    target: target,
-                    type: type,
-                    node: link_nodes[i],
-                };
-            }
-            this.links = links;
+        setSubs: function (subs) {
+            this.subs = subs;
             return this;
         },
-        setPins: function (pins) {
-            this.pins = pins;
-            return this;
-        },
-        setLinks: function (links) {
-            this.links = links;
-            return this;
-        },
-        activatePins: function () {
-            for (let i = 0, length = this.pins.length; i < length; i++) {
-                if (typeof this.pins[i].source !== 'string') {
-                    this.pins[i].source.subscribe((value) => {
-                        this.pins[i].node[this.pins[i].target] = value;
+        activateSubs: function () {
+            for (let i = 0, length = this.subs.length; i < length; i++) {
+                if (typeof this.subs[i].source !== 'string') {
+                    this.subs[i].source.subscribe((value) => {
+                        this.subs[i].node[this.subs[i].target] = value;
                     });
                 }
             }
             return this;
         },
-        activateLinks: function () {
-            for (let i = 0, length = this.links.length; i < length; i++) {
-                if (typeof this.links[i].source !== 'string') {
-                    link(this.links[i].source, this.links[i].node, this.links[i].target, this.links[i].event);
-                }
-            }
-            return this;
-        },
         refresh: function () {
-            for (let i = 0, length = this.observables_iterator.length; i < length; i++) {
-                this.observables_iterator[i][1].notify();
+            for (const pin of Object.values(this.pins)) {
+                pin.notify();
             }
             return this;
-        },
+        }
     };
     return context;
 }
@@ -306,18 +258,19 @@ window.addEventListener('DOMContentLoaded', function (event) {
     var _a;
     getWeather()
         .then((forecasts) => {
-        app.observables.forecasts.set(forecasts);
-        app.observables.day.set(0);
+        app.pins.forecasts.set(forecasts);
+        app.pins.day.set(0);
     })
         .catch((err) => {
         console.log(err);
     });
     const renderForecast = function (f, day) {
         const d = day === 0 ? f.current : f.daily[Math.min(day, 7)];
-        view.observables.city.set(f.city);
-        view.observables.icon.set('icons/' + d.icon);
-        view.observables.temp.set(`${d.temperature}°`);
-        view.observables.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+        view.pins.city.set(f.city);
+        view.pins.icon.set('icons/' + d.icon);
+        view.pins.temp.set(`${d.temperature}°`);
+        view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+        view.pins.loading.set('');
     };
     const renderDaysNav = function (f) {
         const fragment = document.createDocumentFragment();
@@ -330,7 +283,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
                 weekday: 'long',
             });
             day_button.addEventListener('click', (e) => {
-                app.observables.day.set(i);
+                app.pins.day.set(i);
                 e.preventDefault();
             });
             fragment.appendChild(day_button);
@@ -338,24 +291,26 @@ window.addEventListener('DOMContentLoaded', function (event) {
         days_nav.appendChild(fragment);
     };
     const app = app_solo_1.newContext()
-        .put('forecasts', app_solo_1.newObservable(null), (f) => {
+        .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
         renderDaysNav(f);
     })
-        .put('day', app_solo_1.newObservable(0), (d) => {
-        renderForecast(app.observables.forecasts.value, d);
+        .pub('day', app_solo_1.newObservable(0), (d) => {
+        renderForecast(app.pins.forecasts.value, d);
     });
     const view = app_solo_1.newContext()
-        .put('city', app_solo_1.newObservable('...'))
-        .put('icon', app_solo_1.newObservable('data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='))
-        .put('temp', app_solo_1.newObservable('...°'))
-        .put('wind', app_solo_1.newObservable('Vent ...km/h (...°)'))
-        .put('date', app_solo_1.newObservable(new Date()))
-        .put('day', app_solo_1.newObservable(0))
-        .musterPins()
-        .activatePins()
+        .pub('city', app_solo_1.newObservable('...'))
+        .pub('icon', app_solo_1.newObservable('data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='))
+        .pub('temp', app_solo_1.newObservable('...°'))
+        .pub('wind', app_solo_1.newObservable('Vent ...km/h (...°)'))
+        .pub('date', app_solo_1.newObservable(new Date()))
+        .pub('day', app_solo_1.newObservable(0))
+        .pub('loading', app_solo_1.newObservable('loading'))
+        .musterSubs(document)
+        .activateSubs()
         .refresh();
     const days_nav = (_a = document.querySelector('.day-nav')) !== null && _a !== void 0 ? _a : document.createElement('div');
+    console.log();
 });
 
 },{"./app-solo":1,"./geo":2,"./weather":5}],5:[function(require,module,exports){

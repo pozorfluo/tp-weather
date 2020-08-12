@@ -17,7 +17,14 @@
       href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
       rel="stylesheet"
     />
-    <!-- <link rel="stylesheet" href="css/style.css" /> -->
+    <style>
+      .loading {
+        filter: opacity(50%);
+        background: transparent url('icons/spinner.svg') no-repeat scroll center
+          center;
+        background-blend-mode: multiply;
+      }
+    </style>
     <link rel="stylesheet" href="css/weather.css" />
   </head>
   <body>
@@ -26,7 +33,7 @@
     <div id="root">
       <div class="App">
         <header class="App-header">
-          <img src="logo_transparent.png" class="App-logo" alt="logo" />
+          <img src="icons/logo_transparent.png" class="App-logo" alt="logo" />
         </header>
         <div class="row">
           <div class="col s12 m6 push-m3">
@@ -34,12 +41,12 @@
               <div class="card-content white-text">
                 <span
                   class="card-title"
-                  data-pin="city"
+                  data-sub="city"
                   data-property="textContent"
                 ></span>
-                <p>
+                <p data-sub="loading" data-property="className">
                   <img
-                    data-pin="icon"
+                    data-sub="icon"
                     data-property="src"
                     width="196"
                     height="196"
@@ -47,12 +54,15 @@
                 </p>
                 <span
                   class="temperature"
-                  data-pin="temp"
+                  data-sub="temp"
                   data-property="textContent"
                 >
                 </span>
-                <div class="wind" data-pin="wind" data-property="textContent">
-                </div>
+                <div
+                  class="wind"
+                  data-sub="wind"
+                  data-property="textContent"
+                ></div>
               </div>
               <div class="card-action day-nav">
                 <!-- <a href="#" style="font-weight: bold;">Now</a>
