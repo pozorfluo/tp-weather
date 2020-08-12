@@ -1,6 +1,4 @@
-import { Forecast } from './weather';
-
-export class WeatherDays extends HTMLElement {
+export class WeatherNav extends HTMLElement {
   static _button: HTMLElement = (() => {
     const t = document.createElement('a');
      t.classList.add('day-button');
@@ -20,7 +18,7 @@ export class WeatherDays extends HTMLElement {
 
   constructor() {
     super();
-    this.days = <HTMLElement>WeatherDays._days.cloneNode(true);
+    this.days = <HTMLElement>WeatherNav._days.cloneNode(true);
     this.appendChild(this.days);
   }
 
@@ -33,12 +31,12 @@ export class WeatherDays extends HTMLElement {
     return this;
   }
 
-  render(f: Forecast, max: number): this {
-    const days = <HTMLElement>WeatherDays._days.cloneNode(true);
-    for (let i = 0, length = Math.min(f.daily.length, max); i < length; i++) {
-      const button = <HTMLElement>WeatherDays._button.cloneNode(true);
+  render(timestamps: number[], max: number): this {
+    const days = <HTMLElement>WeatherNav._days.cloneNode(true);
+    for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
+      const button = <HTMLElement>WeatherNav._button.cloneNode(true);
       button.textContent = new Date(
-        f.daily[i].timestamp * 1000
+        timestamps[i] * 1000
       ).toLocaleDateString(navigator.language, {
         weekday: 'long',
       });
@@ -56,6 +54,4 @@ export class WeatherDays extends HTMLElement {
   }
 }
 
-customElements.define('weather-days', WeatherDays);
-// (function () {
-// })();
+customElements.define('weather-nav', WeatherNav);

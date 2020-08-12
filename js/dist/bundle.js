@@ -239,7 +239,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-require("./weather-days");
+require("./weather-nav");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -276,7 +276,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
         weather_days.setEffect(app.pins.day.set);
-        weather_days.render(f, 5);
+        weather_days.render(f.daily.map((d) => d.timestamp), 5);
     })
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
@@ -292,20 +292,20 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .musterSubs(document)
         .activateSubs()
         .refresh();
-    const weather_days = document.querySelector('weather-days');
+    const weather_days = document.querySelector('weather-nav');
 });
 
-},{"./app-solo":1,"./geo":2,"./weather":6,"./weather-days":5}],5:[function(require,module,exports){
+},{"./app-solo":1,"./geo":2,"./weather":6,"./weather-nav":5}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WeatherDays = void 0;
-class WeatherDays extends HTMLElement {
+exports.WeatherNav = void 0;
+class WeatherNav extends HTMLElement {
     constructor() {
         super();
         this._effect = () => {
             throw 'WeatherDays : effect not set.';
         };
-        this.days = WeatherDays._days.cloneNode(true);
+        this.days = WeatherNav._days.cloneNode(true);
         this.appendChild(this.days);
     }
     connectedCallback() {
@@ -315,11 +315,11 @@ class WeatherDays extends HTMLElement {
         this._effect = effect;
         return this;
     }
-    render(f, max) {
-        const days = WeatherDays._days.cloneNode(true);
-        for (let i = 0, length = Math.min(f.daily.length, max); i < length; i++) {
-            const button = WeatherDays._button.cloneNode(true);
-            button.textContent = new Date(f.daily[i].timestamp * 1000).toLocaleDateString(navigator.language, {
+    render(timestamps, max) {
+        const days = WeatherNav._days.cloneNode(true);
+        for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
+            const button = WeatherNav._button.cloneNode(true);
+            button.textContent = new Date(timestamps[i] * 1000).toLocaleDateString(navigator.language, {
                 weekday: 'long',
             });
             button.onclick = (e) => {
@@ -332,18 +332,18 @@ class WeatherDays extends HTMLElement {
         return this;
     }
 }
-exports.WeatherDays = WeatherDays;
-WeatherDays._button = (() => {
+exports.WeatherNav = WeatherNav;
+WeatherNav._button = (() => {
     const t = document.createElement('a');
     t.classList.add('day-button');
     return t;
 })();
-WeatherDays._days = (() => {
+WeatherNav._days = (() => {
     const t = document.createElement('div');
     t.classList.add('card-action', 'day-nav');
     return t;
 })();
-customElements.define('weather-days', WeatherDays);
+customElements.define('weather-nav', WeatherNav);
 
 },{}],6:[function(require,module,exports){
 "use strict";

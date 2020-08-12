@@ -13,6 +13,13 @@ export interface OWMOneCallResponse {
   };
   [prop: string]: any;
 }
+export interface Daily {
+    timestamp: number;
+    temperature: string;
+    windSpeed: string;
+    windDeg: string;
+    icon: string;
+}
 
 export interface Forecast {
   countryCode: string;
@@ -21,20 +28,8 @@ export interface Forecast {
   longitude: number;
   timezone: string;
   timezone_offset: number;
-  current: {
-    timestamp: number;
-    temperature: string;
-    windSpeed: string;
-    windDeg: string;
-    icon: string;
-  };
-  daily: {
-    timestamp: number;
-    temperature: string;
-    windSpeed: string;
-    windDeg: string;
-    icon: string;
-  }[];
+  current: Daily;
+  daily: Daily[];
 }
 
 const iconTable: { [prop: string]: string } = {

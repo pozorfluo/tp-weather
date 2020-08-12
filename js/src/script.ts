@@ -1,9 +1,9 @@
 import { newObservable, newContext } from './app-solo';
 import { geoLocate, GeoInfo } from './geo';
-import { getDailyForecasts, Forecast, newForecast } from './weather';
+import { getDailyForecasts, Forecast, Daily, newForecast } from './weather';
 
-import { WeatherDays } from './weather-days';
-import './weather-days';
+import { WeatherNav } from './weather-nav';
+import './weather-nav';
 
 /**
  * Workaround commiting api keys to git for this exercise.
@@ -56,7 +56,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
       weather_days.setEffect(app.pins.day.set);
-      weather_days.render(f, 5);
+      weather_days.render(f.daily.map((d : Daily) => d.timestamp), 5);
     })
     .pub('day', newObservable<number>(0), (d) => {
       renderForecast(app.pins.forecasts.value, d);
@@ -79,7 +79,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .activateSubs()
     .refresh();
 
-  const weather_days = <WeatherDays>document.querySelector('weather-days');
-  // <WeatherDays>document.querySelector('weather-days') ??
+  const weather_days = <WeatherNav>document.querySelector('weather-nav');
+  // <WeatherDays>document.querySelector('weather-nav') ??
   // new WeatherDays();
 }); /* DOMContentLoaded */

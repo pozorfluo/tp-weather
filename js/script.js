@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-require("./weather-days");
+require("./weather-nav");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -40,7 +40,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
         weather_days.setEffect(app.pins.day.set);
-        weather_days.render(f, 5);
+        weather_days.render(f.daily.map((d) => d.timestamp), 5);
     })
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
@@ -56,5 +56,5 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .musterSubs(document)
         .activateSubs()
         .refresh();
-    const weather_days = document.querySelector('weather-days');
+    const weather_days = document.querySelector('weather-nav');
 });
