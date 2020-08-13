@@ -1,5 +1,181 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
+class ImgSpinner extends HTMLImageElement {
+    constructor() {
+        super();
+        if (!(this['src'] || this['srcset'])) {
+            this['src'] = ImgSpinner._placeholder;
+            this.classList.add(ImgSpinner.classname);
+        }
+    }
+    static get observedAttributes() {
+        return ['src', 'srcset'];
+    }
+    _spinUntilLoaded() {
+        if (!this.complete) {
+            this.classList.add(ImgSpinner.classname);
+            this.onload = this._onLoad;
+        }
+    }
+    _onLoad() {
+        this.classList.remove(ImgSpinner.classname);
+    }
+    connectedCallback() {
+        this._spinUntilLoaded();
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+        this._spinUntilLoaded();
+    }
+}
+ImgSpinner.classname = 'img-spinner-loading';
+ImgSpinner._template = (() => {
+    const t = document.createElement('template');
+    t.innerHTML = `\
+    <style>
+    .${ImgSpinner.classname} {
+      filter: opacity(50%);
+      background: transparent url('icons/spinner.svg') no-repeat scroll center
+        center;
+      background-blend-mode: multiply;
+      shape-outside: polygon(0 0, 0 200px, 300px 600px);
+    }
+    </style>`;
+    document.head.appendChild(t.content);
+    return t.content;
+})();
+ImgSpinner._placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+customElements.define('img-spinner', ImgSpinner, { extends: 'img' });
+
+},{}],2:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WeatherNav = void 0;
+class WeatherNav extends HTMLElement {
+    constructor() {
+        super();
+        this._onClick = () => {
+            throw 'WeatherDays : effect not set.';
+        };
+        this.days = WeatherNav._days.cloneNode(true);
+        this.appendChild(this.days);
+    }
+    connectedCallback() {
+        this.days.textContent = 'Loading ...';
+    }
+    setOnClick(effect) {
+        this._onClick = effect;
+        return this;
+    }
+    render(timestamps, max) {
+        const days = WeatherNav._days.cloneNode(true);
+        for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
+            const button = WeatherNav._button.cloneNode(true);
+            button.textContent = new Date(timestamps[i] * 1000).toLocaleDateString(navigator.language, {
+                weekday: 'long',
+            });
+            button.onclick = (e) => {
+                this._onClick(i);
+                e.preventDefault();
+            };
+            days.appendChild(button);
+        }
+        this.replaceChild(days, this.days);
+        return this;
+    }
+}
+exports.WeatherNav = WeatherNav;
+WeatherNav._button = (() => {
+    const t = document.createElement('a');
+    t.classList.add('day-button');
+    return t;
+})();
+WeatherNav._days = (() => {
+    const t = document.createElement('div');
+    t.classList.add('card-action', 'day-nav');
+    return t;
+})();
+customElements.define('weather-nav', WeatherNav);
+
+},{}],3:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.geoLocate = void 0;
+async function geoIp(api_key) {
+    try {
+        const response = await fetch(`https://api.ipdata.co?api-key=${api_key}`, {
+            headers: {
+                Accept: 'application/json',
+            },
+        });
+        if (response.status >= 400 && response.status < 600) {
+            throw new Error("Something went wrong contacting 'api.ipdata.co'.");
+        }
+        return response.json();
+    }
+    catch (err) {
+        console.log(err);
+        return err;
+    }
+}
+async function geoReverse(lat, lon, api_key) {
+    var _a;
+    try {
+        const response = await fetch(`https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`);
+        if (response.status >= 400 && response.status < 600) {
+            throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
+        }
+        const result = await response.json();
+        return [result.address.country_code, (_a = result.address.city) !== null && _a !== void 0 ? _a : result.address.town];
+    }
+    catch (err) {
+        console.log(err);
+        return [null, null];
+    }
+}
+async function geoCoords() {
+    const options = {
+        maximumAge: 30000,
+        timeout: 10000,
+    };
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    });
+}
+async function geoLocate(api_keys) {
+    let lat = null;
+    let lon = null;
+    let city = null;
+    let country_code = null;
+    let coords = null;
+    if (navigator.geolocation) {
+        try {
+            coords = await geoCoords();
+        }
+        catch (err) {
+            console.log('Unable to retrieve coords using geolocation API. Using ip.');
+        }
+    }
+    if (coords !== null) {
+        lat = coords.coords.latitude;
+        lon = coords.coords.longitude;
+        [country_code, city] = await geoReverse(lat, lon, api_keys.map);
+    }
+    else {
+        ({ latitude: lat, longitude: lon, country_code, city } = await geoIp(api_keys.ipdata));
+    }
+    return lat && lon && country_code && city
+        ? {
+            countryCode: country_code,
+            city: city,
+            latitude: lat,
+            longitude: lon,
+        }
+        : null;
+}
+exports.geoLocate = geoLocate;
+
+},{}],4:[function(require,module,exports){
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newContext = exports.withObservable = exports.newObservable = void 0;
 const komrad_1 = require("./komrad");
@@ -117,183 +293,7 @@ function newContext() {
 }
 exports.newContext = newContext;
 
-},{"./komrad":5}],2:[function(require,module,exports){
-"use strict";
-class ImgSpinner extends HTMLImageElement {
-    constructor() {
-        super();
-        if (!(this['src'] || this['srcset'])) {
-            this['src'] = ImgSpinner._placeholder;
-            this.classList.add(ImgSpinner.classname);
-        }
-    }
-    static get observedAttributes() {
-        return ['src', 'srcset'];
-    }
-    _spinUntilLoaded() {
-        if (!this.complete) {
-            this.classList.add(ImgSpinner.classname);
-            this.onload = this._onLoad;
-        }
-    }
-    _onLoad() {
-        this.classList.remove(ImgSpinner.classname);
-    }
-    connectedCallback() {
-        this._spinUntilLoaded();
-    }
-    attributeChangedCallback(name, oldValue, newValue) {
-        this._spinUntilLoaded();
-    }
-}
-ImgSpinner.classname = 'img-spinner-loading';
-ImgSpinner._template = (() => {
-    const t = document.createElement('template');
-    t.innerHTML = `\
-    <style>
-    .${ImgSpinner.classname} {
-      filter: opacity(50%);
-      background: transparent url('icons/spinner.svg') no-repeat scroll center
-        center;
-      background-blend-mode: multiply;
-      shape-outside: polygon(0 0, 0 200px, 300px 600px);
-    }
-    </style>`;
-    document.head.appendChild(t.content);
-    return t.content;
-})();
-ImgSpinner._placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
-customElements.define('img-spinner', ImgSpinner, { extends: 'img' });
-
-},{}],3:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WeatherNav = void 0;
-class WeatherNav extends HTMLElement {
-    constructor() {
-        super();
-        this._onClick = () => {
-            throw 'WeatherDays : effect not set.';
-        };
-        this.days = WeatherNav._days.cloneNode(true);
-        this.appendChild(this.days);
-    }
-    connectedCallback() {
-        this.days.textContent = 'Loading ...';
-    }
-    setOnClick(effect) {
-        this._onClick = effect;
-        return this;
-    }
-    render(timestamps, max) {
-        const days = WeatherNav._days.cloneNode(true);
-        for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
-            const button = WeatherNav._button.cloneNode(true);
-            button.textContent = new Date(timestamps[i] * 1000).toLocaleDateString(navigator.language, {
-                weekday: 'long',
-            });
-            button.onclick = (e) => {
-                this._onClick(i);
-                e.preventDefault();
-            };
-            days.appendChild(button);
-        }
-        this.replaceChild(days, this.days);
-        return this;
-    }
-}
-exports.WeatherNav = WeatherNav;
-WeatherNav._button = (() => {
-    const t = document.createElement('a');
-    t.classList.add('day-button');
-    return t;
-})();
-WeatherNav._days = (() => {
-    const t = document.createElement('div');
-    t.classList.add('card-action', 'day-nav');
-    return t;
-})();
-customElements.define('weather-nav', WeatherNav);
-
-},{}],4:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.geoLocate = void 0;
-async function geoIp(api_key) {
-    try {
-        const response = await fetch(`https://api.ipdata.co?api-key=${api_key}`, {
-            headers: {
-                Accept: 'application/json',
-            },
-        });
-        if (response.status >= 400 && response.status < 600) {
-            throw new Error("Something went wrong contacting 'api.ipdata.co'.");
-        }
-        return response.json();
-    }
-    catch (err) {
-        console.log(err);
-        return err;
-    }
-}
-async function geoReverse(lat, lon, api_key) {
-    var _a;
-    try {
-        const response = await fetch(`https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`);
-        if (response.status >= 400 && response.status < 600) {
-            throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
-        }
-        const result = await response.json();
-        return [result.address.country_code, (_a = result.address.city) !== null && _a !== void 0 ? _a : result.address.town];
-    }
-    catch (err) {
-        console.log(err);
-        return [null, null];
-    }
-}
-async function geoCoords() {
-    const options = {
-        maximumAge: 30000,
-        timeout: 10000,
-    };
-    return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, options);
-    });
-}
-async function geoLocate(api_keys) {
-    let lat = null;
-    let lon = null;
-    let city = null;
-    let country_code = null;
-    let coords = null;
-    if (navigator.geolocation) {
-        try {
-            coords = await geoCoords();
-        }
-        catch (err) {
-            console.log('Unable to retrieve coords using geolocation API. Using ip.');
-        }
-    }
-    if (coords !== null) {
-        lat = coords.coords.latitude;
-        lon = coords.coords.longitude;
-        [country_code, city] = await geoReverse(lat, lon, api_keys.map);
-    }
-    else {
-        ({ latitude: lat, longitude: lon, country_code, city } = await geoIp(api_keys.ipdata));
-    }
-    return lat && lon && country_code && city
-        ? {
-            countryCode: country_code,
-            city: city,
-            latitude: lat,
-            longitude: lon,
-        }
-        : null;
-}
-exports.geoLocate = geoLocate;
-
-},{}],5:[function(require,module,exports){
+},{"./komrad":5}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cram = exports.extend = void 0;
@@ -332,10 +332,6 @@ function extendCopy(object, trait) {
 }
 
 },{}],6:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"./komrad":7,"dup":1}],7:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./lib/app-solo");
@@ -396,9 +392,12 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .musterSubs(document)
         .activateSubs();
     const weather_nav = document.querySelector('weather-nav');
+    const key = 'data-pub-name';
+    console.log(key.split('-'));
+    console.log('howdy');
 });
 
-},{"./components/img-spinner":2,"./components/weather-nav":3,"./geo":4,"./lib/app-solo":6,"./weather":9}],9:[function(require,module,exports){
+},{"./components/img-spinner":1,"./components/weather-nav":2,"./geo":3,"./lib/app-solo":4,"./weather":7}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
@@ -466,4 +465,4 @@ async function getDailyForecasts(loc, api_keys) {
 }
 exports.getDailyForecasts = getDailyForecasts;
 
-},{}]},{},[5,1,8]);
+},{}]},{},[6]);

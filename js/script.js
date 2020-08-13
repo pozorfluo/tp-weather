@@ -58,4 +58,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .musterSubs(document)
         .activateSubs();
     const weather_nav = document.querySelector('weather-nav');
+    const key = 'data-pub-name';
+    console.log(key.split('-'));
+    console.log('howdy');
 });

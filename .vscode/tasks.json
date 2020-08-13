@@ -22,8 +22,8 @@
             },
             "isBackground": true,
             "args": [
-                "js/komrad.js",
-                "js/app-solo.js",
+                // "js/lib/komrad.js",
+                // "js/lib/app-solo.js",
                 "js/script.js",
                 "-o",
                 "js/dist/bundle.js"

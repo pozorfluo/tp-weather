@@ -87,6 +87,10 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     ;
 
   const weather_nav = <WeatherNav>document.querySelector('weather-nav');
+
+  const key = 'data-pub-name';
+  console.log(key.split('-'));
+  console.log('howdy');
   // <WeatherDays>document.querySelector('weather-nav') ??
   // new WeatherDays();
 }); /* DOMContentLoaded */
