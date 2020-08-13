@@ -131,3 +131,39 @@ suite
 // document.body.appendChild(f3);
 
 
+
+const count = 1000;
+const c = Array(count);
+for(let i = 0; i <count; i++){
+  c[i] = i;
+}
+
+const a = [1, 2, 3, 4, 5];
+const b = [6, 7, 8, 9, 10];
+
+function merge(a, b) {
+  const length_old = a.length;
+  const length_added = b.length;
+  a.length += length_added;
+  for (let i = 0; i < length_added; i++) {
+    a[length_old + i] = b[i];
+  } 
+}
+
+console.log(a);
+console.log(b);
+console.log(c);
+
+Array.prototype.push.apply(a, b);
+Array.prototype.push.apply(c, b);
+Array.prototype.push.apply(b, c);
+Array.prototype.push.apply(c, c);
+
+merge(a, b);
+merge(c, b);
+merge(b, c);
+merge(c, c);
+
+console.log(a);
+console.log(b);
+console.log(c);

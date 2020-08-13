@@ -36,6 +36,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         view.pins.icon.set('icons/' + d.icon);
         view.pins.temp.set(`${d.temperature}°`);
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+        view.pins.date.set(new Date(d.timestamp).toLocaleDateString(navigator.language));
         view.pins.loading.set('');
     };
     const weather_nav = document.querySelector('weather-nav');
@@ -50,14 +51,9 @@ window.addEventListener('DOMContentLoaded', function (event) {
         renderForecast(app.pins.forecasts.value, d);
     });
     const view = app_solo_1.newContext()
-        .pub('city', app_solo_1.newObservable('...'))
         .pub('icon', app_solo_1.newObservable(''))
-        .pub('wind', app_solo_1.newObservable('Vent ...km/h (...°)'))
-        .pub('date', app_solo_1.newObservable(new Date()))
-        .pub('day', app_solo_1.newObservable(0))
+        .pub('date', app_solo_1.newObservable(''))
         .pub('loading', app_solo_1.newObservable('loading'))
-        .musterPubs(weather)
-        .musterSubs(weather)
+        .muster(weather)
         .activateSubs();
-    console.log(view.pins);
 });

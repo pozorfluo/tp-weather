@@ -36,7 +36,7 @@ export class WeatherNav extends HTMLElement {
     for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
       const button = <HTMLElement>WeatherNav._button.cloneNode(true);
       button.textContent = new Date(
-        timestamps[i] * 1000
+        timestamps[i] // * 1000
       ).toLocaleDateString(navigator.language, {
         weekday: 'long',
       });

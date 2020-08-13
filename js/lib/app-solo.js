@@ -70,14 +70,6 @@ function newContext() {
             komrad_1.extend(context.pins, another_context);
             return context;
         },
-        _mergeWithSubs: function (subs) {
-            const length_old = context.subs.length;
-            const length_added = subs.length;
-            context.subs.length += length_added;
-            for (let i = 0; i < length_added; i++) {
-                context.subs[length_old + i] = subs[i];
-            }
-        },
         musterPubs: function (element) {
             var _a, _b, _c;
             const pub_nodes = [...element.querySelectorAll('[data-pub')];
@@ -88,7 +80,6 @@ function newContext() {
                 const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
                 const initial_value = pub_nodes[i][target];
                 context.pub(source, newObservable(initial_value));
-                console.log(context.pins[source]);
                 subs[i] = {
                     source: context.pins[source] !== undefined ? context.pins[source] : source,
                     target: target,
@@ -96,7 +87,7 @@ function newContext() {
                     node: pub_nodes[i],
                 };
             }
-            context._mergeWithSubs(subs);
+            Array.prototype.push.apply(context.subs, subs);
             return context;
         },
         musterSubs: function (element) {
@@ -115,6 +106,9 @@ function newContext() {
             }
             Array.prototype.push.apply(context.subs, subs);
             return context;
+        },
+        muster: function (element) {
+            return context.musterPubs(element).musterSubs(element);
         },
         setSubs: function (subs) {
             context.subs = subs;

@@ -45,18 +45,23 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
       console.log(err);
     });
   //----------------------------------------------- render functions ---
+  /** @todo Convert 'renderForecast' to web component */
   const renderForecast = function (f: Forecast, day: number): void {
     const d = day === 0 ? f.current : f.daily[Math.min(day, day_count)];
     view.pins.city.set(f.city);
     view.pins.icon.set('icons/' + d.icon);
     view.pins.temp.set(`${d.temperature}°`);
     view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+    view.pins.date.set(
+      new Date(d.timestamp).toLocaleDateString(navigator.language)
+    );
     view.pins.loading.set('');
   };
 
   //------------------------------------------------------- contexts ---
   const weather_nav = <WeatherNav>document.querySelector('weather-nav');
   const weather = <HTMLElement>document.getElementById('Weather');
+
   const app = newContext()
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
@@ -71,27 +76,10 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     });
 
   const view = newContext()
-    .pub('city', newObservable<string>('...'))
-    .pub(
-      'icon',
-      newObservable<string>(
-        ''
-      )
-    )
-    // .pub('temp', newObservable<string>('...°'))
-    .pub('wind', newObservable<string>('Vent ...km/h (...°)'))
-    .pub('date', newObservable<Date>(new Date()))
-    .pub('day', newObservable<number>(0))
+    .pub('icon', newObservable<string>(''))
+    .pub('date', newObservable<string>(''))
     .pub('loading', newObservable<string>('loading'))
-    .musterPubs(weather)
-    .musterSubs(weather)
-    .activateSubs()
-    // .refresh()
-    ;
-
-
-
-  console.log(view.pins);
-  // <WeatherDays>document.querySelector('weather-nav') ??
-  // new WeatherDays();
+    .muster(weather)
+    .activateSubs();
+  // .refresh()
 }); /* DOMContentLoaded */

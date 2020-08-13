@@ -70,7 +70,7 @@ class WeatherNav extends HTMLElement {
         const days = WeatherNav._days.cloneNode(true);
         for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
             const button = WeatherNav._button.cloneNode(true);
-            button.textContent = new Date(timestamps[i] * 1000).toLocaleDateString(navigator.language, {
+            button.textContent = new Date(timestamps[i]).toLocaleDateString(navigator.language, {
                 weekday: 'long',
             });
             button.onclick = (e) => {
@@ -247,14 +247,6 @@ function newContext() {
             komrad_1.extend(context.pins, another_context);
             return context;
         },
-        _mergeWithSubs: function (subs) {
-            const length_old = context.subs.length;
-            const length_added = subs.length;
-            context.subs.length += length_added;
-            for (let i = 0; i < length_added; i++) {
-                context.subs[length_old + i] = subs[i];
-            }
-        },
         musterPubs: function (element) {
             var _a, _b, _c;
             const pub_nodes = [...element.querySelectorAll('[data-pub')];
@@ -265,7 +257,6 @@ function newContext() {
                 const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
                 const initial_value = pub_nodes[i][target];
                 context.pub(source, newObservable(initial_value));
-                console.log(context.pins[source]);
                 subs[i] = {
                     source: context.pins[source] !== undefined ? context.pins[source] : source,
                     target: target,
@@ -273,7 +264,7 @@ function newContext() {
                     node: pub_nodes[i],
                 };
             }
-            context._mergeWithSubs(subs);
+            Array.prototype.push.apply(context.subs, subs);
             return context;
         },
         musterSubs: function (element) {
@@ -292,6 +283,9 @@ function newContext() {
             }
             Array.prototype.push.apply(context.subs, subs);
             return context;
+        },
+        muster: function (element) {
+            return context.musterPubs(element).musterSubs(element);
         },
         setSubs: function (subs) {
             context.subs = subs;
@@ -396,6 +390,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         view.pins.icon.set('icons/' + d.icon);
         view.pins.temp.set(`${d.temperature}°`);
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+        view.pins.date.set(new Date(d.timestamp).toLocaleDateString(navigator.language));
         view.pins.loading.set('');
     };
     const weather_nav = document.querySelector('weather-nav');
@@ -410,16 +405,11 @@ window.addEventListener('DOMContentLoaded', function (event) {
         renderForecast(app.pins.forecasts.value, d);
     });
     const view = app_solo_1.newContext()
-        .pub('city', app_solo_1.newObservable('...'))
         .pub('icon', app_solo_1.newObservable(''))
-        .pub('wind', app_solo_1.newObservable('Vent ...km/h (...°)'))
-        .pub('date', app_solo_1.newObservable(new Date()))
-        .pub('day', app_solo_1.newObservable(0))
+        .pub('date', app_solo_1.newObservable(''))
         .pub('loading', app_solo_1.newObservable('loading'))
-        .musterPubs(weather)
-        .musterSubs(weather)
+        .muster(weather)
         .activateSubs();
-    console.log(view.pins);
 });
 
 },{"./components/img-spinner":1,"./components/weather-nav":2,"./geo":3,"./lib/app-solo":4,"./weather":7}],7:[function(require,module,exports){
@@ -455,7 +445,7 @@ function newForecast(loc, owm) {
         timezone: owm.timezone,
         timezoneOffset: owm.timezone_offset,
         current: {
-            timestamp: owm.current.dt,
+            timestamp: owm.current.dt * 1000,
             temperature: owm.current.temp,
             windSpeed: owm.current.wind_speed,
             windDeg: owm.current.wind_deg,
@@ -465,7 +455,7 @@ function newForecast(loc, owm) {
     };
     for (let i = 0, length = owm.daily.length; i < length; i++) {
         forecast.daily.push({
-            timestamp: owm.daily[i].dt,
+            timestamp: owm.daily[i].dt * 1000,
             temperature: owm.daily[i].temp.day,
             windSpeed: owm.daily[i].wind_speed,
             windDeg: owm.daily[i].wind_deg,
