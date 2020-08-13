@@ -1,10 +1,10 @@
-import { newObservable, newContext } from './app-solo';
+import { newObservable, newContext } from './lib/app-solo';
 import { geoLocate, GeoInfo } from './geo';
 import { getDailyForecasts, Forecast, Daily, newForecast } from './weather';
 
-import { WeatherNav } from './weather-nav';
-import './weather-nav';
-import './img-spinner';
+import { WeatherNav } from './components/weather-nav';
+import './components/weather-nav';
+import './components/img-spinner';
 
 /**
  * Workaround commiting api keys to git for this exercise.

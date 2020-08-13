@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_solo_1 = require("./app-solo");
+const app_solo_1 = require("./lib/app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-require("./weather-nav");
-require("./img-spinner");
+require("./components/weather-nav");
+require("./components/img-spinner");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())

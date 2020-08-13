@@ -117,7 +117,105 @@ function newContext() {
 }
 exports.newContext = newContext;
 
-},{"./komrad":4}],2:[function(require,module,exports){
+},{"./komrad":5}],2:[function(require,module,exports){
+"use strict";
+class ImgSpinner extends HTMLImageElement {
+    constructor() {
+        super();
+        if (!(this['src'] || this['srcset'])) {
+            this['src'] = ImgSpinner._placeholder;
+            this.classList.add(ImgSpinner.classname);
+        }
+    }
+    static get observedAttributes() {
+        return ['src', 'srcset'];
+    }
+    _spinUntilLoaded() {
+        if (!this.complete) {
+            this.classList.add(ImgSpinner.classname);
+            this.onload = this._onLoad;
+        }
+    }
+    _onLoad() {
+        this.classList.remove(ImgSpinner.classname);
+    }
+    connectedCallback() {
+        this._spinUntilLoaded();
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+        this._spinUntilLoaded();
+    }
+}
+ImgSpinner.classname = 'img-spinner-loading';
+ImgSpinner._template = (() => {
+    const t = document.createElement('template');
+    t.innerHTML = `\
+    <style>
+    .${ImgSpinner.classname} {
+      filter: opacity(50%);
+      background: transparent url('icons/spinner.svg') no-repeat scroll center
+        center;
+      background-blend-mode: multiply;
+      shape-outside: polygon(0 0, 0 200px, 300px 600px);
+    }
+    </style>`;
+    document.head.appendChild(t.content);
+    return t.content;
+})();
+ImgSpinner._placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+customElements.define('img-spinner', ImgSpinner, { extends: 'img' });
+
+},{}],3:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WeatherNav = void 0;
+class WeatherNav extends HTMLElement {
+    constructor() {
+        super();
+        this._onClick = () => {
+            throw 'WeatherDays : effect not set.';
+        };
+        this.days = WeatherNav._days.cloneNode(true);
+        this.appendChild(this.days);
+    }
+    connectedCallback() {
+        this.days.textContent = 'Loading ...';
+    }
+    setOnClick(effect) {
+        this._onClick = effect;
+        return this;
+    }
+    render(timestamps, max) {
+        const days = WeatherNav._days.cloneNode(true);
+        for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
+            const button = WeatherNav._button.cloneNode(true);
+            button.textContent = new Date(timestamps[i] * 1000).toLocaleDateString(navigator.language, {
+                weekday: 'long',
+            });
+            button.onclick = (e) => {
+                this._onClick(i);
+                e.preventDefault();
+            };
+            days.appendChild(button);
+        }
+        this.replaceChild(days, this.days);
+        return this;
+    }
+}
+exports.WeatherNav = WeatherNav;
+WeatherNav._button = (() => {
+    const t = document.createElement('a');
+    t.classList.add('day-button');
+    return t;
+})();
+WeatherNav._days = (() => {
+    const t = document.createElement('div');
+    t.classList.add('card-action', 'day-nav');
+    return t;
+})();
+customElements.define('weather-nav', WeatherNav);
+
+},{}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geoLocate = void 0;
@@ -195,55 +293,7 @@ async function geoLocate(api_keys) {
 }
 exports.geoLocate = geoLocate;
 
-},{}],3:[function(require,module,exports){
-"use strict";
-class ImgSpinner extends HTMLImageElement {
-    constructor() {
-        super();
-        if (!(this['src'] || this['srcset'])) {
-            this['src'] = ImgSpinner._placeholder;
-            this.classList.add(ImgSpinner.classname);
-        }
-    }
-    static get observedAttributes() {
-        return ['src', 'srcset'];
-    }
-    _spinUntilLoaded() {
-        if (!this.complete) {
-            this.classList.add(ImgSpinner.classname);
-            this.onload = this._onLoad;
-        }
-    }
-    _onLoad() {
-        this.classList.remove(ImgSpinner.classname);
-    }
-    connectedCallback() {
-        this._spinUntilLoaded();
-    }
-    attributeChangedCallback(name, oldValue, newValue) {
-        this._spinUntilLoaded();
-    }
-}
-ImgSpinner.classname = 'img-spinner-loading';
-ImgSpinner._template = (() => {
-    const t = document.createElement('template');
-    t.innerHTML = `\
-    <style>
-    .${ImgSpinner.classname} {
-      filter: opacity(50%);
-      background: transparent url('icons/spinner.svg') no-repeat scroll center
-        center;
-      background-blend-mode: multiply;
-      shape-outside: polygon(0 0, 0 200px, 300px 600px);
-    }
-    </style>`;
-    document.head.appendChild(t.content);
-    return t.content;
-})();
-ImgSpinner._placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
-customElements.define('img-spinner', ImgSpinner, { extends: 'img' });
-
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cram = exports.extend = void 0;
@@ -281,14 +331,18 @@ function extendCopy(object, trait) {
     return extended_copy;
 }
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+arguments[4][1][0].apply(exports,arguments)
+},{"./komrad":7,"dup":1}],7:[function(require,module,exports){
+arguments[4][5][0].apply(exports,arguments)
+},{"dup":5}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_solo_1 = require("./app-solo");
+const app_solo_1 = require("./lib/app-solo");
 const geo_1 = require("./geo");
 const weather_1 = require("./weather");
-require("./weather-nav");
-require("./img-spinner");
+require("./components/weather-nav");
+require("./components/img-spinner");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -344,57 +398,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const weather_nav = document.querySelector('weather-nav');
 });
 
-},{"./app-solo":1,"./geo":2,"./img-spinner":3,"./weather":7,"./weather-nav":6}],6:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WeatherNav = void 0;
-class WeatherNav extends HTMLElement {
-    constructor() {
-        super();
-        this._onClick = () => {
-            throw 'WeatherDays : effect not set.';
-        };
-        this.days = WeatherNav._days.cloneNode(true);
-        this.appendChild(this.days);
-    }
-    connectedCallback() {
-        this.days.textContent = 'Loading ...';
-    }
-    setOnClick(effect) {
-        this._onClick = effect;
-        return this;
-    }
-    render(timestamps, max) {
-        const days = WeatherNav._days.cloneNode(true);
-        for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
-            const button = WeatherNav._button.cloneNode(true);
-            button.textContent = new Date(timestamps[i] * 1000).toLocaleDateString(navigator.language, {
-                weekday: 'long',
-            });
-            button.onclick = (e) => {
-                this._onClick(i);
-                e.preventDefault();
-            };
-            days.appendChild(button);
-        }
-        this.replaceChild(days, this.days);
-        return this;
-    }
-}
-exports.WeatherNav = WeatherNav;
-WeatherNav._button = (() => {
-    const t = document.createElement('a');
-    t.classList.add('day-button');
-    return t;
-})();
-WeatherNav._days = (() => {
-    const t = document.createElement('div');
-    t.classList.add('card-action', 'day-nav');
-    return t;
-})();
-customElements.define('weather-nav', WeatherNav);
-
-},{}],7:[function(require,module,exports){
+},{"./components/img-spinner":2,"./components/weather-nav":3,"./geo":4,"./lib/app-solo":6,"./weather":9}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
@@ -462,4 +466,4 @@ async function getDailyForecasts(loc, api_keys) {
 }
 exports.getDailyForecasts = getDailyForecasts;
 
-},{}]},{},[4,1,5]);
+},{}]},{},[5,1,8]);
