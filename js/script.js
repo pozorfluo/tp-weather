@@ -38,6 +38,8 @@ window.addEventListener('DOMContentLoaded', function (event) {
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
         view.pins.loading.set('');
     };
+    const weather_nav = document.querySelector('weather-nav');
+    const weather = document.getElementById('Weather');
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
@@ -50,15 +52,12 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const view = app_solo_1.newContext()
         .pub('city', app_solo_1.newObservable('...'))
         .pub('icon', app_solo_1.newObservable(''))
-        .pub('temp', app_solo_1.newObservable('...°'))
         .pub('wind', app_solo_1.newObservable('Vent ...km/h (...°)'))
         .pub('date', app_solo_1.newObservable(new Date()))
         .pub('day', app_solo_1.newObservable(0))
         .pub('loading', app_solo_1.newObservable('loading'))
-        .musterSubs(document)
+        .musterPubs(weather)
+        .musterSubs(weather)
         .activateSubs();
-    const weather_nav = document.querySelector('weather-nav');
-    const key = 'data-pub-name';
-    console.log(key.split('-'));
-    console.log('howdy');
+    console.log(view.pins);
 });

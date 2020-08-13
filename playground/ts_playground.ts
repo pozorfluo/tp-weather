@@ -580,7 +580,7 @@ function musterPins(context: Context): Pin<any>[] {
 
     for (let i = 0; i < length; i++) {
         const source = pin_nodes[i].getAttribute('data-pin');
-        const target = pin_nodes[i].getAttribute('data-property');
+        const target = pin_nodes[i].getAttribute('data-prop');
         const type = pin_nodes[i].getAttribute('data-type');
         pins[i] = {
             source:
@@ -615,7 +615,7 @@ function musterLinks(context: Context): Link<any>[] {
     for (let i = 0; i < length; i++) {
         const source = link_nodes[i].getAttribute('data-link');
         const event = link_nodes[i].getAttribute('data-event');
-        const target = link_nodes[i].getAttribute('data-property');
+        const target = link_nodes[i].getAttribute('data-prop');
         const type = link_nodes[i].getAttribute('data-type');
         links[i] = {
             source:

@@ -61,7 +61,7 @@ export function cram<
  * Extend a shallow copy of given object with given trait, clobbering
  * existing properties.
  */
-function extendCopy<Base, Extension, K extends keyof Extension>(
+export function extendCopy<Base, Extension, K extends keyof Extension>(
     object: Base,
     trait: Trait & Extension
 ): Base & Extension {

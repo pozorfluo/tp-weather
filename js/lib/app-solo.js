@@ -70,6 +70,35 @@ function newContext() {
             komrad_1.extend(context.pins, another_context);
             return context;
         },
+        _mergeWithSubs: function (subs) {
+            const length_old = context.subs.length;
+            const length_added = subs.length;
+            context.subs.length += length_added;
+            for (let i = 0; i < length_added; i++) {
+                context.subs[length_old + i] = subs[i];
+            }
+        },
+        musterPubs: function (element) {
+            var _a, _b, _c;
+            const pub_nodes = [...element.querySelectorAll('[data-pub')];
+            const length = pub_nodes.length;
+            const subs = Array(length);
+            for (let i = 0; i < length; i++) {
+                const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
+                const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
+                const initial_value = pub_nodes[i][target];
+                context.pub(source, newObservable(initial_value));
+                console.log(context.pins[source]);
+                subs[i] = {
+                    source: context.pins[source] !== undefined ? context.pins[source] : source,
+                    target: target,
+                    type: (_c = pub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
+                    node: pub_nodes[i],
+                };
+            }
+            context._mergeWithSubs(subs);
+            return context;
+        },
         musterSubs: function (element) {
             var _a, _b, _c;
             const sub_nodes = [...element.querySelectorAll('[data-sub]')];
@@ -77,18 +106,14 @@ function newContext() {
             const subs = Array(length);
             for (let i = 0; i < length; i++) {
                 const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'error';
-                const target = (_b = sub_nodes[i].getAttribute('data-property')) !== null && _b !== void 0 ? _b : 'value';
-                const type = (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string';
                 subs[i] = {
-                    source: context.pins[source] !== undefined
-                        ? context.pins[source]
-                        : source,
-                    target: target,
-                    type: type,
+                    source: context.pins[source] !== undefined ? context.pins[source] : source,
+                    target: (_b = sub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent',
+                    type: (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
                     node: sub_nodes[i],
                 };
             }
-            context.subs = subs;
+            Array.prototype.push.apply(context.subs, subs);
             return context;
         },
         setSubs: function (subs) {
@@ -110,7 +135,7 @@ function newContext() {
                 pin.notify();
             }
             return context;
-        }
+        },
     };
     return context;
 }

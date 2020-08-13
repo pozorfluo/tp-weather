@@ -55,6 +55,8 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   };
 
   //------------------------------------------------------- contexts ---
+  const weather_nav = <WeatherNav>document.querySelector('weather-nav');
+  const weather = <HTMLElement>document.getElementById('Weather');
   const app = newContext()
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
@@ -76,21 +78,20 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
         ''
       )
     )
-    .pub('temp', newObservable<string>('...°'))
+    // .pub('temp', newObservable<string>('...°'))
     .pub('wind', newObservable<string>('Vent ...km/h (...°)'))
     .pub('date', newObservable<Date>(new Date()))
     .pub('day', newObservable<number>(0))
     .pub('loading', newObservable<string>('loading'))
-    .musterSubs(document)
+    .musterPubs(weather)
+    .musterSubs(weather)
     .activateSubs()
     // .refresh()
     ;
 
-  const weather_nav = <WeatherNav>document.querySelector('weather-nav');
 
-  const key = 'data-pub-name';
-  console.log(key.split('-'));
-  console.log('howdy');
+
+  console.log(view.pins);
   // <WeatherDays>document.querySelector('weather-nav') ??
   // new WeatherDays();
 }); /* DOMContentLoaded */

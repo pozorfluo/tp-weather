@@ -28,10 +28,8 @@
     <link rel="stylesheet" href="css/weather.css" />
   </head>
   <body>
-    <section class="weather"></section>
 
-    <div id="root">
-      <div class="App">
+      <div id="Weather" class="App">
         <header class="App-header">
           <img src="icons/logo_transparent.png" class="App-logo" alt="logo" />
         </header>
@@ -42,28 +40,25 @@
                 <span
                   class="card-title"
                   data-sub="city"
-                  data-property="textContent"
                 ></span>
-                <!-- <p data-sub="loading" data-property="className"> -->
+                <!-- <p data-sub="loading" data-prop="className"> -->
                 <p>
                   <img
                     is="img-spinner"
                     data-sub="icon"
-                    data-property="src"
+                    data-prop="src"
                     width="128"
                     height="128"
                   />
                 </p>
                 <span
                   class="temperature"
-                  data-sub="temp"
-                  data-property="textContent"
-                >
+                  data-pub="temp"
+                >...°
                 </span>
                 <div
                   class="wind"
                   data-sub="wind"
-                  data-property="textContent"
                 ></div>
               </div>
               <!-- <div class="card-action day-nav">
@@ -80,7 +75,6 @@
           </div>
         </div>
       </div>
-    </div>
   </body>
   <script src="js/dist/bundle.js"></script>
 </html>

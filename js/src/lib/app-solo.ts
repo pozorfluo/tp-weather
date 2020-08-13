@@ -89,14 +89,6 @@ export function newObservable<T>(value: T): Observable<T> {
       return observable.value;
     },
 
-    // set: function (value: T): Observable<T> {
-    //   /* The buck stops here. */
-    //   if (value !== this.value) {
-    //     this.value = value;
-    //     this.notify();
-    //   }
-    //   return this;
-    // },
     set: function (value: T): Observable<T> {
       /* The buck stops here. */
       if (value !== observable.value) {
@@ -136,7 +128,6 @@ export interface Sub<T> {
   node: Node;
 }
 
-
 /**
  * Define Context object.
  *
@@ -159,7 +150,8 @@ export interface Context {
   merge: (
     another_context: Context | { [name: string]: Observable<any> }
   ) => Context;
-  musterSubs: (element : Document | Element) => this;
+  musterPubs: (element: ParentNode) => this;
+  musterSubs: (element: ParentNode) => this;
   setSubs: (pins: Sub<any>[]) => this;
   activateSubs: () => this;
   refresh: () => this;
@@ -215,6 +207,61 @@ export function newContext(): Context {
       return context;
     },
 
+    // _extractSub: function(element : Element) : Sub<any> {
+    //   const source: string = element.getAttribute('data-sub') ?? 'error';
+
+    //   return {
+    //     source:
+    //     context.pins[source] !== undefined
+    //         ? context.pins[source]
+    //         : source,
+    //     target: element.getAttribute('data-prop') ?? 'value',
+    //     type:  element.getAttribute('data-type') ?? 'string',
+    //     node: element,
+    //   };
+    // },
+
+    _mergeWithSubs: function (subs: Sub<any>[]): void {
+      const length_old = context.subs.length;
+      const length_added = subs.length;
+      context.subs.length += length_added;
+      for (let i = 0; i < length_added; i++) {
+        context.subs[length_old + i] = subs[i];
+      }
+    },
+    /**
+     * Collect data pubs declared in given element for this Context.
+     *
+     * @note A pub is a sub that publishes its initial value as an observable to
+     *       a context, i.e., it is immediately subscribed to this new
+     *       observable value.
+     */
+    musterPubs: function (element: ParentNode): Context {
+      const pub_nodes = [...element.querySelectorAll('[data-pub')];
+      const length = pub_nodes.length;
+      const subs: Sub<any>[] = Array(length);
+
+      for (let i = 0; i < length; i++) {
+        const source = pub_nodes[i].getAttribute('data-pub') ?? 'error';
+        const target = pub_nodes[i].getAttribute('data-prop') ?? 'textContent';
+
+        /** @todo Figure out how to check that target exists */
+        const initial_value = pub_nodes[i][target as keyof Element];
+        context.pub(source, newObservable<typeof initial_value>(initial_value));
+        console.log(context.pins[source]);
+        subs[i] = {
+          source:
+            context.pins[source] !== undefined ? context.pins[source] : source,
+          target: target,
+          type: pub_nodes[i].getAttribute('data-type') ?? 'string',
+          node: pub_nodes[i],
+        };
+      }
+      // Array.prototype.push.apply(context.subs, subs);
+      context._mergeWithSubs(subs);
+      return context;
+    },
+
     /**
      * Collect data subs declared in given element for this Context.
      *
@@ -223,27 +270,22 @@ export function newContext(): Context {
      *
      * @todo Consider using a dictionnary and an identifier per sub.
      */
-    musterSubs: function (element : Document | Element): Context {
-      const sub_nodes: Element[] = [...element.querySelectorAll('[data-sub]')];
-      const length: number = sub_nodes.length;
+    musterSubs: function (element: ParentNode): Context {
+      const sub_nodes = [...element.querySelectorAll('[data-sub]')];
+      const length = sub_nodes.length;
       const subs: Sub<any>[] = Array(length);
 
       for (let i = 0; i < length; i++) {
-        const source: string = sub_nodes[i].getAttribute('data-sub') ?? 'error';
-        const target: string =
-          sub_nodes[i].getAttribute('data-property') ?? 'value';
-        const type: string = sub_nodes[i].getAttribute('data-type') ?? 'string';
+        const source = sub_nodes[i].getAttribute('data-sub') ?? 'error';
         subs[i] = {
           source:
-          context.pins[source] !== undefined
-              ? context.pins[source]
-              : source,
-          target: target,
-          type: type,
+            context.pins[source] !== undefined ? context.pins[source] : source,
+          target: sub_nodes[i].getAttribute('data-prop') ?? 'textContent',
+          type: sub_nodes[i].getAttribute('data-type') ?? 'string',
           node: sub_nodes[i],
         };
       }
-      context.subs = <Sub<any>[]>subs;
+      Array.prototype.push.apply(context.subs, subs);
       return context;
     },
     /**
@@ -270,11 +312,11 @@ export function newContext(): Context {
     },
 
     refresh: function (): Context {
-      for (const pin of Object.values(context.pins)){
+      for (const pin of Object.values(context.pins)) {
         (<Observable<any>>pin).notify();
       }
       return context;
-    }
+    },
   };
   return <Context>context;
 }

@@ -247,6 +247,35 @@ function newContext() {
             komrad_1.extend(context.pins, another_context);
             return context;
         },
+        _mergeWithSubs: function (subs) {
+            const length_old = context.subs.length;
+            const length_added = subs.length;
+            context.subs.length += length_added;
+            for (let i = 0; i < length_added; i++) {
+                context.subs[length_old + i] = subs[i];
+            }
+        },
+        musterPubs: function (element) {
+            var _a, _b, _c;
+            const pub_nodes = [...element.querySelectorAll('[data-pub')];
+            const length = pub_nodes.length;
+            const subs = Array(length);
+            for (let i = 0; i < length; i++) {
+                const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
+                const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
+                const initial_value = pub_nodes[i][target];
+                context.pub(source, newObservable(initial_value));
+                console.log(context.pins[source]);
+                subs[i] = {
+                    source: context.pins[source] !== undefined ? context.pins[source] : source,
+                    target: target,
+                    type: (_c = pub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
+                    node: pub_nodes[i],
+                };
+            }
+            context._mergeWithSubs(subs);
+            return context;
+        },
         musterSubs: function (element) {
             var _a, _b, _c;
             const sub_nodes = [...element.querySelectorAll('[data-sub]')];
@@ -254,18 +283,14 @@ function newContext() {
             const subs = Array(length);
             for (let i = 0; i < length; i++) {
                 const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'error';
-                const target = (_b = sub_nodes[i].getAttribute('data-property')) !== null && _b !== void 0 ? _b : 'value';
-                const type = (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string';
                 subs[i] = {
-                    source: context.pins[source] !== undefined
-                        ? context.pins[source]
-                        : source,
-                    target: target,
-                    type: type,
+                    source: context.pins[source] !== undefined ? context.pins[source] : source,
+                    target: (_b = sub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent',
+                    type: (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
                     node: sub_nodes[i],
                 };
             }
-            context.subs = subs;
+            Array.prototype.push.apply(context.subs, subs);
             return context;
         },
         setSubs: function (subs) {
@@ -287,7 +312,7 @@ function newContext() {
                 pin.notify();
             }
             return context;
-        }
+        },
     };
     return context;
 }
@@ -296,7 +321,7 @@ exports.newContext = newContext;
 },{"./komrad":5}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cram = exports.extend = void 0;
+exports.extendCopy = exports.cram = exports.extend = void 0;
 function extend(object, trait) {
     Object.keys(trait).forEach(function (key) {
         object[key] = trait[key];
@@ -330,6 +355,7 @@ function extendCopy(object, trait) {
     });
     return extended_copy;
 }
+exports.extendCopy = extendCopy;
 
 },{}],6:[function(require,module,exports){
 "use strict";
@@ -372,6 +398,8 @@ window.addEventListener('DOMContentLoaded', function (event) {
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
         view.pins.loading.set('');
     };
+    const weather_nav = document.querySelector('weather-nav');
+    const weather = document.getElementById('Weather');
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
@@ -384,17 +412,14 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const view = app_solo_1.newContext()
         .pub('city', app_solo_1.newObservable('...'))
         .pub('icon', app_solo_1.newObservable(''))
-        .pub('temp', app_solo_1.newObservable('...°'))
         .pub('wind', app_solo_1.newObservable('Vent ...km/h (...°)'))
         .pub('date', app_solo_1.newObservable(new Date()))
         .pub('day', app_solo_1.newObservable(0))
         .pub('loading', app_solo_1.newObservable('loading'))
-        .musterSubs(document)
+        .musterPubs(weather)
+        .musterSubs(weather)
         .activateSubs();
-    const weather_nav = document.querySelector('weather-nav');
-    const key = 'data-pub-name';
-    console.log(key.split('-'));
-    console.log('howdy');
+    console.log(view.pins);
 });
 
 },{"./components/img-spinner":1,"./components/weather-nav":2,"./geo":3,"./lib/app-solo":4,"./weather":7}],7:[function(require,module,exports){
