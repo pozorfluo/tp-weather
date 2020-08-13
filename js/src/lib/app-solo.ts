@@ -152,6 +152,7 @@ export interface Context {
   ) => Context;
   musterPubs: (element: ParentNode) => this;
   musterSubs: (element: ParentNode) => this;
+  muster: (element: ParentNode) => this;
   setSubs: (pins: Sub<any>[]) => this;
   activateSubs: () => this;
   refresh: () => this;
@@ -207,28 +208,6 @@ export function newContext(): Context {
       return context;
     },
 
-    // _extractSub: function(element : Element) : Sub<any> {
-    //   const source: string = element.getAttribute('data-sub') ?? 'error';
-
-    //   return {
-    //     source:
-    //     context.pins[source] !== undefined
-    //         ? context.pins[source]
-    //         : source,
-    //     target: element.getAttribute('data-prop') ?? 'value',
-    //     type:  element.getAttribute('data-type') ?? 'string',
-    //     node: element,
-    //   };
-    // },
-
-    _mergeWithSubs: function (subs: Sub<any>[]): void {
-      const length_old = context.subs.length;
-      const length_added = subs.length;
-      context.subs.length += length_added;
-      for (let i = 0; i < length_added; i++) {
-        context.subs[length_old + i] = subs[i];
-      }
-    },
     /**
      * Collect data pubs declared in given element for this Context.
      *
@@ -248,7 +227,6 @@ export function newContext(): Context {
         /** @todo Figure out how to check that target exists */
         const initial_value = pub_nodes[i][target as keyof Element];
         context.pub(source, newObservable<typeof initial_value>(initial_value));
-        console.log(context.pins[source]);
         subs[i] = {
           source:
             context.pins[source] !== undefined ? context.pins[source] : source,
@@ -257,8 +235,7 @@ export function newContext(): Context {
           node: pub_nodes[i],
         };
       }
-      // Array.prototype.push.apply(context.subs, subs);
-      context._mergeWithSubs(subs);
+      Array.prototype.push.apply(context.subs, subs);
       return context;
     },
 
@@ -287,6 +264,15 @@ export function newContext(): Context {
       }
       Array.prototype.push.apply(context.subs, subs);
       return context;
+    },
+
+    /**
+     * Collect both data pubs & subs declared in given element for this Context.
+     *
+     * @note Muster pubs first to avoid dangling subs.
+     */
+    muster: function (element: ParentNode): Context {
+      return context.musterPubs(element).musterSubs(element);
     },
     /**
      * Reference given sub collection as this context sub collection.
