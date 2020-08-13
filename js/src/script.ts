@@ -4,6 +4,7 @@ import { getDailyForecasts, Forecast, Daily, newForecast } from './weather';
 
 import { WeatherNav } from './weather-nav';
 import './weather-nav';
+import './img-spinner';
 
 /**
  * Workaround commiting api keys to git for this exercise.
@@ -33,6 +34,8 @@ async function getWeather(): Promise<Forecast | null> {
  * Run the app !
  */
 window.addEventListener('DOMContentLoaded', function (event: Event) {
+  const day_count = 5;
+
   getWeather()
     .then((forecasts) => {
       app.pins.forecasts.set(forecasts);
@@ -43,7 +46,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     });
   //----------------------------------------------- render functions ---
   const renderForecast = function (f: Forecast, day: number): void {
-    const d = day === 0 ? f.current : f.daily[Math.min(day, 7)];
+    const d = day === 0 ? f.current : f.daily[Math.min(day, day_count)];
     view.pins.city.set(f.city);
     view.pins.icon.set('icons/' + d.icon);
     view.pins.temp.set(`${d.temperature}°`);
@@ -56,7 +59,10 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
       weather_nav.setOnClick(app.pins.day.set);
-      weather_nav.render(f.daily.map((d : Daily) => d.timestamp), 5);
+      weather_nav.render(
+        f.daily.map((d: Daily) => d.timestamp),
+        day_count
+      );
     })
     .pub('day', newObservable<number>(0), (d) => {
       renderForecast(app.pins.forecasts.value, d);
@@ -67,7 +73,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .pub(
       'icon',
       newObservable<string>(
-        'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
+        ''
       )
     )
     .pub('temp', newObservable<string>('...°'))
@@ -77,7 +83,8 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .pub('loading', newObservable<string>('loading'))
     .musterSubs(document)
     .activateSubs()
-    .refresh();
+    // .refresh()
+    ;
 
   const weather_nav = <WeatherNav>document.querySelector('weather-nav');
   // <WeatherDays>document.querySelector('weather-nav') ??
