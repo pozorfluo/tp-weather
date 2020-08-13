@@ -1,7 +1,7 @@
 export class WeatherNav extends HTMLElement {
   static _button: HTMLElement = (() => {
     const t = document.createElement('a');
-     t.classList.add('day-button');
+    t.classList.add('day-button');
     return t;
   })();
 
@@ -31,20 +31,32 @@ export class WeatherNav extends HTMLElement {
     return this;
   }
 
+  // handleClick = (e: Event): void => {
+  //   const day = (<Element>e.target).getAttribute?.('data-day') ?? '0';
+  //   this._onClick(+day);
+  //   e.preventDefault();
+  // };
+
   render(timestamps: number[], max: number): this {
     const days = <HTMLElement>WeatherNav._days.cloneNode(true);
-    for (let i = 0, length = Math.min(timestamps.length, max); i < length; i++) {
+    for (
+      let i = 0, length = Math.min(timestamps.length, max);
+      i < length;
+      i++
+    ) {
       const button = <HTMLElement>WeatherNav._button.cloneNode(true);
       button.textContent = new Date(
-        timestamps[i] // * 1000
+        timestamps[i]
       ).toLocaleDateString(navigator.language, {
         weekday: 'long',
       });
-
+      
+      // button.setAttribute('data-day', i + '');
       button.onclick = (e: Event): void => {
         this._onClick(i);
         e.preventDefault();
       };
+      // button.onclick = this.handleClick;
 
       days.appendChild(button);
     }

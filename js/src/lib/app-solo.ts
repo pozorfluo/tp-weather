@@ -260,7 +260,7 @@ export function newContext(): Context {
           target: sub_nodes[i].getAttribute('data-prop') ?? 'textContent',
           type: sub_nodes[i].getAttribute('data-type') ?? 'string',
           node: sub_nodes[i],
-        };
+        };  
       }
       Array.prototype.push.apply(context.subs, subs);
       return context;
