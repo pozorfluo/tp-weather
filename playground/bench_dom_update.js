@@ -167,3 +167,16 @@ merge(c, c);
 console.log(a);
 console.log(b);
 console.log(c);
+
+const count = 1000;
+const frag = document.createDocumentFragment();
+// const span = document.createElement('span');
+for (let i=count; i--;){
+  // const s = span.cloneNode(true);
+  const s = document.createElement('a');
+  // s.setAttribute('data-pub', 's'+i);
+  s.setAttribute('data-sub', 'temp');
+  s.textContent = i +'';
+  frag.appendChild(s);
+}
+weather.appendChild(frag);
