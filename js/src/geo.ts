@@ -96,12 +96,13 @@ export async function geoLocate(api_keys: any): Promise<GeoInfo | null> {
       console.log('Unable to retrieve coords using geolocation API. Using ip.');
     }
   }
-
   if (coords !== null) {
     lat = coords.coords.latitude;
     lon = coords.coords.longitude;
     [country_code, city] = await geoReverse(lat, lon, api_keys.map);
-  } else {
+  } 
+  
+  if (!( lat && lon && country_code && city)){
     ({ latitude: lat, longitude: lon, country_code, city } = await geoIp(
       api_keys.ipdata
     ));
