@@ -5,6 +5,7 @@ const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 require("./components/weather-nav");
 require("./components/img-spinner");
+require("./components/sprite-player");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())

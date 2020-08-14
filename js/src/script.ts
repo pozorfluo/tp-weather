@@ -5,6 +5,7 @@ import { getDailyForecasts, Forecast, Daily, newForecast } from './weather';
 import { WeatherNav } from './components/weather-nav';
 import './components/weather-nav';
 import './components/img-spinner';
+import './components/sprite-player';
 
 /**
  * Workaround commiting api keys to git for this exercise.

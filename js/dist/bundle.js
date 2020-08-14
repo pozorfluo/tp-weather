@@ -31,15 +31,15 @@ ImgSpinner.classname = 'img-spinner-loading';
 ImgSpinner._template = (() => {
     const t = document.createElement('template');
     t.innerHTML = `\
-    <style>
-    .${ImgSpinner.classname} {
-      filter: opacity(50%);
-      background: transparent url('icons/spinner.svg') no-repeat scroll center
-        center;
-      background-blend-mode: multiply;
-      shape-outside: polygon(0 0, 0 200px, 300px 600px);
-    }
-    </style>`;
+      <style>
+      .${ImgSpinner.classname} {
+        filter: opacity(50%);
+        background: transparent url('icons/spinner.svg') no-repeat scroll center
+          center;
+        background-blend-mode: multiply;
+        shape-outside: polygon(0 0, 0 200px, 300px 600px);
+      }
+      </style>`;
     document.head.appendChild(t.content);
     return t.content;
 })();
@@ -47,6 +47,53 @@ ImgSpinner._placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAE
 customElements.define('img-spinner', ImgSpinner, { extends: 'img' });
 
 },{}],2:[function(require,module,exports){
+"use strict";
+class SpritePlayer extends HTMLElement {
+    constructor() {
+        var _a;
+        super();
+        this.attachShadow({ mode: 'open' });
+        (_a = this.shadowRoot) === null || _a === void 0 ? void 0 : _a.appendChild(SpritePlayer._template.cloneNode(true));
+        const rules = this.shadowRoot.styleSheets[0].cssRules[0];
+        this.css = rules.style;
+    }
+    static get observedAttributes() {
+        return ['anim'];
+    }
+    attributeChangedCallback(name, oldValue, newValue) {
+        this.css.setProperty('--anim', (newValue !== null && newValue !== void 0 ? newValue : 0) + '');
+    }
+}
+SpritePlayer._template = (() => {
+    const t = document.createElement('template');
+    t.innerHTML = `\
+      <style>
+      .sprite {
+        --width : 24px;
+        --height : 32px;
+        --frames: 12;
+        --anim : 1;
+        --y : calc(var(--height) * var(--anim));
+        --x : calc(var(--width) * var(--frames));
+        --duration: 333ms;
+        width: var(--width);
+        height: var(--height);
+        background-origin: border-box;
+        background: url('sprites/link.png') 0px var(--y);
+        animation: play var(--duration) steps(var(--frames)) infinite;
+      }
+
+      @keyframes play {
+        100% { background-position: var(--x) var(--y); }
+      }
+      </style>
+      <div class="sprite"></div>
+      `;
+    return t.content;
+})();
+customElements.define('sprite-player', SpritePlayer);
+
+},{}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WeatherNav = void 0;
@@ -96,7 +143,7 @@ WeatherNav._days = (() => {
 })();
 customElements.define('weather-nav', WeatherNav);
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geoLocate = void 0;
@@ -160,7 +207,7 @@ async function geoLocate(api_keys) {
         lon = coords.coords.longitude;
         [country_code, city] = await geoReverse(lat, lon, api_keys.map);
     }
-    else {
+    if (!(lat && lon && country_code && city)) {
         ({ latitude: lat, longitude: lon, country_code, city } = await geoIp(api_keys.ipdata));
     }
     return lat && lon && country_code && city
@@ -174,7 +221,7 @@ async function geoLocate(api_keys) {
 }
 exports.geoLocate = geoLocate;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newContext = exports.withObservable = exports.newObservable = void 0;
@@ -312,7 +359,7 @@ function newContext() {
 }
 exports.newContext = newContext;
 
-},{"./komrad":5}],5:[function(require,module,exports){
+},{"./komrad":6}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extendCopy = exports.cram = exports.extend = void 0;
@@ -351,7 +398,7 @@ function extendCopy(object, trait) {
 }
 exports.extendCopy = extendCopy;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./lib/app-solo");
@@ -359,6 +406,7 @@ const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 require("./components/weather-nav");
 require("./components/img-spinner");
+require("./components/sprite-player");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -412,7 +460,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .activateSubs();
 });
 
-},{"./components/img-spinner":1,"./components/weather-nav":2,"./geo":3,"./lib/app-solo":4,"./weather":7}],7:[function(require,module,exports){
+},{"./components/img-spinner":1,"./components/sprite-player":2,"./components/weather-nav":3,"./geo":4,"./lib/app-solo":5,"./weather":8}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
@@ -480,4 +528,4 @@ async function getDailyForecasts(loc, api_keys) {
 }
 exports.getDailyForecasts = getDailyForecasts;
 
-},{}]},{},[6]);
+},{}]},{},[7]);

@@ -61,7 +61,7 @@ async function geoLocate(api_keys) {
         lon = coords.coords.longitude;
         [country_code, city] = await geoReverse(lat, lon, api_keys.map);
     }
-    else {
+    if (!(lat && lon && country_code && city)) {
         ({ latitude: lat, longitude: lon, country_code, city } = await geoIp(api_keys.ipdata));
     }
     return lat && lon && country_code && city

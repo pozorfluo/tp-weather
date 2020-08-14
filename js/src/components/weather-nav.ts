@@ -14,6 +14,7 @@ export class WeatherNav extends HTMLElement {
   _onClick: (i: number) => void = () => {
     throw 'WeatherDays : effect not set.';
   };
+  
   days: HTMLElement;
 
   constructor() {
