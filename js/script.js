@@ -42,6 +42,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     };
     const weather_nav = document.querySelector('weather-nav');
     const weather = document.getElementById('Weather');
+    weather_nav.renderPlaceholder(day_count, '...');
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);

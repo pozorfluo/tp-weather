@@ -10,9 +10,6 @@ class WeatherNav extends HTMLElement {
         this.days = WeatherNav._days.cloneNode(true);
         this.appendChild(this.days);
     }
-    connectedCallback() {
-        this.days.textContent = 'Loading ...';
-    }
     setOnClick(effect) {
         this._onClick = effect;
         return this;
@@ -31,6 +28,18 @@ class WeatherNav extends HTMLElement {
             days.appendChild(button);
         }
         this.replaceChild(days, this.days);
+        this.days = days;
+        return this;
+    }
+    renderPlaceholder(max, msg) {
+        const days = WeatherNav._days.cloneNode(true);
+        for (let i = 0; i < max; i++) {
+            const button = WeatherNav._button.cloneNode(true);
+            button.textContent = msg;
+            days.appendChild(button);
+        }
+        this.replaceChild(days, this.days);
+        this.days = days;
         return this;
     }
 }

@@ -5,12 +5,12 @@ class SpritePlayer extends HTMLElement {
     t.innerHTML=`\
       <style>
       .sprite {
-        --width : 24px;
-        --height : 32px;
+        --width : 64px;
+        --height : 64px;
         --frames: 12;
-        --anim : 1;
-        --y : calc(var(--height) * var(--anim));
-        --x : calc(var(--width) * var(--frames));
+        --anim : 0;
+        --y : calc(var(--height) * var(--anim) * -1);
+        --x : calc(var(--width) * var(--frames) * -1);
         --duration: 333ms;
         width: var(--width);
         height: var(--height);
@@ -28,12 +28,12 @@ class SpritePlayer extends HTMLElement {
       return t.content;
   })();
 
+  _running = true;
+
   css : CSSStyleDeclaration;
-  // width : string;
-  // anim : number;
 
   static get observedAttributes() {
-    return ['anim'];
+    return ['width', 'height', 'anim', 'duration', 'frames'];
   }
 
   constructor(){
@@ -51,9 +51,35 @@ class SpritePlayer extends HTMLElement {
     name: string,
     oldValue: number | string | null,
     newValue: number | string | null
-  ) {
-    this.css.setProperty('--anim', (newValue ?? 0) + '');
+  ) :void {
+    this.css.setProperty('--'+name, (newValue ?? 0) + '');
   }
+
+  play():void {
+    this.css.setProperty('animation-play-state', 'running');
+    this._running = true;
+  }
+  
+  pause():void {
+    this.css.setProperty('animation-play-state', 'paused');
+    this._running = false;
+  }
+
+  stop():void {
+    this.css.setProperty('animation-play-state', 'paused');
+    this._running = false;
+  }
+
+  toggle():void {
+    const toggle = this._running ? 'paused' : 'running';
+    this.css.setProperty('animation-play-state', toggle);
+    this._running = !this._running;
+  }
+
+  pauseAfter():void {
+    this.css.setProperty('animation-iteration-count', '1');
+  }
+
 }
 
 customElements.define('sprite-player', SpritePlayer);

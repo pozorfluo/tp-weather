@@ -52,16 +52,37 @@ class SpritePlayer extends HTMLElement {
     constructor() {
         var _a;
         super();
+        this._running = true;
         this.attachShadow({ mode: 'open' });
         (_a = this.shadowRoot) === null || _a === void 0 ? void 0 : _a.appendChild(SpritePlayer._template.cloneNode(true));
         const rules = this.shadowRoot.styleSheets[0].cssRules[0];
         this.css = rules.style;
     }
     static get observedAttributes() {
-        return ['anim'];
+        return ['width', 'height', 'anim', 'duration', 'frames'];
     }
     attributeChangedCallback(name, oldValue, newValue) {
-        this.css.setProperty('--anim', (newValue !== null && newValue !== void 0 ? newValue : 0) + '');
+        this.css.setProperty('--' + name, (newValue !== null && newValue !== void 0 ? newValue : 0) + '');
+    }
+    play() {
+        this.css.setProperty('animation-play-state', 'running');
+        this._running = true;
+    }
+    pause() {
+        this.css.setProperty('animation-play-state', 'paused');
+        this._running = false;
+    }
+    stop() {
+        this.css.setProperty('animation-play-state', 'paused');
+        this._running = false;
+    }
+    toggle() {
+        const toggle = this._running ? 'paused' : 'running';
+        this.css.setProperty('animation-play-state', toggle);
+        this._running = !this._running;
+    }
+    pauseAfter() {
+        this.css.setProperty('animation-iteration-count', '1');
     }
 }
 SpritePlayer._template = (() => {
@@ -69,12 +90,12 @@ SpritePlayer._template = (() => {
     t.innerHTML = `\
       <style>
       .sprite {
-        --width : 24px;
-        --height : 32px;
+        --width : 64px;
+        --height : 64px;
         --frames: 12;
-        --anim : 1;
-        --y : calc(var(--height) * var(--anim));
-        --x : calc(var(--width) * var(--frames));
+        --anim : 0;
+        --y : calc(var(--height) * var(--anim) * -1);
+        --x : calc(var(--width) * var(--frames) * -1);
         --duration: 333ms;
         width: var(--width);
         height: var(--height);
@@ -106,9 +127,6 @@ class WeatherNav extends HTMLElement {
         this.days = WeatherNav._days.cloneNode(true);
         this.appendChild(this.days);
     }
-    connectedCallback() {
-        this.days.textContent = 'Loading ...';
-    }
     setOnClick(effect) {
         this._onClick = effect;
         return this;
@@ -127,6 +145,18 @@ class WeatherNav extends HTMLElement {
             days.appendChild(button);
         }
         this.replaceChild(days, this.days);
+        this.days = days;
+        return this;
+    }
+    renderPlaceholder(max, msg) {
+        const days = WeatherNav._days.cloneNode(true);
+        for (let i = 0; i < max; i++) {
+            const button = WeatherNav._button.cloneNode(true);
+            button.textContent = msg;
+            days.appendChild(button);
+        }
+        this.replaceChild(days, this.days);
+        this.days = days;
         return this;
     }
 }
@@ -443,6 +473,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     };
     const weather_nav = document.querySelector('weather-nav');
     const weather = document.getElementById('Weather');
+    weather_nav.renderPlaceholder(day_count, '...');
     const app = app_solo_1.newContext()
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
