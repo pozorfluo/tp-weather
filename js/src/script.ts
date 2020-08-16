@@ -63,6 +63,10 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const weather_nav = <WeatherNav>document.querySelector('weather-nav');
   const weather = <HTMLElement>document.getElementById('Weather');
 
+  weather_nav.renderPlaceholder(
+    day_count, '...'
+  );
+
   const app = newContext()
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);

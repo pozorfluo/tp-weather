@@ -14,7 +14,7 @@ export class WeatherNav extends HTMLElement {
   _onClick: (i: number) => void = () => {
     throw 'WeatherDays : effect not set.';
   };
-  
+
   days: HTMLElement;
 
   constructor() {
@@ -23,9 +23,10 @@ export class WeatherNav extends HTMLElement {
     this.appendChild(this.days);
   }
 
-  connectedCallback() {
-    this.days.textContent = 'Loading ...';
-  }
+  // connectedCallback() {
+  //   // this.days.textContent = 'Loading ...';
+  //   this.renderPlaceholder(5, '...');
+  // }
 
   setOnClick(effect: (i: number) => void): this {
     this._onClick = effect;
@@ -46,12 +47,13 @@ export class WeatherNav extends HTMLElement {
       i++
     ) {
       const button = <HTMLElement>WeatherNav._button.cloneNode(true);
-      button.textContent = new Date(
-        timestamps[i]
-      ).toLocaleDateString(navigator.language, {
-        weekday: 'long',
-      });
-      
+      button.textContent = new Date(timestamps[i]).toLocaleDateString(
+        navigator.language,
+        {
+          weekday: 'long',
+        }
+      );
+
       // button.setAttribute('data-day', i + '');
       button.onclick = (e: Event): void => {
         this._onClick(i);
@@ -63,6 +65,20 @@ export class WeatherNav extends HTMLElement {
     }
 
     this.replaceChild(days, this.days);
+    this.days = days;
+    return this;
+  }
+
+  renderPlaceholder(max: number, msg : string): this {
+    const days = <HTMLElement>WeatherNav._days.cloneNode(true);
+    for (let i = 0; i < max; i++) {
+      const button = <HTMLElement>WeatherNav._button.cloneNode(true);
+      button.textContent = msg;
+      days.appendChild(button);
+    }
+
+    this.replaceChild(days, this.days);
+    this.days = days;
     return this;
   }
 }
