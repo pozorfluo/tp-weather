@@ -5,5 +5,7 @@ vanilla typescript web components with KOПЯΛD
 
 ## todo
 
-- Try moving non-UI stuff to a web worker
-- Extract komrad, app-solo updates
+- [ ] Try moving non-UI stuff to a web worker
+- [ ] Extract komrad, app-solo updates
+  - [ ] Add debounce
+  - [ ] Research how to deal with inconsistent read/glitch
