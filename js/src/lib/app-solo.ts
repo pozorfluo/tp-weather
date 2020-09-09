@@ -18,7 +18,7 @@ export interface Subscriber<T> {
 export interface Observable<T> {
   subscribers: Subscriber<T>[];
   value: T;
-  _rate_limit: number;
+  _ticker: number;
   notify: () => Promise<this>;
   subscribe: (subscriber: Subscriber<T>, priority?: number) => this;
   // unsubscribe: (subscriber: Subscriber<T>) => void;
@@ -62,12 +62,13 @@ enum RateLimit {
 export function newObservable<T>(
   value: T,
   // options?: ObservableOptions
-  rateLimit: RateLimit = RateLimit.throttle
+  rateLimit: RateLimit = RateLimit.debounce
 ): Observable<T> {
   const observable: any = {
     subscribers: [],
     value: value,
-    _rate_limit: 0,
+    /** Internal state for rate limiting if any. */
+    _ticker: 0,
     /**
      *
      */
@@ -118,6 +119,7 @@ export function newObservable<T>(
     /**
      * @todo See how wasteful this experiment to avoid a branch is when using
      *       prototype/ctor.
+     * @todo Consider having 'set' point to internal function on prototype.
      */
     // set: options?.debounce
     set: ((rateLimit: RateLimit) => {
@@ -133,10 +135,24 @@ export function newObservable<T>(
           };
         case RateLimit.debounce:
           return function (value: T): Observable<T> {
+            console.log('set', observable._ticker, observable.value);
             /* The buck stops here. */
             if (value !== observable.value) {
               observable.value = value;
-              observable.notify();
+
+              /** Cancel pending notification. */
+              if (observable._ticker) {
+                window.cancelAnimationFrame(observable._ticker);
+                console.log('Cancel notify', observable._ticker, observable.value);
+              }
+
+              /** Schedule notification on next frame. */
+              observable._ticker = window.requestAnimationFrame(function() {
+                observable.notify();
+                console.log('Notify', observable._ticker, observable.value);
+                observable._ticker = 0;
+              })
+              console.log('Schedule notify', observable._ticker, observable.value);
             }
             return observable;
           };

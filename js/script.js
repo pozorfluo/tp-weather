@@ -34,6 +34,9 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const renderForecast = function (f, day) {
         const d = day === 0 ? f.current : f.daily[Math.min(day, day_count)];
         view.pins.city.set(f.city);
+        view.pins.city.set(f.city + 'x');
+        view.pins.city.set(f.city + 'xy');
+        view.pins.city.set(f.city + 'xyz');
         view.pins.icon.set('icons/' + d.icon);
         view.pins.temp.set(`${d.temperature}°`);
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
@@ -58,4 +61,21 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .pub('loading', app_solo_1.newObservable('loading'))
         .muster(weather)
         .activateSubs();
+    const rate_limit_test = document.getElementById('RateLimit');
+    const rate_limit_btn = document.getElementById('RateLimitBtn');
+    const rate_limit = app_solo_1.newContext().muster(rate_limit_test).activateSubs();
+    rate_limit_btn.addEventListener('click', (e) => {
+        console.log('click ----------------');
+        for (let i = 0; i < 100; i++) {
+            rate_limit.pins.mouse_x.set(i);
+            rate_limit.pins.mouse_y.set(i);
+        }
+        setTimeout(() => {
+            rate_limit.pins.mouse_x.set(e.offsetX);
+            rate_limit.pins.mouse_y.set(e.offsetY);
+        }, 1000);
+    });
+    setTimeout(function () {
+        app.data.todos.push('Take a nap... zzsqdsdzzz');
+    }, 3000);
 });

@@ -111,7 +111,6 @@ class SpritePlayer extends HTMLElement {
             this.css.setProperty('animation-name', 'play');
         }
         this._running = !this._running;
-        
     }
     pauseAfter() {
         this._loop = this.css.getPropertyValue('--loop');
@@ -291,10 +290,17 @@ exports.geoLocate = geoLocate;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newContext = exports.withObservable = exports.newObservable = void 0;
 const komrad_1 = require("./komrad");
-function newObservable(value) {
+var RateLimit;
+(function (RateLimit) {
+    RateLimit["none"] = "none";
+    RateLimit["debounce"] = "debounce";
+    RateLimit["throttle"] = "throttle";
+})(RateLimit || (RateLimit = {}));
+function newObservable(value, rateLimit = RateLimit.debounce) {
     const observable = {
         subscribers: [],
         value: value,
+        _ticker: 0,
         notify: function () {
             for (let i = 0, length = observable.subscribers.length; i < length; i++) {
                 observable.subscribers[i](observable.value);
@@ -317,13 +323,44 @@ function newObservable(value) {
         get: function () {
             return observable.value;
         },
-        set: function (value) {
-            if (value !== observable.value) {
-                observable.value = value;
-                observable.notify();
+        set: ((rateLimit) => {
+            switch (rateLimit) {
+                case RateLimit.none:
+                    return function (value) {
+                        if (value !== observable.value) {
+                            observable.value = value;
+                            observable.notify();
+                        }
+                        return observable;
+                    };
+                case RateLimit.debounce:
+                    return function (value) {
+                        console.log('set', observable._ticker, observable.value);
+                        if (value !== observable.value) {
+                            observable.value = value;
+                            if (observable._ticker) {
+                                window.cancelAnimationFrame(observable._ticker);
+                                console.log('Cancel notify', observable._ticker, observable.value);
+                            }
+                            observable._ticker = window.requestAnimationFrame(function () {
+                                observable.notify();
+                                console.log('Notify', observable._ticker, observable.value);
+                                observable._ticker = 0;
+                            });
+                            console.log('Schedule notify', observable._ticker, observable.value);
+                        }
+                        return observable;
+                    };
+                case RateLimit.throttle:
+                    return function (value) {
+                        if (value !== observable.value) {
+                            observable.value = value;
+                            observable.notify();
+                        }
+                        return observable;
+                    };
             }
-            return observable;
-        },
+        })(rateLimit),
     };
     return observable;
 }
@@ -500,6 +537,9 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const renderForecast = function (f, day) {
         const d = day === 0 ? f.current : f.daily[Math.min(day, day_count)];
         view.pins.city.set(f.city);
+        view.pins.city.set(f.city + 'x');
+        view.pins.city.set(f.city + 'xy');
+        view.pins.city.set(f.city + 'xyz');
         view.pins.icon.set('icons/' + d.icon);
         view.pins.temp.set(`${d.temperature}°`);
         view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
@@ -524,6 +564,23 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .pub('loading', app_solo_1.newObservable('loading'))
         .muster(weather)
         .activateSubs();
+    const rate_limit_test = document.getElementById('RateLimit');
+    const rate_limit_btn = document.getElementById('RateLimitBtn');
+    const rate_limit = app_solo_1.newContext().muster(rate_limit_test).activateSubs();
+    rate_limit_btn.addEventListener('click', (e) => {
+        console.log('click ----------------');
+        for (let i = 0; i < 100; i++) {
+            rate_limit.pins.mouse_x.set(i);
+            rate_limit.pins.mouse_y.set(i);
+        }
+        setTimeout(() => {
+            rate_limit.pins.mouse_x.set(e.offsetX);
+            rate_limit.pins.mouse_y.set(e.offsetY);
+        }, 1000);
+    });
+    setTimeout(function () {
+        app.data.todos.push('Take a nap... zzsqdsdzzz');
+    }, 3000);
 });
 
 },{"./components/img-spinner":1,"./components/sprite-player":2,"./components/weather-nav":3,"./geo":4,"./lib/app-solo":5,"./weather":8}],8:[function(require,module,exports){

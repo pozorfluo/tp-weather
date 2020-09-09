@@ -8,11 +8,11 @@ var RateLimit;
     RateLimit["debounce"] = "debounce";
     RateLimit["throttle"] = "throttle";
 })(RateLimit || (RateLimit = {}));
-function newObservable(value, rateLimit = RateLimit.throttle) {
+function newObservable(value, rateLimit = RateLimit.debounce) {
     const observable = {
         subscribers: [],
         value: value,
-        _rate_limit: 0,
+        _ticker: 0,
         notify: function () {
             for (let i = 0, length = observable.subscribers.length; i < length; i++) {
                 observable.subscribers[i](observable.value);
@@ -47,9 +47,19 @@ function newObservable(value, rateLimit = RateLimit.throttle) {
                     };
                 case RateLimit.debounce:
                     return function (value) {
+                        console.log('set', observable._ticker, observable.value);
                         if (value !== observable.value) {
                             observable.value = value;
-                            observable.notify();
+                            if (observable._ticker) {
+                                window.cancelAnimationFrame(observable._ticker);
+                                console.log('Cancel notify', observable._ticker, observable.value);
+                            }
+                            observable._ticker = window.requestAnimationFrame(function () {
+                                observable.notify();
+                                console.log('Notify', observable._ticker, observable.value);
+                                observable._ticker = 0;
+                            });
+                            console.log('Schedule notify', observable._ticker, observable.value);
                         }
                         return observable;
                     };

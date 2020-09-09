@@ -50,6 +50,9 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const renderForecast = function (f: Forecast, day: number): void {
     const d = day === 0 ? f.current : f.daily[Math.min(day, day_count)];
     view.pins.city.set(f.city);
+    view.pins.city.set(f.city + 'x');
+    view.pins.city.set(f.city + 'xy');
+    view.pins.city.set(f.city + 'xyz');
     view.pins.icon.set('icons/' + d.icon);
     view.pins.temp.set(`${d.temperature}°`);
     view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
@@ -63,9 +66,7 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   const weather_nav = <WeatherNav>document.querySelector('weather-nav');
   const weather = <HTMLElement>document.getElementById('Weather');
 
-  weather_nav.renderPlaceholder(
-    day_count, '...'
-  );
+  weather_nav.renderPlaceholder(day_count, '...');
 
   const app = newContext()
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
@@ -87,4 +88,34 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     .muster(weather)
     .activateSubs();
   // .refresh()
+
+  //-------------------------------------------------------- rate limit test ---
+  const rate_limit_test = <HTMLElement>document.getElementById('RateLimit');
+  const rate_limit_btn = <HTMLElement>document.getElementById('RateLimitBtn');
+  const rate_limit = newContext().muster(rate_limit_test).activateSubs();
+
+  rate_limit_btn.addEventListener('click', (e) => {
+    console.log('click ----------------');
+
+    for (let i = 0; i < 100; i++) {
+      rate_limit.pins.mouse_x.set(i);
+      rate_limit.pins.mouse_y.set(i);
+    }
+    setTimeout(() => {
+      rate_limit.pins.mouse_x.set(e.offsetX);
+      rate_limit.pins.mouse_y.set(e.offsetY);
+    }, 1000);
+  });
+
+  // window.addEventListener('mousemove', (e) => {
+  //   rate_limit.pins.mouse_x.set(0);
+  //   rate_limit.pins.mouse_y.set(0);
+  //   rate_limit.pins.mouse_x.set(e.offsetX);
+  //   rate_limit.pins.mouse_y.set(e.offsetY);
+  //   // console.log(e.offsetX, e.offsetY);
+  // })
+
+  setTimeout(function () {
+    app.data.todos.push('Take a nap... zzsqdsdzzz');
+  }, 3000);
 }); /* DOMContentLoaded */

@@ -28,48 +28,39 @@
     <link rel="stylesheet" href="css/weather.css" />
   </head>
   <body>
-      <div id="Weather" class="App">
-        <header class="App-header">
-          <img src="icons/logo_transparent.png" class="App-logo" alt="logo" />
-        </header>
-        <div class="row">
-          <div class="col s12 m6 offset-m3">
-            <div class="weather card blue-grey darken-1">
-              <div class="card-content white-text">
-                <span
-                  class="card-title"
-                  data-pub="city"
-                >...</span>
-                <p>
-                  <img
-                    is="img-spinner"
-                    data-sub="icon"
-                    data-prop="src"
-                    width="128"
-                    height="128"
-                    alt="Weather icon"
-                  />
-                </p>
-                <span
-                  class="temperature"
-                  data-pub="temp"
-                >...°
-                </span>
-                <div
-                  class="wind"
-                  data-pub="wind"
-                >Vent ...km/h (...°)</div>
-                <div
-                  class="date"
-                  data-sub="date"
-                >...</div>
-              </div>
-              <weather-nav>
-              </weather-nav>
+    <div id="Weather" class="App">
+      <header class="App-header">
+        <img src="icons/logo_transparent.png" class="App-logo" alt="logo" />
+      </header>
+      <div class="row">
+        <div class="col s12 m6 offset-m3">
+          <div class="weather card blue-grey darken-1">
+            <div class="card-content white-text">
+              <span class="card-title" data-pub="city">...</span>
+              <p>
+                <img
+                  is="img-spinner"
+                  data-sub="icon"
+                  data-prop="src"
+                  width="128"
+                  height="128"
+                  alt="Weather icon"
+                />
+              </p>
+              <span class="temperature" data-pub="temp">...° </span>
+              <div class="wind" data-pub="wind">Vent ...km/h (...°)</div>
+              <div class="date" data-sub="date">...</div>
             </div>
+            <weather-nav> </weather-nav>
           </div>
         </div>
       </div>
+    </div>
+    <div id="RateLimit" class="App blue-grey">
+      <div data-pub="mouse_x">...</div>
+      <div data-pub="mouse_y">...</div>
+      <button id="RateLimitBtn">Fire</button>
+    </div>
   </body>
   <script src="js/dist/bundle.js"></script>
 </html>
