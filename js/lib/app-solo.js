@@ -9,72 +9,84 @@ var RateLimit;
     RateLimit["throttle"] = "throttle";
 })(RateLimit || (RateLimit = {}));
 function newObservable(value, rateLimit = RateLimit.debounce) {
-    const observable = {
+    const instance = {
         subscribers: [],
         value: value,
         _ticker: 0,
         notify: function () {
-            for (let i = 0, length = observable.subscribers.length; i < length; i++) {
-                observable.subscribers[i](observable.value);
+            for (let i = 0, length = instance.subscribers.length; i < length; i++) {
+                instance.subscribers[i](instance.value);
             }
-            return observable;
+            return instance;
         },
         subscribe: function (subscriber, priority) {
             if (priority === undefined) {
-                observable.subscribers.push(subscriber);
+                instance.subscribers.push(subscriber);
             }
             else {
-                observable.subscribers.splice(priority, 0, subscriber);
+                instance.subscribers.splice(priority, 0, subscriber);
             }
-            return observable;
+            return instance;
         },
         flush: function () {
-            observable.subscribers = [];
-            return observable;
+            instance.subscribers = [];
+            return instance;
         },
         get: function () {
-            return observable.value;
+            return instance.value;
         },
         set: ((rateLimit) => {
             switch (rateLimit) {
                 case RateLimit.none:
                     return function (value) {
-                        if (value !== observable.value) {
-                            observable.value = value;
-                            observable.notify();
+                        if (value !== instance.value) {
+                            instance.value = value;
+                            instance.notify();
                         }
-                        return observable;
+                        return instance;
                     };
                 case RateLimit.debounce:
                     return function (value) {
-                        console.log('set', observable._ticker, observable.value);
-                        if (value !== observable.value) {
-                            observable.value = value;
-                            if (observable._ticker) {
-                                window.cancelAnimationFrame(observable._ticker);
-                                console.log('Cancel notify', observable._ticker, observable.value);
+                        console.log('set', instance._ticker, instance.value);
+                        if (value !== instance.value) {
+                            instance.value = value;
+                            if (instance._ticker) {
+                                window.cancelAnimationFrame(instance._ticker);
+                                console.log('Cancel notify', instance._ticker, instance.value);
                             }
-                            observable._ticker = window.requestAnimationFrame(function () {
-                                observable.notify();
-                                console.log('Notify', observable._ticker, observable.value);
-                                observable._ticker = 0;
+                            instance._ticker = window.requestAnimationFrame(function () {
+                                instance.notify();
+                                console.log(' ----> Notify', instance._ticker, instance.value);
+                                instance._ticker = 0;
                             });
-                            console.log('Schedule notify', observable._ticker, observable.value);
+                            console.log('Schedule notify', instance._ticker, instance.value);
                         }
-                        return observable;
+                        return instance;
                     };
                 case RateLimit.throttle:
                     return function (value) {
-                        if (value !== observable.value) {
-                            observable.value = value;
-                            observable.notify();
+                        if (value !== instance.value) {
+                            instance.value = value;
+                            if (!instance._ticker) {
+                                instance.notify();
+                                console.log('----> LeadNotify', instance._ticker, instance.value);
+                            }
+                            else {
+                                instance._ticker = window.requestAnimationFrame(function (now) {
+                                    window.cancelAnimationFrame(instance._ticker);
+                                    instance.notify();
+                                    console.log(' ----> TrailNotify', instance._ticker, instance.value);
+                                    instance._ticker = 0;
+                                });
+                                console.log('Schedule notify', instance._ticker, instance.value);
+                            }
                         }
-                        return observable;
+                        return instance;
                     };
             }
         })(rateLimit),
     };
-    return observable;
+    return instance;
 }
 exports.newObservable = newObservable;
 function withObservable(name, value) {

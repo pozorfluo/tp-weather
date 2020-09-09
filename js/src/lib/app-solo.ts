@@ -64,7 +64,7 @@ export function newObservable<T>(
   // options?: ObservableOptions
   rateLimit: RateLimit = RateLimit.debounce
 ): Observable<T> {
-  const observable: any = {
+  const instance: any = {
     subscribers: [],
     value: value,
     /** Internal state for rate limiting if any. */
@@ -77,16 +77,16 @@ export function newObservable<T>(
       // const length = this.subscribers.length;
       // const tasks = new Array(length);
       // console.log(this.subscribers);
-      for (let i = 0, length = observable.subscribers.length; i < length; i++) {
+      for (let i = 0, length = instance.subscribers.length; i < length; i++) {
         // console.log('notifying ' + this.subscribers[i]);
         // tasks.push(this.subscribers[i](this.value));
         // tasks[i] = this.subscribers[i](this.value);
         // await this.subscribers[i](this.value);
-        observable.subscribers[i](observable.value);
+        instance.subscribers[i](instance.value);
       }
       /** @todo consider ES2020 Promise.allSettled */
       // await Promise.all(tasks);
-      return observable;
+      return instance;
     },
     /**
      *
@@ -96,25 +96,25 @@ export function newObservable<T>(
       priority?: number
     ): Observable<T> {
       if (priority === undefined) {
-        observable.subscribers.push(subscriber);
+        instance.subscribers.push(subscriber);
       } else {
-        observable.subscribers.splice(priority, 0, subscriber);
+        instance.subscribers.splice(priority, 0, subscriber);
       }
-      return observable;
+      return instance;
     },
     /**
      *
      */
     flush: function (): Observable<T> {
-      observable.subscribers = [];
-      return observable;
+      instance.subscribers = [];
+      return instance;
     },
     /**
      *
      */
     get: function (): T {
       /* Notify that a read is happening here if necessary. */
-      return observable.value;
+      return instance.value;
     },
     /**
      * @todo See how wasteful this experiment to avoid a branch is when using
@@ -127,43 +127,79 @@ export function newObservable<T>(
         case RateLimit.none:
           return function (value: T): Observable<T> {
             /* The buck stops here. */
-            if (value !== observable.value) {
-              observable.value = value;
-              observable.notify();
+            if (value !== instance.value) {
+              instance.value = value;
+              instance.notify();
             }
-            return observable;
+            return instance;
           };
         case RateLimit.debounce:
           return function (value: T): Observable<T> {
-            console.log('set', observable._ticker, observable.value);
+            console.log('set', instance._ticker, instance.value);
             /* The buck stops here. */
-            if (value !== observable.value) {
-              observable.value = value;
+            if (value !== instance.value) {
+              instance.value = value;
 
               /** Cancel pending notification. */
-              if (observable._ticker) {
-                window.cancelAnimationFrame(observable._ticker);
-                console.log('Cancel notify', observable._ticker, observable.value);
+              if (instance._ticker) {
+                window.cancelAnimationFrame(instance._ticker);
+                console.log('Cancel notify', instance._ticker, instance.value);
               }
 
               /** Schedule notification on next frame. */
-              observable._ticker = window.requestAnimationFrame(function() {
-                observable.notify();
-                console.log('Notify', observable._ticker, observable.value);
-                observable._ticker = 0;
-              })
-              console.log('Schedule notify', observable._ticker, observable.value);
+              instance._ticker = window.requestAnimationFrame(function () {
+                instance.notify();
+                console.log(' ----> Notify', instance._ticker, instance.value);
+                instance._ticker = 0;
+              });
+              console.log('Schedule notify', instance._ticker, instance.value);
             }
-            return observable;
+            return instance;
           };
         case RateLimit.throttle:
+          /**
+           * If there is no pending notification
+           *   Notify immediately
+           * Else
+           *   Notify at most once per frame
+           *   Schedule notification with last know value
+           */
           return function (value: T): Observable<T> {
             /* The buck stops here. */
-            if (value !== observable.value) {
-              observable.value = value;
-              observable.notify();
+            if (value !== instance.value) {
+              instance.value = value;
+
+              /** Notify immediately if there are no pending notifications. */
+              if (!instance._ticker) {
+                instance.notify();
+                console.log(
+                  '----> LeadNotify',
+                  instance._ticker,
+                  instance.value
+                );
+              } else {
+                /** Schedule notification on next frame. */
+                instance._ticker = window.requestAnimationFrame(function (
+                  now: DOMHighResTimeStamp
+                ) {
+                  window.cancelAnimationFrame(instance._ticker);
+
+                  instance.notify();
+                  console.log(
+                    ' ----> TrailNotify',
+                    instance._ticker,
+                    instance.value
+                  );
+                  instance._ticker = 0;
+                });
+                console.log(
+                  'Schedule notify',
+                  instance._ticker,
+                  instance.value
+                );
+              }
             }
-            return observable;
+            return instance;
           };
       }
     })(rateLimit),
@@ -182,7 +218,7 @@ export function newObservable<T>(
     //   return observable;
     // }
   };
-  return <Observable<T>>observable;
+  return <Observable<T>>instance;
 }
 
 /**

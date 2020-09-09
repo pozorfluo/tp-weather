@@ -97,13 +97,13 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   rate_limit_btn.addEventListener('click', (e) => {
     console.log('click ----------------');
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
       rate_limit.pins.mouse_x.set(i);
       rate_limit.pins.mouse_y.set(i);
     }
     setTimeout(() => {
-      rate_limit.pins.mouse_x.set(e.offsetX);
-      rate_limit.pins.mouse_y.set(e.offsetY);
+      rate_limit.pins.mouse_x.set(77);
+      rate_limit.pins.mouse_y.set(44);
     }, 1000);
   });
 
@@ -114,8 +114,4 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   //   rate_limit.pins.mouse_y.set(e.offsetY);
   //   // console.log(e.offsetX, e.offsetY);
   // })
-
-  setTimeout(function () {
-    app.data.todos.push('Take a nap... zzsqdsdzzz');
-  }, 3000);
 }); /* DOMContentLoaded */
