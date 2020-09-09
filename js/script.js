@@ -66,13 +66,8 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const rate_limit = app_solo_1.newContext().muster(rate_limit_test).activateSubs();
     rate_limit_btn.addEventListener('click', (e) => {
         console.log('click ----------------');
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 1000; i++) {
             rate_limit.pins.mouse_x.set(i);
-            rate_limit.pins.mouse_y.set(i);
         }
-        setTimeout(() => {
-            rate_limit.pins.mouse_x.set(77);
-            rate_limit.pins.mouse_y.set(44);
-        }, 1000);
     });
 });

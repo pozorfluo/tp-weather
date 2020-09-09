@@ -229,14 +229,17 @@ async function geoIp(api_key) {
     }
 }
 async function geoReverse(lat, lon, api_key) {
-    var _a;
+    var _a, _b;
     try {
         const response = await fetch(`https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`);
         if (response.status >= 400 && response.status < 600) {
             throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
         }
         const result = await response.json();
-        return [result.address.country_code, (_a = result.address.city) !== null && _a !== void 0 ? _a : result.address.town];
+        return [
+            result.address.country_code,
+            (_b = (_a = result.address.city) !== null && _a !== void 0 ? _a : result.address.town) !== null && _b !== void 0 ? _b : result.address.village,
+        ];
     }
     catch (err) {
         console.log(err);
@@ -296,11 +299,12 @@ var RateLimit;
     RateLimit["debounce"] = "debounce";
     RateLimit["throttle"] = "throttle";
 })(RateLimit || (RateLimit = {}));
-function newObservable(value, rateLimit = RateLimit.debounce) {
+function newObservable(value, rateLimit = RateLimit.throttle) {
     const instance = {
         subscribers: [],
         value: value,
         _ticker: 0,
+        _immediate: 0,
         notify: function () {
             for (let i = 0, length = instance.subscribers.length; i < length; i++) {
                 instance.subscribers[i](instance.value);
@@ -355,15 +359,16 @@ function newObservable(value, rateLimit = RateLimit.debounce) {
                     return function (value) {
                         if (value !== instance.value) {
                             instance.value = value;
-                            if (!instance._ticker) {
+                            if (!instance._immediate && !instance._ticker) {
                                 instance.notify();
                                 console.log('----> LeadNotify', instance._ticker, instance.value);
+                                instance._immediate = window.requestAnimationFrame(() => (instance._immediate = 0));
                             }
-                            else {
+                            else if (!instance._ticker) {
                                 instance._ticker = window.requestAnimationFrame(function (now) {
                                     window.cancelAnimationFrame(instance._ticker);
                                     instance.notify();
-                                    console.log(' ----> TrailNotify', instance._ticker, instance.value);
+                                    console.log(' ----> Notify', instance._ticker, instance.value, now);
                                     instance._ticker = 0;
                                 });
                                 console.log('Schedule notify', instance._ticker, instance.value);
@@ -478,9 +483,7 @@ exports.newContext = newContext;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extendCopy = exports.cram = exports.extend = void 0;
 function extend(object, trait) {
-    Object.keys(trait).forEach(function (key) {
-        object[key] = trait[key];
-    });
+    Object.assign(object, trait);
 }
 exports.extend = extend;
 function cram(object, trait) {
@@ -581,14 +584,9 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const rate_limit = app_solo_1.newContext().muster(rate_limit_test).activateSubs();
     rate_limit_btn.addEventListener('click', (e) => {
         console.log('click ----------------');
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 1000; i++) {
             rate_limit.pins.mouse_x.set(i);
-            rate_limit.pins.mouse_y.set(i);
         }
-        setTimeout(() => {
-            rate_limit.pins.mouse_x.set(77);
-            rate_limit.pins.mouse_y.set(44);
-        }, 1000);
     });
 });
 

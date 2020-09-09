@@ -25,7 +25,6 @@ async function getWeather(): Promise<Forecast | null> {
   const loc = await geoLocate(api_keys);
   const forecasts =
     loc !== null ? await getDailyForecasts(loc, api_keys) : null;
-
   /** newForecast not called if loc === null, safe to 'cast' to quiet linter */
   return forecasts !== null ? newForecast(<GeoInfo>loc, forecasts) : null;
 }
@@ -97,14 +96,17 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   rate_limit_btn.addEventListener('click', (e) => {
     console.log('click ----------------');
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 1000; i++) {
       rate_limit.pins.mouse_x.set(i);
-      rate_limit.pins.mouse_y.set(i);
+      //   rate_limit.pins.mouse_y.set(i);
+    //   setTimeout(() => {
+    //     rate_limit.pins.mouse_x.set(i);
+    //   }, i);
     }
-    setTimeout(() => {
-      rate_limit.pins.mouse_x.set(77);
-      rate_limit.pins.mouse_y.set(44);
-    }, 1000);
+    // setTimeout(() => {
+    //   rate_limit.pins.mouse_x.set(77);
+    //   rate_limit.pins.mouse_y.set(44);
+    // }, 1000);
   });
 
   // window.addEventListener('mousemove', (e) => {

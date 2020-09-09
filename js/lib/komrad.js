@@ -2,9 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extendCopy = exports.cram = exports.extend = void 0;
 function extend(object, trait) {
-    Object.keys(trait).forEach(function (key) {
-        object[key] = trait[key];
-    });
+    Object.assign(object, trait);
 }
 exports.extend = extend;
 function cram(object, trait) {

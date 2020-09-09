@@ -62,13 +62,14 @@ enum RateLimit {
 export function newObservable<T>(
   value: T,
   // options?: ObservableOptions
-  rateLimit: RateLimit = RateLimit.debounce
+  rateLimit: RateLimit = RateLimit.throttle
 ): Observable<T> {
   const instance: any = {
     subscribers: [],
     value: value,
     /** Internal state for rate limiting if any. */
     _ticker: 0,
+    _immediate: 0,
     /**
      *
      */
@@ -161,8 +162,7 @@ export function newObservable<T>(
            * If there is no pending notification
            *   Notify immediately
            * Else
-           *   Notify at most once per frame
-           *   Schedule notification with last know value
+           *   Schedule notification
            */
           return function (value: T): Observable<T> {
             /* The buck stops here. */
@@ -170,14 +170,18 @@ export function newObservable<T>(
               instance.value = value;
 
               /** Notify immediately if there are no pending notifications. */
-              if (!instance._ticker) {
+              if (!instance._immediate && !instance._ticker) {
                 instance.notify();
                 console.log(
                   '----> LeadNotify',
                   instance._ticker,
                   instance.value
                 );
-              } else {
+                /** Prevent further immediate notification until next frame. */
+                instance._immediate = window.requestAnimationFrame(
+                  () => (instance._immediate = 0)
+                );
+              } else if (!instance._ticker) {
                 /** Schedule notification on next frame. */
                 instance._ticker = window.requestAnimationFrame(function (
                   now: DOMHighResTimeStamp
@@ -186,9 +190,10 @@ export function newObservable<T>(
 
                   instance.notify();
                   console.log(
-                    ' ----> TrailNotify',
+                    ' ----> Notify',
                     instance._ticker,
-                    instance.value
+                    instance.value,
+                    now
                   );
                   instance._ticker = 0;
                 });

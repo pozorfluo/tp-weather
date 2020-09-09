@@ -8,11 +8,12 @@ var RateLimit;
     RateLimit["debounce"] = "debounce";
     RateLimit["throttle"] = "throttle";
 })(RateLimit || (RateLimit = {}));
-function newObservable(value, rateLimit = RateLimit.debounce) {
+function newObservable(value, rateLimit = RateLimit.throttle) {
     const instance = {
         subscribers: [],
         value: value,
         _ticker: 0,
+        _immediate: 0,
         notify: function () {
             for (let i = 0, length = instance.subscribers.length; i < length; i++) {
                 instance.subscribers[i](instance.value);
@@ -67,15 +68,16 @@ function newObservable(value, rateLimit = RateLimit.debounce) {
                     return function (value) {
                         if (value !== instance.value) {
                             instance.value = value;
-                            if (!instance._ticker) {
+                            if (!instance._immediate && !instance._ticker) {
                                 instance.notify();
                                 console.log('----> LeadNotify', instance._ticker, instance.value);
+                                instance._immediate = window.requestAnimationFrame(() => (instance._immediate = 0));
                             }
-                            else {
+                            else if (!instance._ticker) {
                                 instance._ticker = window.requestAnimationFrame(function (now) {
                                     window.cancelAnimationFrame(instance._ticker);
                                     instance.notify();
-                                    console.log(' ----> TrailNotify', instance._ticker, instance.value);
+                                    console.log(' ----> Notify', instance._ticker, instance.value, now);
                                     instance._ticker = 0;
                                 });
                                 console.log('Schedule notify', instance._ticker, instance.value);

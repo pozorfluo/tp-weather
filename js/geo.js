@@ -19,14 +19,17 @@ async function geoIp(api_key) {
     }
 }
 async function geoReverse(lat, lon, api_key) {
-    var _a;
+    var _a, _b;
     try {
         const response = await fetch(`https://eu1.locationiq.com/v1/reverse.php?key=${api_key}&lat=${lat}&lon=${lon}&format=json`);
         if (response.status >= 400 && response.status < 600) {
             throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
         }
         const result = await response.json();
-        return [result.address.country_code, (_a = result.address.city) !== null && _a !== void 0 ? _a : result.address.town];
+        return [
+            result.address.country_code,
+            (_b = (_a = result.address.city) !== null && _a !== void 0 ? _a : result.address.town) !== null && _b !== void 0 ? _b : result.address.village,
+        ];
     }
     catch (err) {
         console.log(err);
