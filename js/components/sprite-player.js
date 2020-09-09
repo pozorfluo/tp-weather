@@ -62,7 +62,6 @@ class SpritePlayer extends HTMLElement {
             this.css.setProperty('animation-name', 'play');
         }
         this._running = !this._running;
-        
     }
     pauseAfter() {
         this._loop = this.css.getPropertyValue('--loop');

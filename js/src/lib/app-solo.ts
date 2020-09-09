@@ -18,14 +18,28 @@ export interface Subscriber<T> {
 export interface Observable<T> {
   subscribers: Subscriber<T>[];
   value: T;
+  _rate_limit: number;
   notify: () => Promise<this>;
   subscribe: (subscriber: Subscriber<T>, priority?: number) => this;
   // unsubscribe: (subscriber: Subscriber<T>) => void;
   flush: () => this;
   get: () => T;
   set: (value: T) => this;
+  debounce: () => this;
   [extension: string]: any; // open for extension.
 }
+
+/**
+ * Define ObservableOptions object used in Observable constructor.
+ */
+enum RateLimit {
+  none = 'none',
+  debounce = 'debounce',
+  throttle = 'throttle',
+}
+// export interface ObservableOptions {
+//   rateLimit: RateLimit;
+// }
 
 /**
  * Create a new Observable object.
@@ -36,7 +50,7 @@ export interface Observable<T> {
  *
  * @note To resolve notifications according to subscribers priority and
  *       insertion order, notify() Awaits each subscriber's callback in
- *       turn.
+ *       turn. -> not used right now.
  *
  * @todo Research which approach is favored to prevent notification cascade.
  * @todo Defer render to after all compositions/updates are done.
@@ -45,11 +59,18 @@ export interface Observable<T> {
  * @todo Add unsubscribe method.
  * @todo Consider tracking Observables in a list.
  */
-export function newObservable<T>(value: T): Observable<T> {
+export function newObservable<T>(
+  value: T,
+  // options?: ObservableOptions
+  rateLimit: RateLimit = RateLimit.throttle
+): Observable<T> {
   const observable: any = {
     subscribers: [],
     value: value,
-
+    _rate_limit: 0,
+    /**
+     *
+     */
     // notify: async function (): Promise<Observable<T>> {
     notify: function (): Observable<T> {
       // const length = this.subscribers.length;
@@ -66,7 +87,9 @@ export function newObservable<T>(value: T): Observable<T> {
       // await Promise.all(tasks);
       return observable;
     },
-
+    /**
+     *
+     */
     subscribe: function (
       subscriber: Subscriber<T>,
       priority?: number
@@ -78,25 +101,70 @@ export function newObservable<T>(value: T): Observable<T> {
       }
       return observable;
     },
-
+    /**
+     *
+     */
     flush: function (): Observable<T> {
       observable.subscribers = [];
       return observable;
     },
-
+    /**
+     *
+     */
     get: function (): T {
       /* Notify that a read is happening here if necessary. */
       return observable.value;
     },
-
-    set: function (value: T): Observable<T> {
-      /* The buck stops here. */
-      if (value !== observable.value) {
-        observable.value = value;
-        observable.notify();
+    /**
+     * @todo See how wasteful this experiment to avoid a branch is when using
+     *       prototype/ctor.
+     */
+    // set: options?.debounce
+    set: ((rateLimit: RateLimit) => {
+      switch (rateLimit) {
+        case RateLimit.none:
+          return function (value: T): Observable<T> {
+            /* The buck stops here. */
+            if (value !== observable.value) {
+              observable.value = value;
+              observable.notify();
+            }
+            return observable;
+          };
+        case RateLimit.debounce:
+          return function (value: T): Observable<T> {
+            /* The buck stops here. */
+            if (value !== observable.value) {
+              observable.value = value;
+              observable.notify();
+            }
+            return observable;
+          };
+        case RateLimit.throttle:
+          return function (value: T): Observable<T> {
+            /* The buck stops here. */
+            if (value !== observable.value) {
+              observable.value = value;
+              observable.notify();
+            }
+            return observable;
+          };
       }
-      return observable;
-    },
+    })(rateLimit),
+    // set: function (value: T): Observable<T> {
+    //   /* The buck stops here. */
+    //   if (value !== observable.value) {
+    //     observable.value = value;
+    //     observable.notify();
+    //   }
+    //   return observable;
+    // },
+    // /**
+    //  * Debounce this Observable notifications.
+    //  */
+    // debounce: function() : Observable<T> {
+    //   return observable;
+    // }
   };
   return <Observable<T>>observable;
 }
@@ -260,7 +328,7 @@ export function newContext(): Context {
           target: sub_nodes[i].getAttribute('data-prop') ?? 'textContent',
           type: sub_nodes[i].getAttribute('data-type') ?? 'string',
           node: sub_nodes[i],
-        };  
+        };
       }
       Array.prototype.push.apply(context.subs, subs);
       return context;

@@ -2,10 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newContext = exports.withObservable = exports.newObservable = void 0;
 const komrad_1 = require("./komrad");
-function newObservable(value) {
+var RateLimit;
+(function (RateLimit) {
+    RateLimit["none"] = "none";
+    RateLimit["debounce"] = "debounce";
+    RateLimit["throttle"] = "throttle";
+})(RateLimit || (RateLimit = {}));
+function newObservable(value, rateLimit = RateLimit.throttle) {
     const observable = {
         subscribers: [],
         value: value,
+        _rate_limit: 0,
         notify: function () {
             for (let i = 0, length = observable.subscribers.length; i < length; i++) {
                 observable.subscribers[i](observable.value);
@@ -28,13 +35,34 @@ function newObservable(value) {
         get: function () {
             return observable.value;
         },
-        set: function (value) {
-            if (value !== observable.value) {
-                observable.value = value;
-                observable.notify();
+        set: ((rateLimit) => {
+            switch (rateLimit) {
+                case RateLimit.none:
+                    return function (value) {
+                        if (value !== observable.value) {
+                            observable.value = value;
+                            observable.notify();
+                        }
+                        return observable;
+                    };
+                case RateLimit.debounce:
+                    return function (value) {
+                        if (value !== observable.value) {
+                            observable.value = value;
+                            observable.notify();
+                        }
+                        return observable;
+                    };
+                case RateLimit.throttle:
+                    return function (value) {
+                        if (value !== observable.value) {
+                            observable.value = value;
+                            observable.notify();
+                        }
+                        return observable;
+                    };
             }
-            return observable;
-        },
+        })(rateLimit),
     };
     return observable;
 }
