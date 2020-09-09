@@ -55,7 +55,10 @@ async function geoReverse(
       throw new Error("Something went wrong contacting 'eu1.locationiq.com'.");
     }
     const result = await response.json();
-    return [result.address.country_code, result.address.city ?? result.address.town];
+    return [
+      result.address.country_code,
+      result.address.city ?? result.address.town ?? result.address.village,
+    ];
   } catch (err) {
     console.log(err);
     return [null, null];
@@ -100,9 +103,9 @@ export async function geoLocate(api_keys: any): Promise<GeoInfo | null> {
     lat = coords.coords.latitude;
     lon = coords.coords.longitude;
     [country_code, city] = await geoReverse(lat, lon, api_keys.map);
-  } 
-  
-  if (!( lat && lon && country_code && city)){
+  }
+
+  if (!(lat && lon && country_code && city)) {
     ({ latitude: lat, longitude: lon, country_code, city } = await geoIp(
       api_keys.ipdata
     ));
