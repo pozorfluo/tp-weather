@@ -15,9 +15,10 @@ export function extend<
     B extends keyof Base,
     E extends keyof Extension
 >(object: Base, trait: Trait & Extension): void {
-    Object.keys(trait).forEach(function (key) {
-        (<any>object)[<B>key] = trait[<E>key];
-    });
+    Object.assign(object, trait);
+    // Object.keys(trait).forEach(function (key) {
+    //     (<any>object)[<B>key] = trait[<E>key];
+    // });
 }
 
 /**
