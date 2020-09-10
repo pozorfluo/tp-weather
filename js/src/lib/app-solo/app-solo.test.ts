@@ -1,5 +1,4 @@
-import { newContext } from './lib/app-solo';
-import { Context } from 'vm';
+import { newContext, Context } from '.';
 
 // const sum = require('./script');
 
