@@ -55,7 +55,6 @@ export interface Context {
   [extension: string]: any; // open for extension.
 }
 
-// export function newContext(): Context {
 const context: Context = {
   pins: {},
   subs: [],
@@ -221,3 +220,5 @@ export const Context = (function (this: Context): Context {
 Context.prototype = context;
 // const testee = new Context();
 // console.log(testee)
+
+// export default Context;

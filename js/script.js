@@ -5,7 +5,6 @@ const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 require("./components/weather-nav");
 require("./components/img-spinner");
-require("./components/sprite-player");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -46,7 +45,7 @@ function main() {
     const weather_nav = document.querySelector('weather-nav');
     const weather = document.getElementById('Weather');
     weather_nav.renderPlaceholder(day_count, '...');
-    const app = new Context();
+    const app = new app_solo_1.Context();
     app
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
@@ -56,7 +55,7 @@ function main() {
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
     });
-    const view = new Context();
+    const view = new app_solo_1.Context();
     view
         .pub('icon', app_solo_1.newObservable(''))
         .pub('date', app_solo_1.newObservable(''))
@@ -65,7 +64,7 @@ function main() {
         .activateSubs();
     const rate_limit_test = document.getElementById('RateLimit');
     const rate_limit_btn = document.getElementById('RateLimitBtn');
-    const rate_limit = new Context();
+    const rate_limit = new app_solo_1.Context();
     rate_limit.muster(rate_limit_test).activateSubs();
     console.log(view);
     rate_limit_btn.addEventListener('click', (e) => {

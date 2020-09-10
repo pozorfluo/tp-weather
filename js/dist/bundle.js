@@ -48,108 +48,6 @@ customElements.define('img-spinner', ImgSpinner, { extends: 'img' });
 
 },{}],2:[function(require,module,exports){
 "use strict";
-class SpritePlayer extends HTMLElement {
-    constructor() {
-        var _a, _b;
-        super();
-        this._running = true;
-        this._loop = null;
-        this.attachShadow({ mode: 'open' });
-        (_a = this.shadowRoot) === null || _a === void 0 ? void 0 : _a.appendChild(SpritePlayer._template.cloneNode(true));
-        this._sprite = (_b = this.shadowRoot) === null || _b === void 0 ? void 0 : _b.getElementById('sprite');
-        const rules = this.shadowRoot.styleSheets[0].cssRules[0];
-        this.css = rules.style;
-    }
-    static get observedAttributes() {
-        return ['width', 'height', 'anim', 'duration', 'frames', 'loop'];
-    }
-    attributeChangedCallback(name, oldValue, newValue) {
-        this.css.setProperty('--' + name, (newValue !== null && newValue !== void 0 ? newValue : 0) + '');
-    }
-    setLoopDuration(duration) {
-        this.css.setProperty('--duration', duration + 'ms');
-        return this;
-    }
-    setLoop(iterations) {
-        this.css.setProperty('animation-iteration-count', iterations);
-        return this;
-    }
-    setAnim(anim) {
-        this.css.setProperty('--anim', anim + '');
-        return this;
-    }
-    play() {
-        if (this._loop) {
-            this.css.setProperty('animation-iteration-count', this._loop);
-            this._loop = null;
-        }
-        this.css.setProperty('animation-play-state', 'running');
-        this._running = true;
-    }
-    pause() {
-        this.css.setProperty('animation-play-state', 'paused');
-        this._running = false;
-    }
-    toggle() {
-        if (this._loop) {
-            this.css.setProperty('animation-iteration-count', this._loop);
-            this._loop = null;
-        }
-        const toggle = this._running ? 'paused' : 'running';
-        this.css.setProperty('animation-play-state', toggle);
-        this._running = !this._running;
-    }
-    toggleReset() {
-        if (this._running) {
-            this.css.setProperty('animation-name', 'none');
-        }
-        else {
-            if (this._loop) {
-                this.css.setProperty('animation-iteration-count', this._loop);
-                this._loop = null;
-            }
-            this.css.setProperty('animation-name', 'play');
-        }
-        this._running = !this._running;
-    }
-    pauseAfter() {
-        this._loop = this.css.getPropertyValue('--loop');
-        this.css.setProperty('animation-iteration-count', '1');
-        this._running = false;
-    }
-}
-SpritePlayer._template = (() => {
-    const t = document.createElement('template');
-    t.innerHTML = `\
-      <style>
-      #sprite {
-        --width : 64px;
-        --height : 64px;
-        --frames: 12;
-        --anim : 0;
-        --loop : infinite;
-        --y : calc(var(--height) * var(--anim) * -1);
-        --x : calc(var(--width) * var(--frames) * -1);
-        --duration: 333ms;
-        width: var(--width);
-        height: var(--height);
-        background-origin: border-box;
-        background: url('sprites/link.png') 0px var(--y);
-        animation: play var(--duration) steps(var(--frames)) var(--loop);
-      }
-
-      @keyframes play {
-        100% { background-position: var(--x) var(--y); }
-      }
-      </style>
-      <div id="sprite"></div>
-      `;
-    return t.content;
-})();
-customElements.define('sprite-player', SpritePlayer);
-
-},{}],3:[function(require,module,exports){
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WeatherNav = void 0;
 class WeatherNav extends HTMLElement {
@@ -207,7 +105,7 @@ WeatherNav._days = (() => {
 })();
 customElements.define('weather-nav', WeatherNav);
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geoLocate = void 0;
@@ -288,10 +186,128 @@ async function geoLocate(api_keys) {
 }
 exports.geoLocate = geoLocate;
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.newContext = exports.withObservable = exports.newObservable = void 0;
+exports.Context = void 0;
+const observable_1 = require("./observable");
+const context = {
+    pins: {},
+    subs: [],
+    pub: function (name, pin, ...subscribers) {
+        context.pins[name] = pin;
+        for (let i = 0, length = subscribers.length; i < length; i++) {
+            pin.subscribe(subscribers[i]);
+        }
+        return context;
+    },
+    remove: function (name) {
+        if (context.pins[name] !== undefined) {
+            context.pins[name].flush();
+            delete context.pins[name];
+        }
+        return context;
+    },
+    merge: function (another_context) {
+        if (another_context.pins !== undefined) {
+            another_context = another_context.pins;
+        }
+        Object.assign(context.pins, another_context);
+        return context;
+    },
+    musterPubs: function (element) {
+        var _a, _b, _c;
+        const pub_nodes = [...element.querySelectorAll('[data-pub]')];
+        const length = pub_nodes.length;
+        const subs = Array(length);
+        for (let i = 0; i < length; i++) {
+            const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
+            const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
+            const initial_value = pub_nodes[i][target];
+            context.pub(source, observable_1.newObservable(initial_value));
+            subs[i] = {
+                source: context.pins[source] !== undefined ? context.pins[source] : source,
+                target: target,
+                type: (_c = pub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
+                node: pub_nodes[i],
+            };
+        }
+        Array.prototype.push.apply(context.subs, subs);
+        return context;
+    },
+    musterSubs: function (element) {
+        var _a, _b, _c;
+        const sub_nodes = [...element.querySelectorAll('[data-sub]')];
+        const length = sub_nodes.length;
+        const subs = Array(length);
+        for (let i = 0; i < length; i++) {
+            const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'data-sub or';
+            if (!context.pins[source])
+                throw source + ' pin does not exist !';
+            subs[i] = {
+                source: context.pins[source],
+                target: (_b = sub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent',
+                type: (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
+                node: sub_nodes[i],
+            };
+        }
+        Array.prototype.push.apply(context.subs, subs);
+        return context;
+    },
+    muster: function (element) {
+        return context.musterPubs(element).musterSubs(element);
+    },
+    setSubs: function (subs) {
+        context.subs = subs;
+        return context;
+    },
+    activateSubs: function () {
+        for (let i = 0, length = context.subs.length; i < length; i++) {
+            const target = context.subs[i].target;
+            const node = context.subs[i].node;
+            if (!node[target])
+                throw target + ' is not a valid node prop !';
+            context.subs[i].source.subscribe((value) => {
+                node[target] = value;
+            });
+        }
+        return context;
+    },
+    refresh: function () {
+        for (const pin of Object.values(context.pins)) {
+            pin.notify();
+        }
+        return context;
+    },
+};
+exports.Context = function () {
+    if (!new.target) {
+        throw 'Context() must be called with new !';
+    }
+    return this;
+};
+exports.Context.prototype = context;
+
+},{"./observable":6}],5:[function(require,module,exports){
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !exports.hasOwnProperty(p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+__exportStar(require("./observable"), exports);
+__exportStar(require("./context"), exports);
+
+},{"./context":4,"./observable":6}],6:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.withObservable = exports.newObservable = void 0;
 var RateLimit;
 (function (RateLimit) {
     RateLimit["none"] = "none";
@@ -389,97 +405,8 @@ function withObservable(name, value) {
     return trait;
 }
 exports.withObservable = withObservable;
-function newContext() {
-    const context = {
-        pins: {},
-        subs: [],
-        pub: function (name, pin, ...subscribers) {
-            context.pins[name] = pin;
-            for (let i = 0, length = subscribers.length; i < length; i++) {
-                pin.subscribe(subscribers[i]);
-            }
-            return context;
-        },
-        remove: function (name) {
-            if (context.pins[name] !== undefined) {
-                context.pins[name].flush();
-                delete context.pins[name];
-            }
-            return context;
-        },
-        merge: function (another_context) {
-            if (another_context.pins !== undefined) {
-                another_context = another_context.pins;
-            }
-            Object.assign(context.pins, another_context);
-            return context;
-        },
-        musterPubs: function (element) {
-            var _a, _b, _c;
-            const pub_nodes = [...element.querySelectorAll('[data-pub]')];
-            const length = pub_nodes.length;
-            const subs = Array(length);
-            for (let i = 0; i < length; i++) {
-                const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
-                const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
-                const initial_value = pub_nodes[i][target];
-                context.pub(source, newObservable(initial_value));
-                subs[i] = {
-                    source: context.pins[source] !== undefined ? context.pins[source] : source,
-                    target: target,
-                    type: (_c = pub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
-                    node: pub_nodes[i],
-                };
-            }
-            Array.prototype.push.apply(context.subs, subs);
-            return context;
-        },
-        musterSubs: function (element) {
-            var _a, _b, _c;
-            const sub_nodes = [...element.querySelectorAll('[data-sub]')];
-            const length = sub_nodes.length;
-            const subs = Array(length);
-            for (let i = 0; i < length; i++) {
-                const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'error';
-                subs[i] = {
-                    source: context.pins[source] !== undefined ? context.pins[source] : source,
-                    target: (_b = sub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent',
-                    type: (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
-                    node: sub_nodes[i],
-                };
-            }
-            Array.prototype.push.apply(context.subs, subs);
-            return context;
-        },
-        muster: function (element) {
-            return context.musterPubs(element).musterSubs(element);
-        },
-        setSubs: function (subs) {
-            context.subs = subs;
-            return context;
-        },
-        activateSubs: function () {
-            for (let i = 0, length = context.subs.length; i < length; i++) {
-                if (typeof context.subs[i].source !== 'string') {
-                    context.subs[i].source.subscribe((value) => {
-                        context.subs[i].node[context.subs[i].target] = value;
-                    });
-                }
-            }
-            return context;
-        },
-        refresh: function () {
-            for (const pin of Object.values(context.pins)) {
-                pin.notify();
-            }
-            return context;
-        },
-    };
-    return context;
-}
-exports.newContext = newContext;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./lib/app-solo");
@@ -487,7 +414,6 @@ const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 require("./components/weather-nav");
 require("./components/img-spinner");
-require("./components/sprite-player");
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -528,7 +454,7 @@ function main() {
     const weather_nav = document.querySelector('weather-nav');
     const weather = document.getElementById('Weather');
     weather_nav.renderPlaceholder(day_count, '...');
-    const app = new Context();
+    const app = new app_solo_1.Context();
     app
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
@@ -538,7 +464,7 @@ function main() {
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
     });
-    const view = new Context();
+    const view = new app_solo_1.Context();
     view
         .pub('icon', app_solo_1.newObservable(''))
         .pub('date', app_solo_1.newObservable(''))
@@ -547,7 +473,7 @@ function main() {
         .activateSubs();
     const rate_limit_test = document.getElementById('RateLimit');
     const rate_limit_btn = document.getElementById('RateLimitBtn');
-    const rate_limit = new Context();
+    const rate_limit = new app_solo_1.Context();
     rate_limit.muster(rate_limit_test).activateSubs();
     console.log(view);
     rate_limit_btn.addEventListener('click', (e) => {
@@ -561,7 +487,7 @@ document.readyState === 'loading'
     ? window.addEventListener('DOMContentLoaded', main)
     : main();
 
-},{"./components/img-spinner":1,"./components/sprite-player":2,"./components/weather-nav":3,"./geo":4,"./lib/app-solo":5,"./weather":7}],7:[function(require,module,exports){
+},{"./components/img-spinner":1,"./components/weather-nav":2,"./geo":3,"./lib/app-solo":5,"./weather":8}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
@@ -629,4 +555,4 @@ async function getDailyForecasts(loc, api_keys) {
 }
 exports.getDailyForecasts = getDailyForecasts;
 
-},{}]},{},[6]);
+},{}]},{},[7]);

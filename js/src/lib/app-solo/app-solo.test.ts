@@ -1,4 +1,4 @@
-import {Context } from '.';
+import {Context} from '.';
 
 it('uses jsdom in this test file', () => {
   const element = document.createElement('div');
