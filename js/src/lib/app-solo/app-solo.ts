@@ -1,4 +1,4 @@
-import { Trait, extend } from './komrad';
+import { Trait } from '../komrad';
 
 //------------------------------------------------------------------ app-solo.ts
 /**
@@ -18,7 +18,8 @@ export interface Subscriber<T> {
 export interface Observable<T> {
   subscribers: Subscriber<T>[];
   value: T;
-  _ticker: number;
+  _pending: number;
+  _timeout: number;
   notify: () => Promise<this>;
   subscribe: (subscriber: Subscriber<T>, priority?: number) => this;
   // unsubscribe: (subscriber: Subscriber<T>) => void;
@@ -68,8 +69,8 @@ export function newObservable<T>(
     subscribers: [],
     value: value,
     /** Internal state for rate limiting if any. */
-    _ticker: 0,
-    _immediate: 0,
+    _pending: 0,
+    _timeout: 0,
     /**
      *
      */
@@ -136,72 +137,75 @@ export function newObservable<T>(
           };
         case RateLimit.debounce:
           return function (value: T): Observable<T> {
-            console.log('set', instance._ticker, instance.value);
+            console.log('set', instance._pending, instance.value);
             /* The buck stops here. */
             if (value !== instance.value) {
               instance.value = value;
 
               /** Cancel pending notification. */
-              if (instance._ticker) {
-                window.cancelAnimationFrame(instance._ticker);
-                console.log('Cancel notify', instance._ticker, instance.value);
+              if (instance._pending) {
+                window.cancelAnimationFrame(instance._pending);
+                console.log('Cancel notify', instance._pending, instance.value);
               }
 
               /** Schedule notification on next frame. */
-              instance._ticker = window.requestAnimationFrame(function () {
+              instance._pending = window.requestAnimationFrame(function () {
                 instance.notify();
-                console.log(' ----> Notify', instance._ticker, instance.value);
-                instance._ticker = 0;
+                console.log(' ----> Notify', instance._pending, instance.value);
+                instance._pending = 0;
               });
-              console.log('Schedule notify', instance._ticker, instance.value);
+              console.log('Schedule notify', instance._pending, instance.value);
             }
             return instance;
           };
         case RateLimit.throttle:
           /**
            * If there is no pending notification
-           *   Notify immediately
-           * Else
-           *   Schedule notification
+           *
+           *     Notify immediately
+           *   Else
+           *     Schedule notification
            */
           return function (value: T): Observable<T> {
             /* The buck stops here. */
             if (value !== instance.value) {
               instance.value = value;
 
-              /** Notify immediately if there are no pending notifications. */
-              if (!instance._immediate && !instance._ticker) {
-                instance.notify();
-                console.log(
-                  '----> LeadNotify',
-                  instance._ticker,
-                  instance.value
-                );
-                /** Prevent further immediate notification until next frame. */
-                instance._immediate = window.requestAnimationFrame(
-                  () => (instance._immediate = 0)
-                );
-              } else if (!instance._ticker) {
-                /** Schedule notification on next frame. */
-                instance._ticker = window.requestAnimationFrame(function (
-                  now: DOMHighResTimeStamp
-                ) {
-                  window.cancelAnimationFrame(instance._ticker);
-
+              if (!instance._pending) {
+                /** Notify immediately if not on timeout. */
+                if (!instance._timeout) {
                   instance.notify();
                   console.log(
-                    ' ----> Notify',
-                    instance._ticker,
-                    instance.value,
-                    now
+                    '----> LeadNotify',
+                    instance._pending,
+                    instance.value
                   );
-                  instance._ticker = 0;
-                });
-                console.log(
-                  'Schedule notify',
-                  instance._ticker,
-                  instance.value
-                );
+                  /** Prevent further immediate notification until next frame. */
+                  instance._timeout = window.requestAnimationFrame(
+                    () => (instance._timeout = 0)
+                  );
+                } else {
+                  /** Schedule notification on next frame. */
+                  instance._pending = window.requestAnimationFrame(function (
+                    now: DOMHighResTimeStamp
+                  ) {
+                    window.cancelAnimationFrame(instance._pending);
+
+                    instance.notify();
+                    console.log(
+                      ' ----> Notify',
+                      instance._pending,
+                      instance.value,
+                      now
+                    );
+                    instance._pending = 0;
+                  });
+                  console.log(
+                    'Schedule notify',
+                    instance._pending,
+                    instance.value
+                  );
+                }
               }
             }
             return instance;
@@ -255,6 +259,9 @@ export interface Sub<T> {
 
 /**
  * Define Context object.
+ * 
+ * @note Because Context relies on apply() to concatenate arrays it can only
+ *       handle up to 65536 subs.
  *
  * @todo Add deactivatePins method.
  * @todo Add deactivateLinks method.
@@ -262,6 +269,7 @@ export interface Sub<T> {
  *       observables_iterator.
  *       Object.is(app.observables.forecasts,
  *                 app.observables_iterator[0][1])) is true though.
+ * @todo Add clearSubs, clearPubs, clear.
  */
 export interface Context {
   readonly pins: { [name: string]: Observable<any> };
@@ -329,7 +337,8 @@ export function newContext(): Context {
       if (another_context.pins !== undefined) {
         another_context = another_context.pins;
       }
-      extend(context.pins, another_context);
+      // extend(context.pins, another_context);
+      Object.assign(context.pins, another_context);
       return context;
     },
 
@@ -339,9 +348,11 @@ export function newContext(): Context {
      * @note A pub is a sub that publishes its initial value as an observable to
      *       a context, i.e., it is immediately subscribed to this new
      *       observable value.
+     * 
+     * @note musterPubs is not idempotent. Y
      */
     musterPubs: function (element: ParentNode): Context {
-      const pub_nodes = [...element.querySelectorAll('[data-pub')];
+      const pub_nodes = [...element.querySelectorAll('[data-pub]')];
       const length = pub_nodes.length;
       const subs: Sub<any>[] = Array(length);
 

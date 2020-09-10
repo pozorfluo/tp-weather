@@ -292,7 +292,6 @@ exports.geoLocate = geoLocate;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.newContext = exports.withObservable = exports.newObservable = void 0;
-const komrad_1 = require("./komrad");
 var RateLimit;
 (function (RateLimit) {
     RateLimit["none"] = "none";
@@ -303,8 +302,8 @@ function newObservable(value, rateLimit = RateLimit.throttle) {
     const instance = {
         subscribers: [],
         value: value,
-        _ticker: 0,
-        _immediate: 0,
+        _pending: 0,
+        _timeout: 0,
         notify: function () {
             for (let i = 0, length = instance.subscribers.length; i < length; i++) {
                 instance.subscribers[i](instance.value);
@@ -339,19 +338,19 @@ function newObservable(value, rateLimit = RateLimit.throttle) {
                     };
                 case RateLimit.debounce:
                     return function (value) {
-                        console.log('set', instance._ticker, instance.value);
+                        console.log('set', instance._pending, instance.value);
                         if (value !== instance.value) {
                             instance.value = value;
-                            if (instance._ticker) {
-                                window.cancelAnimationFrame(instance._ticker);
-                                console.log('Cancel notify', instance._ticker, instance.value);
+                            if (instance._pending) {
+                                window.cancelAnimationFrame(instance._pending);
+                                console.log('Cancel notify', instance._pending, instance.value);
                             }
-                            instance._ticker = window.requestAnimationFrame(function () {
+                            instance._pending = window.requestAnimationFrame(function () {
                                 instance.notify();
-                                console.log(' ----> Notify', instance._ticker, instance.value);
-                                instance._ticker = 0;
+                                console.log(' ----> Notify', instance._pending, instance.value);
+                                instance._pending = 0;
                             });
-                            console.log('Schedule notify', instance._ticker, instance.value);
+                            console.log('Schedule notify', instance._pending, instance.value);
                         }
                         return instance;
                     };
@@ -359,19 +358,21 @@ function newObservable(value, rateLimit = RateLimit.throttle) {
                     return function (value) {
                         if (value !== instance.value) {
                             instance.value = value;
-                            if (!instance._immediate && !instance._ticker) {
-                                instance.notify();
-                                console.log('----> LeadNotify', instance._ticker, instance.value);
-                                instance._immediate = window.requestAnimationFrame(() => (instance._immediate = 0));
-                            }
-                            else if (!instance._ticker) {
-                                instance._ticker = window.requestAnimationFrame(function (now) {
-                                    window.cancelAnimationFrame(instance._ticker);
+                            if (!instance._pending) {
+                                if (!instance._timeout) {
                                     instance.notify();
-                                    console.log(' ----> Notify', instance._ticker, instance.value, now);
-                                    instance._ticker = 0;
-                                });
-                                console.log('Schedule notify', instance._ticker, instance.value);
+                                    console.log('----> LeadNotify', instance._pending, instance.value);
+                                    instance._timeout = window.requestAnimationFrame(() => (instance._timeout = 0));
+                                }
+                                else {
+                                    instance._pending = window.requestAnimationFrame(function (now) {
+                                        window.cancelAnimationFrame(instance._pending);
+                                        instance.notify();
+                                        console.log(' ----> Notify', instance._pending, instance.value, now);
+                                        instance._pending = 0;
+                                    });
+                                    console.log('Schedule notify', instance._pending, instance.value);
+                                }
                             }
                         }
                         return instance;
@@ -410,12 +411,12 @@ function newContext() {
             if (another_context.pins !== undefined) {
                 another_context = another_context.pins;
             }
-            komrad_1.extend(context.pins, another_context);
+            Object.assign(context.pins, another_context);
             return context;
         },
         musterPubs: function (element) {
             var _a, _b, _c;
-            const pub_nodes = [...element.querySelectorAll('[data-pub')];
+            const pub_nodes = [...element.querySelectorAll('[data-pub]')];
             const length = pub_nodes.length;
             const subs = Array(length);
             for (let i = 0; i < length; i++) {
@@ -478,44 +479,7 @@ function newContext() {
 }
 exports.newContext = newContext;
 
-},{"./komrad":6}],6:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.extendCopy = exports.cram = exports.extend = void 0;
-function extend(object, trait) {
-    Object.assign(object, trait);
-}
-exports.extend = extend;
-function cram(object, trait) {
-    Object.keys(trait).forEach(function (key) {
-        switch (typeof object[key]) {
-            case 'object':
-                if (Array.isArray(object[key])) {
-                    [...object[key], trait[key]];
-                }
-                else {
-                    extend(object[key], trait[key]);
-                }
-                break;
-            case undefined:
-            default:
-                object[key] = trait[key];
-                break;
-        }
-    });
-    return object;
-}
-exports.cram = cram;
-function extendCopy(object, trait) {
-    const extended_copy = Object.assign({}, object);
-    Object.keys(trait).forEach(function (key) {
-        extended_copy[key] = trait[key];
-    });
-    return extended_copy;
-}
-exports.extendCopy = extendCopy;
-
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_solo_1 = require("./lib/app-solo");
@@ -590,7 +554,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
     });
 });
 
-},{"./components/img-spinner":1,"./components/sprite-player":2,"./components/weather-nav":3,"./geo":4,"./lib/app-solo":5,"./weather":8}],8:[function(require,module,exports){
+},{"./components/img-spinner":1,"./components/sprite-player":2,"./components/weather-nav":3,"./geo":4,"./lib/app-solo":5,"./weather":7}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDailyForecasts = exports.newForecast = void 0;
@@ -658,4 +622,4 @@ async function getDailyForecasts(loc, api_keys) {
 }
 exports.getDailyForecasts = getDailyForecasts;
 
-},{}]},{},[7]);
+},{}]},{},[6]);

@@ -1,17 +1,59 @@
+import { newContext } from './lib/app-solo';
+import { Context } from 'vm';
+
 // const sum = require('./script');
 
-import { newTimer } from './script';
+// import { newTimer } from './script';
 
-test('use jsdom in this test file', () => {
-    const element = document.createElement('div');
-    expect(element).not.toBeNull();
+it('uses jsdom in this test file', () => {
+  const element = document.createElement('div');
+  expect(element).not.toBeNull();
 });
 
-// test('adds 1 + 2 to equal 3', () => {
-//     expect(sum(1, 2)).toBe(3);
-// });
+describe('Context', () => {
+  let context: Context;
+  let element: HTMLElement;
 
-test('can call function defined inside module from this test file', () => {
-    const timer = newTimer();     
-    expect(timer).not.toBeNull();
+  beforeEach(() => {
+    context = newContext();
+    element = document.createElement('div');
+    element.innerHTML = `
+      <span data-pub="test">test string</span>
+      <span data-sub="test"></span>
+      <input type="text" data-sub="test" data-prop="value" />
+    `;
+  });
+
+  it('can create a new context', () => {
+    // expect(context).any(Context);
+    expect(context.pins).toStrictEqual({});
+  });
+
+  it('can muster pubs and subs from a parent element', () => {
+    context.muster(element);
+    expect(context.pins).toEqual(
+      expect.objectContaining({
+        // test : expect.any(Observable);
+        test: expect.anything(),
+      })
+    );
+    expect(context.subs.length).toBe(3);
+    expect(context.subs).toEqual(
+      expect.arrayContaining(
+        // [expect.any(Sub)],
+        [
+          expect.objectContaining({
+            source: expect.anything(),
+            target: expect.any(String),
+            type: expect.any(String),
+            node: expect.any(Node),
+          }),
+        ]
+      )
+    );
+  });
+
+  it('leaves no danglings subs after a clear', () => {
+    expect(context.pins).toStrictEqual({});
+  });
 });
