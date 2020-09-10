@@ -1,6 +1,6 @@
 import { Trait } from '../komrad';
 
-//------------------------------------------------------------------ app-solo.ts
+//-------------------------------------------------------------- app-solo.ts ---
 /**
  * 
  */
@@ -29,8 +29,6 @@ export interface Observable<T> {
   debounce: () => this;
   [extension: string]: any; // open for extension.
 }
-
-
 
 /**
  * Define ObservableOptions object used in Observable constructor.

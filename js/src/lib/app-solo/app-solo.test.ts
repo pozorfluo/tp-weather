@@ -1,8 +1,4 @@
-import { newContext, Context } from '.';
-
-// const sum = require('./script');
-
-// import { newTimer } from './script';
+import {Context } from '.';
 
 it('uses jsdom in this test file', () => {
   const element = document.createElement('div');
@@ -14,7 +10,7 @@ describe('Context', () => {
   let element: HTMLElement;
 
   beforeEach(() => {
-    context = newContext();
+    context = new Context();
     element = document.createElement('div');
     element.innerHTML = `
       <span data-pub="test">test string</span>
@@ -28,7 +24,7 @@ describe('Context', () => {
     expect(context.pins).toStrictEqual({});
   });
 
-  it('can muster pubs and subs from a parent element', () => {
+  it('can muster pubs and subs from a parent Node', () => {
     context.muster(element);
     expect(context.pins).toEqual(
       expect.objectContaining({
@@ -52,7 +48,27 @@ describe('Context', () => {
     );
   });
 
-  it('leaves no danglings subs after a clear', () => {
-    expect(context.pins).toStrictEqual({});
+  it('throws when trying to muster an observable-less sub', () => {
+    element = document.createElement('div');
+    element.innerHTML = `
+      <span data-sub="pinDoesNotExist"></span>
+    `;
+    expect(() => {
+      context.muster(element);
+    }).toThrow();
   });
+
+  it('throws when trying to activate a sub with an invalid data-prop', () => {
+    element = document.createElement('div');
+    element.innerHTML = `
+      <span data-sub="test" data-prop="invalidTarget"></span>
+    `;
+    expect(() => {
+      context.muster(element).activateSubs();
+    }).toThrow();
+  });
+
+  // it('leaves no danglings subs after a clear', () => {
+  //   expect(context.pins).toStrictEqual({});
+  // });
 });

@@ -1,4 +1,4 @@
-import { newObservable, newContext } from './lib/app-solo';
+import { newObservable, Context } from './lib/app-solo';
 import { geoLocate, GeoInfo } from './geo';
 import { getDailyForecasts, Forecast, Daily, newForecast } from './weather';
 
@@ -33,7 +33,7 @@ async function getWeather(): Promise<Forecast | null> {
 /**
  * Run the app !
  */
-window.addEventListener('DOMContentLoaded', function (event: Event) {
+function main(): void {
   const day_count = 5;
 
   getWeather()
@@ -67,7 +67,8 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
 
   weather_nav.renderPlaceholder(day_count, '...');
 
-  const app = newContext()
+  const app = new Context();
+  app
     .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
       weather_nav.setOnClick(app.pins.day.set);
@@ -80,7 +81,8 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
       renderForecast(app.pins.forecasts.value, d);
     });
 
-  const view = newContext()
+  const view = new Context();
+  view
     .pub('icon', newObservable<string>(''))
     .pub('date', newObservable<string>(''))
     .pub('loading', newObservable<string>('loading'))
@@ -91,7 +93,10 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   //-------------------------------------------------------- rate limit test ---
   const rate_limit_test = <HTMLElement>document.getElementById('RateLimit');
   const rate_limit_btn = <HTMLElement>document.getElementById('RateLimitBtn');
-  const rate_limit = newContext().muster(rate_limit_test).activateSubs();
+  const rate_limit = new Context();
+  rate_limit.muster(rate_limit_test).activateSubs();
+
+  console.log(view);
 
   rate_limit_btn.addEventListener('click', (e) => {
     console.log('click ----------------');
@@ -99,9 +104,9 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
     for (let i = 0; i < 1000; i++) {
       rate_limit.pins.mouse_x.set(i);
       //   rate_limit.pins.mouse_y.set(i);
-    //   setTimeout(() => {
-    //     rate_limit.pins.mouse_x.set(i);
-    //   }, i);
+      //   setTimeout(() => {
+      //     rate_limit.pins.mouse_x.set(i);
+      //   }, i);
     }
     // setTimeout(() => {
     //   rate_limit.pins.mouse_x.set(77);
@@ -116,4 +121,8 @@ window.addEventListener('DOMContentLoaded', function (event: Event) {
   //   rate_limit.pins.mouse_y.set(e.offsetY);
   //   // console.log(e.offsetX, e.offsetY);
   // })
-}); /* DOMContentLoaded */
+}
+//---------------------------------------------------------------------- run ---
+document.readyState === 'loading'
+  ? window.addEventListener('DOMContentLoaded', main)
+  : main();

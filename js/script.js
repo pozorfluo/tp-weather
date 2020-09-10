@@ -21,7 +21,7 @@ async function getWeather() {
     const forecasts = loc !== null ? await weather_1.getDailyForecasts(loc, api_keys) : null;
     return forecasts !== null ? weather_1.newForecast(loc, forecasts) : null;
 }
-window.addEventListener('DOMContentLoaded', function (event) {
+function main() {
     const day_count = 5;
     getWeather()
         .then((forecasts) => {
@@ -46,7 +46,8 @@ window.addEventListener('DOMContentLoaded', function (event) {
     const weather_nav = document.querySelector('weather-nav');
     const weather = document.getElementById('Weather');
     weather_nav.renderPlaceholder(day_count, '...');
-    const app = app_solo_1.newContext()
+    const app = new Context();
+    app
         .pub('forecasts', app_solo_1.newObservable(null), (f) => {
         renderForecast(f, 0);
         weather_nav.setOnClick(app.pins.day.set);
@@ -55,7 +56,8 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .pub('day', app_solo_1.newObservable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
     });
-    const view = app_solo_1.newContext()
+    const view = new Context();
+    view
         .pub('icon', app_solo_1.newObservable(''))
         .pub('date', app_solo_1.newObservable(''))
         .pub('loading', app_solo_1.newObservable('loading'))
@@ -63,11 +65,16 @@ window.addEventListener('DOMContentLoaded', function (event) {
         .activateSubs();
     const rate_limit_test = document.getElementById('RateLimit');
     const rate_limit_btn = document.getElementById('RateLimitBtn');
-    const rate_limit = app_solo_1.newContext().muster(rate_limit_test).activateSubs();
+    const rate_limit = new Context();
+    rate_limit.muster(rate_limit_test).activateSubs();
+    console.log(view);
     rate_limit_btn.addEventListener('click', (e) => {
         console.log('click ----------------');
         for (let i = 0; i < 1000; i++) {
             rate_limit.pins.mouse_x.set(i);
         }
     });
-});
+}
+document.readyState === 'loading'
+    ? window.addEventListener('DOMContentLoaded', main)
+    : main();
