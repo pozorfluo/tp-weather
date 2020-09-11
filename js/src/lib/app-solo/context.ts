@@ -35,7 +35,7 @@ export interface Sub<T> {
  * @todo Add clearSubs, clearPubs, clear.
  */
 export interface Context {
-  readonly pins: { [name: string]: Observable<any> };
+  pins: { [name: string]: Observable<any> };
   subs: Sub<any>[];
   pub: (
     name: string,
@@ -52,53 +52,67 @@ export interface Context {
   setSubs: (pins: Sub<any>[]) => this;
   activateSubs: () => this;
   refresh: () => this;
-  [extension: string]: any; // open for extension.
+  // [extension: string]: any; // open for extension.
 }
 
-const context: Context = {
-  pins: {},
-  subs: [],
-  /**
-   * Register observable in this context.
-   */
-  pub: function (
-    name: string,
-    pin: Observable<any>,
-    ...subscribers: Subscriber<any>[]
-  ): Context {
-    context.pins[name] = pin;
-    for (let i = 0, length = subscribers.length; i < length; i++) {
-      pin.subscribe(subscribers[i]);
-    }
-    return context;
-  },
-  /**
-   * Remove observable from this context.
-   *
-   * @todo Unsubscribe/delete from observables properly.
-   */
-  remove: function (name: string): Context {
-    if (context.pins[name] !== undefined) {
-      context.pins[name].flush();
-      delete context.pins[name];
-    }
-    return context;
-  },
+/**
+ * Define Context constructor.
+ */
+export type ContextCtor = { new (): Context };
 
-  /**
-   * Merge observables from another given context.
-   */
-  merge: function (
-    another_context: Context | { [name: string]: Observable<any> }
-  ): Context {
-    if (another_context.pins !== undefined) {
-        another_context = <any>another_context.pins;
-    }
-    // extend(context.pins, another_context);
-    Object.assign(context.pins, another_context);
-    return context;
-  },
+/**
+ * Create a new Context object.
+ */
+export const Context = (function (this: Context): Context {
+  if (!new.target) {
+    throw 'Context() must be called with new !';
+  }
+  this.pins = {};
+  this.subs = [];
+  return this;
+} as any) as ContextCtor;
 
+/**
+ * Register observable in this context.
+ */
+Context.prototype.pub = function (
+  name: string,
+  pin: Observable<any>,
+  ...subscribers: Subscriber<any>[]
+): Context {
+  this.pins[name] = pin;
+  for (let i = 0, length = subscribers.length; i < length; i++) {
+    pin.subscribe(subscribers[i]);
+  }
+  return this;
+};
+
+/**
+ * Remove observable from this context.
+ *
+ * @todo Unsubscribe/delete from observables properly.
+ */
+Context.prototype.remove = function (name: string): Context {
+  if (this.pins[name] !== undefined) {
+    this.pins[name].flush();
+    delete this.pins[name];
+  }
+  return this;
+};
+
+/**
+ * Merge observables from another given context.
+ */
+(Context.prototype.merge = function (
+  another_context: Context | { [name: string]: Observable<any> }
+): Context {
+  if (another_context.pins !== undefined) {
+    another_context = <any>another_context.pins;
+  }
+  // extend(context.pins, another_context);
+  Object.assign(this.pins, another_context);
+  return this;
+}),
   /**
    * Collect data pubs declared in given element for this Context.
    *
@@ -108,7 +122,7 @@ const context: Context = {
    *
    * @note musterPubs is not idempotent. Y
    */
-  musterPubs: function (element: ParentNode): Context {
+  (Context.prototype.musterPubs = function (element: ParentNode): Context {
     const pub_nodes = [...element.querySelectorAll('[data-pub]')];
     const length = pub_nodes.length;
     const subs: Sub<any>[] = Array(length);
@@ -119,106 +133,85 @@ const context: Context = {
 
       /** @todo Figure out how to check that target exists */
       const initial_value = pub_nodes[i][target as keyof Element];
-      context.pub(source, new Observable<typeof initial_value>(initial_value));
+      this.pub(source, new Observable<typeof initial_value>(initial_value));
       subs[i] = {
-        source:
-          context.pins[source] !== undefined ? context.pins[source] : source,
+        source: this.pins[source] !== undefined ? this.pins[source] : source,
         target: target,
         type: pub_nodes[i].getAttribute('data-type') ?? 'string',
         node: pub_nodes[i],
       };
     }
-    Array.prototype.push.apply(context.subs, subs);
-    return context;
-  },
-
-  /**
-   * Collect data subs declared in given element for this Context.
-   *
-   * @throws If requested observable source is NOT found.
-   *
-   * @todo Consider using a dictionnary and an identifier per sub.
-   */
-  musterSubs: function (element: ParentNode): Context {
-    const sub_nodes = [...element.querySelectorAll('[data-sub]')];
-    const length = sub_nodes.length;
-    const subs: Sub<any>[] = Array(length);
-
-    for (let i = 0; i < length; i++) {
-      const source = sub_nodes[i].getAttribute('data-sub') ?? 'data-sub or';
-
-      if (!context.pins[source]) throw source + ' pin does not exist !';
-
-      subs[i] = {
-        source: context.pins[source],
-        target: sub_nodes[i].getAttribute('data-prop') ?? 'textContent',
-        type: sub_nodes[i].getAttribute('data-type') ?? 'string',
-        node: sub_nodes[i],
-      };
-    }
-    Array.prototype.push.apply(context.subs, subs);
-    return context;
-  },
-
-  /**
-   * Collect both data pubs & subs declared in given element for this Context.
-   *
-   * @note Muster pubs first to avoid dangling subs.
-   */
-  muster: function (element: ParentNode): Context {
-    return context.musterPubs(element).musterSubs(element);
-  },
-  /**
-   * Reference given sub collection as this context sub collection.
-   */
-  setSubs: function (subs: Sub<any>[]): Context {
-    context.subs = subs;
-    return context;
-  },
-  /**
-   * Activate this context sub collection.
-   *
-   * @throws If sub target is NOT a property of sub node.
-   */
-  activateSubs: function (): Context {
-    for (let i = 0, length = context.subs.length; i < length; i++) {
-      const target = context.subs[i].target;
-      const node = context.subs[i].node;
-
-      // if (target in node === false) {}
-      if (!(<any>node)[target]) throw target + ' is not a valid node prop !';
-
-      (<Observable<any>>context.subs[i].source).subscribe((value) => {
-        (<any>node)[target] = value;
-      });
-    }
-    return context;
-  },
-
-  refresh: function (): Context {
-    for (const pin of Object.values(context.pins)) {
-      (<Observable<any>>pin).notify();
-    }
-    return context;
-  },
-};
-//   return <Context>context;
-// }
+    Array.prototype.push.apply(this.subs, subs);
+    return this;
+  });
 
 /**
- * Create a new Context object.
+ * Collect data subs declared in given element for this Context.
+ *
+ * @throws If requested observable source is NOT found.
+ *
+ * @todo Consider using a dictionnary and an identifier per sub.
  */
-export type ContextCtor = { new (): Context };
+Context.prototype.musterSubs = function (element: ParentNode): Context {
+  const sub_nodes = [...element.querySelectorAll('[data-sub]')];
+  const length = sub_nodes.length;
+  const subs: Sub<any>[] = Array(length);
 
-export const Context = (function (this: Context): Context {
-  if (!new.target) {
-    throw 'Context() must be called with new !';
+  for (let i = 0; i < length; i++) {
+    const source = sub_nodes[i].getAttribute('data-sub') ?? 'data-sub or';
+
+    if (!this.pins[source]) throw source + ' pin does not exist !';
+
+    subs[i] = {
+      source: this.pins[source],
+      target: sub_nodes[i].getAttribute('data-prop') ?? 'textContent',
+      type: sub_nodes[i].getAttribute('data-type') ?? 'string',
+      node: sub_nodes[i],
+    };
+  }
+  Array.prototype.push.apply(this.subs, subs);
+  return this;
+};
+
+/**
+ * Collect both data pubs & subs declared in given element for this Context.
+ *
+ * @note Muster pubs first to avoid dangling subs.
+ */
+Context.prototype.muster = function (element: ParentNode): Context {
+  return this.musterPubs(element).musterSubs(element);
+};
+
+/**
+ * Reference given sub collection as this context sub collection.
+ */
+Context.prototype.setSubs = function (subs: Sub<any>[]): Context {
+  this.subs = subs;
+  return this;
+};
+/**
+ * Activate this context sub collection.
+ *
+ * @throws If sub target is NOT a property of sub node.
+ */
+Context.prototype.activateSubs = function (): Context {
+  for (let i = 0, length = this.subs.length; i < length; i++) {
+    const target = this.subs[i].target;
+    const node = this.subs[i].node;
+
+    // if (target in node === false) {}
+    if (!(<any>node)[target]) throw target + ' is not a valid node prop !';
+
+    (<Observable<any>>this.subs[i].source).subscribe((value) => {
+      (<any>node)[target] = value;
+    });
   }
   return this;
-} as any) as ContextCtor;
+};
 
-Context.prototype = context;
-// const testee = new Context();
-// console.log(testee)
-
-// export default Context;
+Context.prototype.refresh = function (): Context {
+  for (const pin of Object.values(this.pins)) {
+    (<Observable<any>>pin).notify();
+  }
+  return this;
+};

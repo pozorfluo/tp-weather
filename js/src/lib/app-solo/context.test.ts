@@ -1,4 +1,4 @@
-import {Context} from '.';
+import { Context, Observable } from '.';
 
 it('uses jsdom in this test file', () => {
   const element = document.createElement('div');
@@ -11,6 +11,8 @@ describe('Context', () => {
 
   beforeEach(() => {
     context = new Context();
+    expect(context.subs).toStrictEqual([]);
+
     element = document.createElement('div');
     element.innerHTML = `
       <span data-pub="test">test string</span>
@@ -19,7 +21,7 @@ describe('Context', () => {
     `;
   });
 
-  it('can create a new context', () => {
+  it('can create a new Context', () => {
     expect(context).toEqual(expect.any(Context));
     // expect(context.pins).toStrictEqual({});
   });
@@ -28,8 +30,7 @@ describe('Context', () => {
     context.muster(element);
     expect(context.pins).toEqual(
       expect.objectContaining({
-        // test : expect.any(Observable);
-        test: expect.anything(),
+        test: expect.any(Observable),
       })
     );
     expect(context.subs.length).toBe(3);
@@ -48,7 +49,7 @@ describe('Context', () => {
     );
   });
 
-  it('throws when trying to muster an observable-less sub', () => {
+  it('throws when trying to muster an pin-less sub', () => {
     element = document.createElement('div');
     element.innerHTML = `
       <span data-sub="pinDoesNotExist"></span>
@@ -68,7 +69,50 @@ describe('Context', () => {
     }).toThrow();
   });
 
-  // it('leaves no danglings subs after a clear', () => {
-  //   expect(context.pins).toStrictEqual({});
-  // });
+  it('can pub Observable of any type', () => {
+    context
+      .pub('test_string', new Observable<string>('a string'))
+      .pub('test_number', new Observable<number>(1980))
+      .pub(
+        'test_object',
+        new Observable<Object>({ test: 'a value' })
+      );
+    expect(context.pins).toEqual(
+      expect.objectContaining({
+        test_string: expect.any(Observable),
+        test_number: expect.any(Observable),
+        test_object: expect.any(Observable),
+      })
+    );
+  });
+
+  it('can pub Observable of any type with optional subscribers', () => {
+    let target_a = '';
+    let target_b = '';
+    context.pub(
+      'test_string',
+      new Observable<string>('a string'),
+      (value) => {
+        target_a = value;
+      },
+      (value) => {
+        target_b = value + value;
+      }
+    );
+    // .activateSubs()
+
+    expect(context.subs).toStrictEqual([]);
+    context.pins.test_string.set('test');
+
+    expect(target_a).toBe('test');
+    expect(target_b).toBe('testtest');
+  });
+
+  it('allows its methods to be passed as callbacks', () => {});
+
+  it('throws when trying to sub to an invalid pin', () => {});
+  it('return null when trying to sub to an invalid pin', () => {});
+  it('leaves no danglings subs after a clear', () => {
+    // expect(context.pins).toStrictEqual({});
+  });
 });

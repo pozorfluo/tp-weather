@@ -191,31 +191,36 @@ exports.geoLocate = geoLocate;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Context = void 0;
 const observable_1 = require("./observable");
-const context = {
-    pins: {},
-    subs: [],
-    pub: function (name, pin, ...subscribers) {
-        context.pins[name] = pin;
-        for (let i = 0, length = subscribers.length; i < length; i++) {
-            pin.subscribe(subscribers[i]);
-        }
-        return context;
-    },
-    remove: function (name) {
-        if (context.pins[name] !== undefined) {
-            context.pins[name].flush();
-            delete context.pins[name];
-        }
-        return context;
-    },
-    merge: function (another_context) {
-        if (another_context.pins !== undefined) {
-            another_context = another_context.pins;
-        }
-        Object.assign(context.pins, another_context);
-        return context;
-    },
-    musterPubs: function (element) {
+exports.Context = function () {
+    if (!new.target) {
+        throw 'Context() must be called with new !';
+    }
+    this.pins = {};
+    this.subs = [];
+    return this;
+};
+exports.Context.prototype.pub = function (name, pin, ...subscribers) {
+    this.pins[name] = pin;
+    for (let i = 0, length = subscribers.length; i < length; i++) {
+        pin.subscribe(subscribers[i]);
+    }
+    return this;
+};
+exports.Context.prototype.remove = function (name) {
+    if (this.pins[name] !== undefined) {
+        this.pins[name].flush();
+        delete this.pins[name];
+    }
+    return this;
+};
+(exports.Context.prototype.merge = function (another_context) {
+    if (another_context.pins !== undefined) {
+        another_context = another_context.pins;
+    }
+    Object.assign(this.pins, another_context);
+    return this;
+}),
+    (exports.Context.prototype.musterPubs = function (element) {
         var _a, _b, _c;
         const pub_nodes = [...element.querySelectorAll('[data-pub]')];
         const length = pub_nodes.length;
@@ -224,69 +229,61 @@ const context = {
             const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
             const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
             const initial_value = pub_nodes[i][target];
-            context.pub(source, new observable_1.Observable(initial_value));
+            this.pub(source, new observable_1.Observable(initial_value));
             subs[i] = {
-                source: context.pins[source] !== undefined ? context.pins[source] : source,
+                source: this.pins[source] !== undefined ? this.pins[source] : source,
                 target: target,
                 type: (_c = pub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
                 node: pub_nodes[i],
             };
         }
-        Array.prototype.push.apply(context.subs, subs);
-        return context;
-    },
-    musterSubs: function (element) {
-        var _a, _b, _c;
-        const sub_nodes = [...element.querySelectorAll('[data-sub]')];
-        const length = sub_nodes.length;
-        const subs = Array(length);
-        for (let i = 0; i < length; i++) {
-            const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'data-sub or';
-            if (!context.pins[source])
-                throw source + ' pin does not exist !';
-            subs[i] = {
-                source: context.pins[source],
-                target: (_b = sub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent',
-                type: (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
-                node: sub_nodes[i],
-            };
-        }
-        Array.prototype.push.apply(context.subs, subs);
-        return context;
-    },
-    muster: function (element) {
-        return context.musterPubs(element).musterSubs(element);
-    },
-    setSubs: function (subs) {
-        context.subs = subs;
-        return context;
-    },
-    activateSubs: function () {
-        for (let i = 0, length = context.subs.length; i < length; i++) {
-            const target = context.subs[i].target;
-            const node = context.subs[i].node;
-            if (!node[target])
-                throw target + ' is not a valid node prop !';
-            context.subs[i].source.subscribe((value) => {
-                node[target] = value;
-            });
-        }
-        return context;
-    },
-    refresh: function () {
-        for (const pin of Object.values(context.pins)) {
-            pin.notify();
-        }
-        return context;
-    },
+        Array.prototype.push.apply(this.subs, subs);
+        return this;
+    });
+exports.Context.prototype.musterSubs = function (element) {
+    var _a, _b, _c;
+    const sub_nodes = [...element.querySelectorAll('[data-sub]')];
+    const length = sub_nodes.length;
+    const subs = Array(length);
+    for (let i = 0; i < length; i++) {
+        const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'data-sub or';
+        if (!this.pins[source])
+            throw source + ' pin does not exist !';
+        subs[i] = {
+            source: this.pins[source],
+            target: (_b = sub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent',
+            type: (_c = sub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
+            node: sub_nodes[i],
+        };
+    }
+    Array.prototype.push.apply(this.subs, subs);
+    return this;
 };
-exports.Context = function () {
-    if (!new.target) {
-        throw 'Context() must be called with new !';
+exports.Context.prototype.muster = function (element) {
+    return this.musterPubs(element).musterSubs(element);
+};
+exports.Context.prototype.setSubs = function (subs) {
+    this.subs = subs;
+    return this;
+};
+exports.Context.prototype.activateSubs = function () {
+    for (let i = 0, length = this.subs.length; i < length; i++) {
+        const target = this.subs[i].target;
+        const node = this.subs[i].node;
+        if (!node[target])
+            throw target + ' is not a valid node prop !';
+        this.subs[i].source.subscribe((value) => {
+            node[target] = value;
+        });
     }
     return this;
 };
-exports.Context.prototype = context;
+exports.Context.prototype.refresh = function () {
+    for (const pin of Object.values(this.pins)) {
+        pin.notify();
+    }
+    return this;
+};
 
 },{"./observable":6}],5:[function(require,module,exports){
 "use strict";
@@ -307,83 +304,13 @@ __exportStar(require("./context"), exports);
 },{"./context":4,"./observable":6}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Observable = void 0;
+exports.Observable = exports.RateLimit = void 0;
 var RateLimit;
 (function (RateLimit) {
     RateLimit["none"] = "none";
     RateLimit["debounce"] = "debounce";
     RateLimit["throttle"] = "throttle";
-})(RateLimit || (RateLimit = {}));
-const observable = {
-    notify: function () {
-        for (let i = 0, length = this.subscribers.length; i < length; i++) {
-            this.subscribers[i](this.value);
-        }
-        return observable;
-    },
-    subscribe: function (subscriber, priority) {
-        if (priority === undefined) {
-            this.subscribers.push(subscriber);
-        }
-        else {
-            this.subscribers.splice(priority, 0, subscriber);
-        }
-        return observable;
-    },
-    flush: function () {
-        this.subscribers = [];
-        return observable;
-    },
-    get: function () {
-        return this.value;
-    },
-    setUnbound: function (value) {
-        if (value !== this.value) {
-            this.value = value;
-            this.notify();
-        }
-        return observable;
-    },
-    setDebounced: function (value) {
-        console.log('set', this._pending, this.value);
-        if (value !== this.value) {
-            this.value = value;
-            if (this._pending) {
-                window.cancelAnimationFrame(this._pending);
-                console.log('Cancel notify', this._pending, this.value);
-            }
-            this._pending = window.requestAnimationFrame(() => {
-                this.notify();
-                console.log(' ----> Notify', this._pending, this.value);
-                this._pending = 0;
-            });
-            console.log('Schedule notify', this._pending, this.value);
-        }
-        return observable;
-    },
-    setThrottled: function (value) {
-        if (value !== this.value) {
-            this.value = value;
-            if (!this._pending) {
-                if (!this._timeout) {
-                    this.notify();
-                    console.log('----> LeadNotify', this._pending, this.value);
-                    this._timeout = window.requestAnimationFrame(() => (this._timeout = 0));
-                }
-                else {
-                    this._pending = window.requestAnimationFrame((now) => {
-                        window.cancelAnimationFrame(this._pending);
-                        this.notify();
-                        console.log(' ----> Notify', this._pending, this.value, now);
-                        this._pending = 0;
-                    });
-                    console.log('Schedule notify', this._pending, this.value);
-                }
-            }
-        }
-        return observable;
-    },
-};
+})(RateLimit = exports.RateLimit || (exports.RateLimit = {}));
 exports.Observable = function (value, rateLimit = RateLimit.throttle) {
     if (!new.target) {
         throw 'Observable() must be called with new !';
@@ -395,16 +322,126 @@ exports.Observable = function (value, rateLimit = RateLimit.throttle) {
     this.set = ((rateLimit) => {
         switch (rateLimit) {
             case RateLimit.none:
-                return observable.setUnbound;
+                return (value) => {
+                    if (value !== this.value) {
+                        this.value = value;
+                        this.notify();
+                    }
+                    return this;
+                };
             case RateLimit.debounce:
-                return observable.setDebounced;
+                return (value) => {
+                    console.log('set', this._pending, this.value);
+                    if (value !== this.value) {
+                        this.value = value;
+                        if (this._pending) {
+                            window.cancelAnimationFrame(this._pending);
+                            console.log('Cancel notify', this._pending, this.value);
+                        }
+                        this._pending = window.requestAnimationFrame(() => {
+                            this.notify();
+                            console.log(' ----> Notify', this._pending, this.value);
+                            this._pending = 0;
+                        });
+                        console.log('Schedule notify', this._pending, this.value);
+                    }
+                    return this;
+                };
             case RateLimit.throttle:
-                return observable.setThrottled;
+                return (value) => {
+                    if (value !== this.value) {
+                        this.value = value;
+                        if (!this._pending) {
+                            if (!this._timeout) {
+                                this.notify();
+                                console.log('----> LeadNotify', this._pending, this.value);
+                                this._timeout = window.requestAnimationFrame(() => (this._timeout = 0));
+                            }
+                            else {
+                                this._pending = window.requestAnimationFrame((now) => {
+                                    window.cancelAnimationFrame(this._pending);
+                                    this.notify();
+                                    console.log(' ----> Notify', this._pending, this.value, now);
+                                    this._pending = 0;
+                                });
+                                console.log('Schedule notify', this._pending, this.value);
+                            }
+                        }
+                    }
+                    return this;
+                };
         }
     })(rateLimit);
     return this;
 };
-exports.Observable.prototype = observable;
+exports.Observable.prototype.notify = function () {
+    for (let i = 0, length = this.subscribers.length; i < length; i++) {
+        this.subscribers[i](this.value);
+    }
+    return this;
+};
+exports.Observable.prototype.subscribe = function (subscriber, priority) {
+    if (priority === undefined) {
+        this.subscribers.push(subscriber);
+    }
+    else {
+        this.subscribers.splice(priority, 0, subscriber);
+    }
+    return this;
+};
+exports.Observable.prototype.flush = function () {
+    this.subscribers = [];
+    return this;
+};
+exports.Observable.prototype.get = function () {
+    return this.value;
+};
+exports.Observable.prototype.setUnbound = function (value) {
+    if (value !== this.value) {
+        this.value = value;
+        this.notify();
+    }
+    return this;
+};
+exports.Observable.prototype.setDebounced = function (value) {
+    console.log('set', this._pending, this.value);
+    if (value !== this.value) {
+        this.value = value;
+        if (this._pending) {
+            window.cancelAnimationFrame(this._pending);
+            console.log('Cancel notify', this._pending, this.value);
+        }
+        this._pending = window.requestAnimationFrame(() => {
+            this.notify();
+            console.log(' ----> Notify', this._pending, this.value);
+            this._pending = 0;
+        });
+        console.log('Schedule notify', this._pending, this.value);
+    }
+    return this;
+};
+exports.Observable.prototype.setThrottled = function (value) {
+    if (value !== this.value) {
+        this.value = value;
+        if (!this._pending) {
+            if (!this._timeout) {
+                this.notify();
+                console.log('----> LeadNotify', this._pending, this.value);
+                this._timeout = window.requestAnimationFrame(() => (this._timeout = 0));
+            }
+            else {
+                this._pending = window.requestAnimationFrame((now) => {
+                    window.cancelAnimationFrame(this._pending);
+                    this.notify();
+                    console.log(' ----> Notify', this._pending, this.value, now);
+                    this._pending = 0;
+                });
+                console.log('Schedule notify', this._pending, this.value);
+            }
+        }
+    }
+    return this;
+};
 
 },{}],7:[function(require,module,exports){
 "use strict";
@@ -461,7 +498,7 @@ function main() {
     app
         .pub('forecasts', new app_solo_1.Observable(null), (f) => {
         renderForecast(f, 0);
-        weather_nav.setOnClick(app.pins.day.set.bind(app.pins.day));
+        weather_nav.setOnClick(app.pins.day.set);
         weather_nav.render(f.daily.map((d) => d.timestamp), day_count);
     })
         .pub('day', new app_solo_1.Observable(0), (d) => {
