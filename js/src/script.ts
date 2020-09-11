@@ -66,6 +66,7 @@ function main(): void {
   //------------------------------------------------------- contexts ---
   const weather_nav = <WeatherNav>document.querySelector('weather-nav');
   const weather = <HTMLElement>document.getElementById('Weather');
+  console.log(weather_nav);
 
   weather_nav.renderPlaceholder(day_count, '...');
 
@@ -73,7 +74,7 @@ function main(): void {
   app
     .pub('forecasts', new Observable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
-      weather_nav.setOnClick(app.pins.day.set);
+      weather_nav.setOnClick(app.pins.day.set.bind(app.pins.day));
       weather_nav.render(
         f.daily.map((d: Daily) => d.timestamp),
         day_count

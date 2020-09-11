@@ -455,12 +455,13 @@ function main() {
     };
     const weather_nav = document.querySelector('weather-nav');
     const weather = document.getElementById('Weather');
+    console.log(weather_nav);
     weather_nav.renderPlaceholder(day_count, '...');
     const app = new app_solo_1.Context();
     app
         .pub('forecasts', new app_solo_1.Observable(null), (f) => {
         renderForecast(f, 0);
-        weather_nav.setOnClick(app.pins.day.set);
+        weather_nav.setOnClick(app.pins.day.set.bind(app.pins.day));
         weather_nav.render(f.daily.map((d) => d.timestamp), day_count);
     })
         .pub('day', new app_solo_1.Observable(0), (d) => {
