@@ -20,8 +20,8 @@ describe('Context', () => {
   });
 
   it('can create a new context', () => {
-    // expect(context).any(Context);
-    expect(context.pins).toStrictEqual({});
+    expect(context).toEqual(expect.any(Context));
+    // expect(context.pins).toStrictEqual({});
   });
 
   it('can muster pubs and subs from a parent Node', () => {

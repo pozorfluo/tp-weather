@@ -224,7 +224,7 @@ const context = {
             const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
             const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
             const initial_value = pub_nodes[i][target];
-            context.pub(source, observable_1.newObservable(initial_value));
+            context.pub(source, new observable_1.Observable(initial_value));
             subs[i] = {
                 source: context.pins[source] !== undefined ? context.pins[source] : source,
                 target: target,
@@ -307,104 +307,104 @@ __exportStar(require("./context"), exports);
 },{"./context":4,"./observable":6}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.withObservable = exports.newObservable = void 0;
+exports.Observable = void 0;
 var RateLimit;
 (function (RateLimit) {
     RateLimit["none"] = "none";
     RateLimit["debounce"] = "debounce";
     RateLimit["throttle"] = "throttle";
 })(RateLimit || (RateLimit = {}));
-function newObservable(value, rateLimit = RateLimit.throttle) {
-    const instance = {
-        subscribers: [],
-        value: value,
-        _pending: 0,
-        _timeout: 0,
-        notify: function () {
-            for (let i = 0, length = instance.subscribers.length; i < length; i++) {
-                instance.subscribers[i](instance.value);
+const observable = {
+    notify: function () {
+        for (let i = 0, length = this.subscribers.length; i < length; i++) {
+            this.subscribers[i](this.value);
+        }
+        return observable;
+    },
+    subscribe: function (subscriber, priority) {
+        if (priority === undefined) {
+            this.subscribers.push(subscriber);
+        }
+        else {
+            this.subscribers.splice(priority, 0, subscriber);
+        }
+        return observable;
+    },
+    flush: function () {
+        this.subscribers = [];
+        return observable;
+    },
+    get: function () {
+        return this.value;
+    },
+    setUnbound: function (value) {
+        if (value !== this.value) {
+            this.value = value;
+            this.notify();
+        }
+        return observable;
+    },
+    setDebounced: function (value) {
+        console.log('set', this._pending, this.value);
+        if (value !== this.value) {
+            this.value = value;
+            if (this._pending) {
+                window.cancelAnimationFrame(this._pending);
+                console.log('Cancel notify', this._pending, this.value);
             }
-            return instance;
-        },
-        subscribe: function (subscriber, priority) {
-            if (priority === undefined) {
-                instance.subscribers.push(subscriber);
+            this._pending = window.requestAnimationFrame(() => {
+                this.notify();
+                console.log(' ----> Notify', this._pending, this.value);
+                this._pending = 0;
+            });
+            console.log('Schedule notify', this._pending, this.value);
+        }
+        return observable;
+    },
+    setThrottled: function (value) {
+        if (value !== this.value) {
+            this.value = value;
+            if (!this._pending) {
+                if (!this._timeout) {
+                    this.notify();
+                    console.log('----> LeadNotify', this._pending, this.value);
+                    this._timeout = window.requestAnimationFrame(() => (this._timeout = 0));
+                }
+                else {
+                    this._pending = window.requestAnimationFrame((now) => {
+                        window.cancelAnimationFrame(this._pending);
+                        this.notify();
+                        console.log(' ----> Notify', this._pending, this.value, now);
+                        this._pending = 0;
+                    });
+                    console.log('Schedule notify', this._pending, this.value);
+                }
             }
-            else {
-                instance.subscribers.splice(priority, 0, subscriber);
-            }
-            return instance;
-        },
-        flush: function () {
-            instance.subscribers = [];
-            return instance;
-        },
-        get: function () {
-            return instance.value;
-        },
-        set: ((rateLimit) => {
-            switch (rateLimit) {
-                case RateLimit.none:
-                    return function (value) {
-                        if (value !== instance.value) {
-                            instance.value = value;
-                            instance.notify();
-                        }
-                        return instance;
-                    };
-                case RateLimit.debounce:
-                    return function (value) {
-                        console.log('set', instance._pending, instance.value);
-                        if (value !== instance.value) {
-                            instance.value = value;
-                            if (instance._pending) {
-                                window.cancelAnimationFrame(instance._pending);
-                                console.log('Cancel notify', instance._pending, instance.value);
-                            }
-                            instance._pending = window.requestAnimationFrame(function () {
-                                instance.notify();
-                                console.log(' ----> Notify', instance._pending, instance.value);
-                                instance._pending = 0;
-                            });
-                            console.log('Schedule notify', instance._pending, instance.value);
-                        }
-                        return instance;
-                    };
-                case RateLimit.throttle:
-                    return function (value) {
-                        if (value !== instance.value) {
-                            instance.value = value;
-                            if (!instance._pending) {
-                                if (!instance._timeout) {
-                                    instance.notify();
-                                    console.log('----> LeadNotify', instance._pending, instance.value);
-                                    instance._timeout = window.requestAnimationFrame(() => (instance._timeout = 0));
-                                }
-                                else {
-                                    instance._pending = window.requestAnimationFrame(function (now) {
-                                        window.cancelAnimationFrame(instance._pending);
-                                        instance.notify();
-                                        console.log(' ----> Notify', instance._pending, instance.value, now);
-                                        instance._pending = 0;
-                                    });
-                                    console.log('Schedule notify', instance._pending, instance.value);
-                                }
-                            }
-                        }
-                        return instance;
-                    };
-            }
-        })(rateLimit),
-    };
-    return instance;
-}
-exports.newObservable = newObservable;
-function withObservable(name, value) {
-    const trait = { observable: {} };
-    trait.observable[name] = newObservable(value);
-    return trait;
-}
-exports.withObservable = withObservable;
+        }
+        return observable;
+    },
+};
+exports.Observable = function (value, rateLimit = RateLimit.throttle) {
+    if (!new.target) {
+        throw 'Observable() must be called with new !';
+    }
+    this.subscribers = [];
+    this.value = value;
+    this._pending = 0;
+    this._timeout = 0;
+    this.set = ((rateLimit) => {
+        switch (rateLimit) {
+            case RateLimit.none:
+                return observable.setUnbound;
+            case RateLimit.debounce:
+                return observable.setDebounced;
+            case RateLimit.throttle:
+                return observable.setThrottled;
+        }
+    })(rateLimit);
+    return this;
+};
+exports.Observable.prototype = observable;
 
 },{}],7:[function(require,module,exports){
 "use strict";
@@ -414,6 +414,8 @@ const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 require("./components/weather-nav");
 require("./components/img-spinner");
+const hello = new app_solo_1.Observable('');
+console.log(hello);
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -456,19 +458,19 @@ function main() {
     weather_nav.renderPlaceholder(day_count, '...');
     const app = new app_solo_1.Context();
     app
-        .pub('forecasts', app_solo_1.newObservable(null), (f) => {
+        .pub('forecasts', new app_solo_1.Observable(null), (f) => {
         renderForecast(f, 0);
         weather_nav.setOnClick(app.pins.day.set);
         weather_nav.render(f.daily.map((d) => d.timestamp), day_count);
     })
-        .pub('day', app_solo_1.newObservable(0), (d) => {
+        .pub('day', new app_solo_1.Observable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
     });
     const view = new app_solo_1.Context();
     view
-        .pub('icon', app_solo_1.newObservable(''))
-        .pub('date', app_solo_1.newObservable(''))
-        .pub('loading', app_solo_1.newObservable('loading'))
+        .pub('icon', new app_solo_1.Observable(''))
+        .pub('date', new app_solo_1.Observable(''))
+        .pub('loading', new app_solo_1.Observable('loading'))
         .muster(weather)
         .activateSubs();
     const rate_limit_test = document.getElementById('RateLimit');

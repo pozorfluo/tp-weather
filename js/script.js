@@ -5,6 +5,8 @@ const geo_1 = require("./geo");
 const weather_1 = require("./weather");
 require("./components/weather-nav");
 require("./components/img-spinner");
+const hello = new app_solo_1.Observable('');
+console.log(hello);
 async function getApiKeys() {
     const api_keys = await fetch('/../keys.env', { mode: 'no-cors' })
         .then((response) => response.json())
@@ -47,19 +49,19 @@ function main() {
     weather_nav.renderPlaceholder(day_count, '...');
     const app = new app_solo_1.Context();
     app
-        .pub('forecasts', app_solo_1.newObservable(null), (f) => {
+        .pub('forecasts', new app_solo_1.Observable(null), (f) => {
         renderForecast(f, 0);
         weather_nav.setOnClick(app.pins.day.set);
         weather_nav.render(f.daily.map((d) => d.timestamp), day_count);
     })
-        .pub('day', app_solo_1.newObservable(0), (d) => {
+        .pub('day', new app_solo_1.Observable(0), (d) => {
         renderForecast(app.pins.forecasts.value, d);
     });
     const view = new app_solo_1.Context();
     view
-        .pub('icon', app_solo_1.newObservable(''))
-        .pub('date', app_solo_1.newObservable(''))
-        .pub('loading', app_solo_1.newObservable('loading'))
+        .pub('icon', new app_solo_1.Observable(''))
+        .pub('date', new app_solo_1.Observable(''))
+        .pub('loading', new app_solo_1.Observable('loading'))
         .muster(weather)
         .activateSubs();
     const rate_limit_test = document.getElementById('RateLimit');

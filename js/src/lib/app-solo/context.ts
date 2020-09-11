@@ -2,7 +2,7 @@
 /**
  *
  */
-import { Observable, Subscriber, newObservable } from './observable';
+import { Observable, Subscriber } from './observable';
 
 /**
  * Define Sub object.
@@ -92,7 +92,7 @@ const context: Context = {
     another_context: Context | { [name: string]: Observable<any> }
   ): Context {
     if (another_context.pins !== undefined) {
-      another_context = another_context.pins;
+        another_context = <any>another_context.pins;
     }
     // extend(context.pins, another_context);
     Object.assign(context.pins, another_context);
@@ -119,7 +119,7 @@ const context: Context = {
 
       /** @todo Figure out how to check that target exists */
       const initial_value = pub_nodes[i][target as keyof Element];
-      context.pub(source, newObservable<typeof initial_value>(initial_value));
+      context.pub(source, new Observable<typeof initial_value>(initial_value));
       subs[i] = {
         source:
           context.pins[source] !== undefined ? context.pins[source] : source,

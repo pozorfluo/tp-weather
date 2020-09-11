@@ -1,10 +1,13 @@
-import { newObservable, Context } from './lib/app-solo';
+import { Observable, Context } from './lib/app-solo';
 import { geoLocate, GeoInfo } from './geo';
 import { getDailyForecasts, Forecast, Daily, newForecast } from './weather';
 
 import { WeatherNav } from './components/weather-nav';
 import './components/weather-nav';
 import './components/img-spinner';
+
+const hello = new Observable<string>('');
+console.log(hello);
 
 /**
  * Workaround commiting api keys to git for this exercise.
@@ -68,7 +71,7 @@ function main(): void {
 
   const app = new Context();
   app
-    .pub('forecasts', newObservable<Forecast | null>(null), (f) => {
+    .pub('forecasts', new Observable<Forecast | null>(null), (f) => {
       renderForecast(f, 0);
       weather_nav.setOnClick(app.pins.day.set);
       weather_nav.render(
@@ -76,15 +79,15 @@ function main(): void {
         day_count
       );
     })
-    .pub('day', newObservable<number>(0), (d) => {
+    .pub('day', new Observable<number>(0), (d) => {
       renderForecast(app.pins.forecasts.value, d);
     });
 
   const view = new Context();
   view
-    .pub('icon', newObservable<string>(''))
-    .pub('date', newObservable<string>(''))
-    .pub('loading', newObservable<string>('loading'))
+    .pub('icon', new Observable<string>(''))
+    .pub('date', new Observable<string>(''))
+    .pub('loading', new Observable<string>('loading'))
     .muster(weather)
     .activateSubs();
   // .refresh()

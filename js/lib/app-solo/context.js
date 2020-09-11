@@ -35,7 +35,7 @@ const context = {
             const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
             const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
             const initial_value = pub_nodes[i][target];
-            context.pub(source, observable_1.newObservable(initial_value));
+            context.pub(source, new observable_1.Observable(initial_value));
             subs[i] = {
                 source: context.pins[source] !== undefined ? context.pins[source] : source,
                 target: target,
