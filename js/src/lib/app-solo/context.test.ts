@@ -21,6 +21,12 @@ describe('Context', () => {
     `;
   });
 
+  it('throws if its constructor is not called with new', () => {
+    expect(() => {
+      (Context as any)();
+    }).toThrow();
+  });
+
   it('can create a new Context', () => {
     expect(context).toEqual(expect.any(Context));
     // expect(context.pins).toStrictEqual({});
@@ -71,8 +77,8 @@ describe('Context', () => {
 
   it('can pub Observable of any type', () => {
     context
-      .pub('test_string', new Observable<string>('a string'))
-      .pub('test_number', new Observable<number>(1980))
+      .pub('test_string', new Observable('a string'))
+      .pub('test_number', new Observable(1980))
       .pub(
         'test_object',
         new Observable<Object>({ test: 'a value' })
@@ -91,7 +97,7 @@ describe('Context', () => {
     let target_b = '';
     context.pub(
       'test_string',
-      new Observable<string>('a string'),
+      new Observable('a string'),
       (value) => {
         target_a = value;
       },
@@ -106,6 +112,18 @@ describe('Context', () => {
 
     expect(target_a).toBe('test');
     expect(target_b).toBe('testtest');
+  });
+
+  it('can remove a pin given its name', () => {
+    const pin_name = 'test_pin';
+    context.pub(pin_name, new Observable('a string'));
+
+    expect(context.pins[pin_name]).toEqual(expect.any(Observable));
+    context.remove(pin_name);
+    expect(context.pins[pin_name]).toBeUndefined();
+    expect(() => {
+      context.refresh();
+    }).not.toThrow();
   });
 
   it('allows its methods to be passed as callbacks', () => {});

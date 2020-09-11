@@ -35,8 +35,8 @@ export interface Sub<T> {
  * @todo Add clearSubs, clearPubs, clear.
  */
 export interface Context {
-  pins: { [name: string]: Observable<any> };
-  // pins: Map<string, Observable<any>>;
+  // pins: { [name: string]: Observable<any> };
+  pins: Map<string, Observable<any>>;
   subs: Sub<any>[];
   pub: (
     name: string,
@@ -68,8 +68,8 @@ export const Context = (function (this: Context): Context {
   if (!new.target) {
     throw 'Context() must be called with new !';
   }
-  this.pins = {};
-  // this.pins = new Map();
+  // this.pins = {};
+  this.pins = new Map();
   this.subs = [];
   return this;
 } as any) as ContextCtor;
@@ -82,8 +82,8 @@ Context.prototype.pub = function (
   pin: Observable<any>,
   ...subscribers: Subscriber<any>[]
 ): Context {
-  this.pins[name] = pin;
-  // this.pins.set(name, pin);
+  // this.pins[name] = pin;
+  this.pins.set(name, pin);
   for (let i = 0, length = subscribers.length; i < length; i++) {
     pin.subscribe(subscribers[i]);
   }
@@ -97,16 +97,16 @@ Context.prototype.pub = function (
  *       dangling subscriptions.
  */
 Context.prototype.remove = function (name: string): Context {
-  if (this.pins[name] !== undefined) {
-    this.pins[name].dropAll();
-    delete this.pins[name];
-    // this.pins[name] = undefined;
-  }
-  // const pin = this.pins.get(name);
-  // if (pin) {
-  //   pin.dropAll();
-  //   this.pins.delete(name);
+  // if (this.pins[name] !== undefined) {
+  //   this.pins[name].dropAll();
+  //   delete this.pins[name];
+  //   // this.pins[name] = undefined;
   // }
+  const pin = this.pins.get(name);
+  if (pin) {
+    pin.dropAll();
+    this.pins.delete(name);
+  }
   return this;
 };
 
@@ -142,15 +142,15 @@ Context.prototype.remove = function (name: string): Context {
       const target = pub_nodes[i].getAttribute('data-prop') ?? 'textContent';
 
       /** @todo Figure out how to check that target exists */
-      if (!(<any>pub_nodes[i])[target]) {
+      if (!(<any>pub_nodes[i])[target]){
         throw target + ' is not a valid node prop !';
       }
 
       const initial_value = pub_nodes[i][target as keyof Element];
       this.pub(source, new Observable<typeof initial_value>(initial_value));
       subs[i] = {
-        source: this.pins[source],
-        // source: this.pins.get(source),
+        // source: this.pins[source] !== undefined ? this.pins[source] : source,
+        source: this.pins.get(source),
         target: target,
         type: pub_nodes[i].getAttribute('data-type') ?? 'string',
         node: pub_nodes[i],
@@ -175,13 +175,13 @@ Context.prototype.musterSubs = function (element: ParentNode): Context {
   for (let i = 0; i < length; i++) {
     const source = sub_nodes[i].getAttribute('data-sub') ?? 'data-sub or';
 
-    if (!this.pins[source]) throw source + ' pin does not exist !';
-    // const pin = this.pins.get(source);
-    // if (!pin) throw source + ' pin does not exist !';
+    // if (!this.pins[source]) throw source + ' pin does not exist !';
+    const pin = this.pins.get(source);
+    if (!pin) throw source + ' pin does not exist !';
 
     subs[i] = {
-      source: this.pins[source],
-      // source: pin,
+      // source: this.pins[source],
+      source: pin,
       target: sub_nodes[i].getAttribute('data-prop') ?? 'textContent',
       type: sub_nodes[i].getAttribute('data-type') ?? 'string',
       node: sub_nodes[i],
@@ -228,11 +228,11 @@ Context.prototype.activateSubs = function (): Context {
 };
 
 Context.prototype.refresh = function (): Context {
-  for (const pin of Object.values(this.pins)) {
-    (<Observable<any>>pin).notify();
-  }
-  // for(let [, pin] of this.pins) {
-  //   pin.notify();
+  // for (const pin of Object.values(this.pins)) {
+  //   (<Observable<any>>pin).notify();
   // }
+  for(let [, pin] of this.pins) {
+    pin.notify();
+  }
   return this;
 };

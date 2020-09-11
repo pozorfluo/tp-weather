@@ -51,10 +51,6 @@ export type ObservableCtor = {
 /**
  * Create a new Observable object.
  *
- * @note Optional parameter priority in subscribe method is the index where
- *       given Subscriber is going to be 'spliced' in the subscribers list.
- *       If no paramater is supplied, given Subscriber is appended.
- *
  * @note To resolve notifications according to subscribers priority and
  *       insertion order, notify() Awaits each subscriber's callback in
  *       turn. -> not used right now.
@@ -91,7 +87,7 @@ export const Observable = (function <T>(
       case RateLimit.debounce:
         // return this.setDebounced.bind(this);
         return (value: T): Observable<T> => {
-          console.log('set', this._pending, this.value);
+          // console.log('set', this._pending, this.value);
           /* The buck stops here. */
           if (value !== this.value) {
             this.value = value;
@@ -99,16 +95,16 @@ export const Observable = (function <T>(
             /** Cancel pending notification. */
             if (this._pending) {
               window.cancelAnimationFrame(this._pending);
-              console.log('Cancel notify', this._pending, this.value);
+              // console.log('Cancel notify', this._pending, this.value);
             }
 
             /** Schedule notification on next frame. */
             this._pending = window.requestAnimationFrame(() => {
               this.notify();
-              console.log(' ----> Notify', this._pending, this.value);
+              // console.log(' ----> Notify', this._pending, this.value);
               this._pending = 0;
             });
-            console.log('Schedule notify', this._pending, this.value);
+            // console.log('Schedule notify', this._pending, this.value);
           }
           return this;
         };
@@ -153,9 +149,6 @@ export const Observable = (function <T>(
           }
           return this;
         };
-      // return this.setThrottled.bind(this);
-      // return this.setThrottled;
-      // return (function(me:Observable<T>) {return me.setThrottled;})(this);
     }
   })(rateLimit);
   return this;
@@ -181,7 +174,9 @@ Observable.prototype.notify = function <T>(): Observable<T> {
 };
 
 /**
- *
+ * @param priority Optional parameter priority is the index where given
+ *                 Subscriber is going to be 'spliced' in the subscribers list.
+ *                 If no paramater is supplied, given Subscriber is appended.
  */
 Observable.prototype.subscribe = function <T>(
   subscriber: Subscriber<T>,
@@ -223,81 +218,6 @@ Observable.prototype.get = function <T>(): T {
   return this.value;
 };
 
-/**
- * @todo See how wasteful this experiment to avoid a branch is when using
- *       prototype/ctor.
- * @todo Consider having 'set' point to internal function on prototype.
- */
-Observable.prototype.setUnbound = function <T>(value: T): Observable<T> {
-  /* The buck stops here. */
-  if (value !== this.value) {
-    this.value = value;
-    this.notify();
-  }
-  return this;
-};
-
-Observable.prototype.setDebounced = function <T>(value: T): Observable<T> {
-  console.log('set', this._pending, this.value);
-  /* The buck stops here. */
-  if (value !== this.value) {
-    this.value = value;
-
-    /** Cancel pending notification. */
-    if (this._pending) {
-      window.cancelAnimationFrame(this._pending);
-      console.log('Cancel notify', this._pending, this.value);
-    }
-
-    /** Schedule notification on next frame. */
-    this._pending = window.requestAnimationFrame(() => {
-      this.notify();
-      console.log(' ----> Notify', this._pending, this.value);
-      this._pending = 0;
-    });
-    console.log('Schedule notify', this._pending, this.value);
-  }
-  return this;
-};
-
-/**
- * If there is no pending notification
- *
- *     Notify immediately
- *   Else
- *     Schedule notification
- */
-Observable.prototype.setThrottled = function <T>(value: T): Observable<T> {
-  /* The buck stops here. */
-  if (value !== this.value) {
-    this.value = value;
-
-    if (!this._pending) {
-      /** Notify immediately if not on timeout. */
-      if (!this._timeout) {
-        this.notify();
-        console.log('----> LeadNotify', this._pending, this.value);
-        /** Prevent further immediate notification until next frame. */
-        this._timeout = window.requestAnimationFrame(() => (this._timeout = 0));
-      } else {
-        /** Schedule notification on next frame. */
-        this._pending = window.requestAnimationFrame(
-          (now: DOMHighResTimeStamp) => {
-            window.cancelAnimationFrame(this._pending);
-
-            this.notify();
-            console.log(' ----> Notify', this._pending, this.value, now);
-            this._pending = 0;
-          }
-        );
-        console.log('Schedule notify', this._pending, this.value);
-      }
-    }
-  }
-  return this;
-};
-//   return <Observable<T>>observable;
-// }
 
 // /**
 //  * Define Observable trait.
