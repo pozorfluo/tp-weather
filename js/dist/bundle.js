@@ -354,17 +354,14 @@ exports.Observable = function (value, rateLimit = RateLimit.throttle) {
                         if (!this._pending) {
                             if (!this._timeout) {
                                 this.notify();
-                                console.log('----> LeadNotify', this._pending, this.value);
                                 this._timeout = window.requestAnimationFrame(() => (this._timeout = 0));
                             }
                             else {
                                 this._pending = window.requestAnimationFrame((now) => {
                                     window.cancelAnimationFrame(this._pending);
                                     this.notify();
-                                    console.log(' ----> Notify', this._pending, this.value, now);
                                     this._pending = 0;
                                 });
-                                console.log('Schedule notify', this._pending, this.value);
                             }
                         }
                     }
@@ -389,7 +386,11 @@ exports.Observable.prototype.subscribe = function (subscriber, priority) {
     }
     return this;
 };
-exports.Observable.prototype.flush = function () {
+exports.Observable.prototype.drop = function (subscriber) {
+    this.subscribers = this.subscribers.filter((s) => s !== subscriber);
+    return this;
+};
+exports.Observable.prototype.dropAll = function () {
     this.subscribers = [];
     return this;
 };
