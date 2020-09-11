@@ -126,7 +126,43 @@ describe('Context', () => {
     }).not.toThrow();
   });
 
-  it('allows its methods to be passed as callbacks', () => {});
+  // it('allows its methods to be passed as callbacks', () => {});
+
+  it('can merge pins from another given context', () => {
+    context.muster(element);
+
+    const another_context = (new Context())
+      .pub('test_string', new Observable('a string'))
+      .pub('test_number', new Observable(1980));
+
+    context.merge(another_context);
+
+    expect(context.pins).toEqual(
+      expect.objectContaining({
+        test_string: expect.any(Observable),
+        test_number: expect.any(Observable),
+        test: expect.any(Observable),
+      })
+    );
+  });
+
+  it('can merge pins from another given pin collection', () => {
+    context.muster(element);
+
+    const another_context = (new Context())
+      .pub('test_string', new Observable('a string'))
+      .pub('test_number', new Observable(1980));
+
+    context.merge(another_context.pins);
+
+    expect(context.pins).toEqual(
+      expect.objectContaining({
+        test_string: expect.any(Observable),
+        test_number: expect.any(Observable),
+        test: expect.any(Observable),
+      })
+    );
+  });
 
   it('throws when trying to sub to an invalid pin', () => {});
   it('return null when trying to sub to an invalid pin', () => {});

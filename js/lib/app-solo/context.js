@@ -24,36 +24,36 @@ exports.Context.prototype.remove = function (name) {
     }
     return this;
 };
-(exports.Context.prototype.merge = function (another_context) {
+exports.Context.prototype.merge = function (another_context) {
     if (another_context.pins !== undefined) {
         another_context = another_context.pins;
     }
     Object.assign(this.pins, another_context);
     return this;
-}),
-    (exports.Context.prototype.musterPubs = function (element) {
-        var _a, _b, _c;
-        const pub_nodes = [...element.querySelectorAll('[data-pub]')];
-        const length = pub_nodes.length;
-        const subs = Array(length);
-        for (let i = 0; i < length; i++) {
-            const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
-            const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
-            if (!pub_nodes[i][target]) {
-                throw target + ' is not a valid node prop !';
-            }
-            const initial_value = pub_nodes[i][target];
-            this.pub(source, new observable_1.Observable(initial_value));
-            subs[i] = {
-                source: this.pins[source],
-                target: target,
-                type: (_c = pub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
-                node: pub_nodes[i],
-            };
+};
+exports.Context.prototype.musterPubs = function (element) {
+    var _a, _b, _c;
+    const pub_nodes = [...element.querySelectorAll('[data-pub]')];
+    const length = pub_nodes.length;
+    const subs = Array(length);
+    for (let i = 0; i < length; i++) {
+        const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
+        const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
+        if (!pub_nodes[i][target]) {
+            throw target + ' is not a valid node prop !';
         }
-        Array.prototype.push.apply(this.subs, subs);
-        return this;
-    });
+        const initial_value = pub_nodes[i][target];
+        this.pub(source, new observable_1.Observable(initial_value));
+        subs[i] = {
+            source: this.pins[source],
+            target: target,
+            type: (_c = pub_nodes[i].getAttribute('data-type')) !== null && _c !== void 0 ? _c : 'string',
+            node: pub_nodes[i],
+        };
+    }
+    Array.prototype.push.apply(this.subs, subs);
+    return this;
+};
 exports.Context.prototype.musterSubs = function (element) {
     var _a, _b, _c;
     const sub_nodes = [...element.querySelectorAll('[data-sub]')];
@@ -75,10 +75,6 @@ exports.Context.prototype.musterSubs = function (element) {
 };
 exports.Context.prototype.muster = function (element) {
     return this.musterPubs(element).musterSubs(element);
-};
-exports.Context.prototype.setSubs = function (subs) {
-    this.subs = subs;
-    return this;
 };
 exports.Context.prototype.activateSubs = function () {
     for (let i = 0, length = this.subs.length; i < length; i++) {

@@ -50,7 +50,7 @@ export interface Context {
   musterPubs: (element: ParentNode) => this;
   musterSubs: (element: ParentNode) => this;
   muster: (element: ParentNode) => this;
-  setSubs: (pins: Sub<any>[]) => this;
+  // setSubs: (pins: Sub<any>[]) => this;
   activateSubs: () => this;
   refresh: () => this;
   // [extension: string]: any; // open for extension.
@@ -113,7 +113,7 @@ Context.prototype.remove = function (name: string): Context {
 /**
  * Merge observables from another given context.
  */
-(Context.prototype.merge = function (
+Context.prototype.merge = function (
   another_context: Context | { [name: string]: Observable<any> }
 ): Context {
   if (another_context.pins !== undefined) {
@@ -122,43 +122,43 @@ Context.prototype.remove = function (name: string): Context {
   // extend(context.pins, another_context);
   Object.assign(this.pins, another_context);
   return this;
-}),
-  /**
-   * Collect data pubs declared in given element for this Context.
-   *
-   * @note A pub is a sub that publishes its initial value as an observable to
-   *       a context, i.e., it is immediately subscribed to this new
-   *       observable value.
-   *
-   * @note musterPubs is not idempotent. Y
-   */
-  (Context.prototype.musterPubs = function (element: ParentNode): Context {
-    const pub_nodes = [...element.querySelectorAll('[data-pub]')];
-    const length = pub_nodes.length;
-    const subs: Sub<any>[] = Array(length);
+};
+/**
+ * Collect data pubs declared in given element for this Context.
+ *
+ * @note A pub is a sub that publishes its initial value as an observable to
+ *       a context, i.e., it is immediately subscribed to this new
+ *       observable value.
+ *
+ * @note musterPubs is not idempotent. Y
+ */
+Context.prototype.musterPubs = function (element: ParentNode): Context {
+  const pub_nodes = [...element.querySelectorAll('[data-pub]')];
+  const length = pub_nodes.length;
+  const subs: Sub<any>[] = Array(length);
 
-    for (let i = 0; i < length; i++) {
-      const source = pub_nodes[i].getAttribute('data-pub') ?? 'error';
-      const target = pub_nodes[i].getAttribute('data-prop') ?? 'textContent';
+  for (let i = 0; i < length; i++) {
+    const source = pub_nodes[i].getAttribute('data-pub') ?? 'error';
+    const target = pub_nodes[i].getAttribute('data-prop') ?? 'textContent';
 
-      /** @todo Figure out how to check that target exists */
-      if (!(<any>pub_nodes[i])[target]) {
-        throw target + ' is not a valid node prop !';
-      }
-
-      const initial_value = pub_nodes[i][target as keyof Element];
-      this.pub(source, new Observable<typeof initial_value>(initial_value));
-      subs[i] = {
-        source: this.pins[source],
-        // source: this.pins.get(source),
-        target: target,
-        type: pub_nodes[i].getAttribute('data-type') ?? 'string',
-        node: pub_nodes[i],
-      };
+    /** @todo Figure out how to check that target exists */
+    if (!(<any>pub_nodes[i])[target]) {
+      throw target + ' is not a valid node prop !';
     }
-    Array.prototype.push.apply(this.subs, subs);
-    return this;
-  });
+
+    const initial_value = pub_nodes[i][target as keyof Element];
+    this.pub(source, new Observable<typeof initial_value>(initial_value));
+    subs[i] = {
+      source: this.pins[source],
+      // source: this.pins.get(source),
+      target: target,
+      type: pub_nodes[i].getAttribute('data-type') ?? 'string',
+      node: pub_nodes[i],
+    };
+  }
+  Array.prototype.push.apply(this.subs, subs);
+  return this;
+};
 
 /**
  * Collect data subs declared in given element for this Context.
@@ -200,13 +200,13 @@ Context.prototype.muster = function (element: ParentNode): Context {
   return this.musterPubs(element).musterSubs(element);
 };
 
-/**
- * Reference given sub collection as this context sub collection.
- */
-Context.prototype.setSubs = function (subs: Sub<any>[]): Context {
-  this.subs = subs;
-  return this;
-};
+// /**
+//  * Reference given sub collection as this context sub collection.
+//  */
+// Context.prototype.setSubs = function (subs: Sub<any>[]): Context {
+//   this.subs = subs;
+//   return this;
+// };
 /**
  * Activate this context sub collection.
  *
