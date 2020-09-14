@@ -130,7 +130,9 @@ Context.prototype.merge = function (
  *       a context, i.e., it is immediately subscribed to this new
  *       observable value.
  *
- * @note musterPubs is not idempotent. Y
+ * @note musterPubs is not idempotent.
+ * 
+ * @throws If sub target is NOT a property of sub node.
  */
 Context.prototype.musterPubs = function (element: ParentNode): Context {
   const pub_nodes = [...element.querySelectorAll('[data-pub]')];
@@ -142,9 +144,8 @@ Context.prototype.musterPubs = function (element: ParentNode): Context {
     const target = pub_nodes[i].getAttribute('data-prop') ?? 'textContent';
 
     /** @todo Figure out how to check that target exists */
-    if (!(<any>pub_nodes[i])[target]) {
-      throw target + ' is not a valid node prop !';
-    }
+    // if (!(<any>)[target]) {
+    if (!(target in pub_nodes[i])) throw target + ' is not a valid node prop !';
 
     const initial_value = pub_nodes[i][target as keyof Element];
     this.pub(source, new Observable<typeof initial_value>(initial_value));
@@ -175,7 +176,9 @@ Context.prototype.musterSubs = function (element: ParentNode): Context {
   for (let i = 0; i < length; i++) {
     const source = sub_nodes[i].getAttribute('data-sub') ?? 'data-sub or';
 
-    if (!this.pins[source]) throw source + ' pin does not exist !';
+    // if (!this.pins[source]) throw source + ' pin does not exist !';
+    if (!(source in this.pins)) throw source + ' pin does not exist !';
+
     // const pin = this.pins.get(source);
     // if (!pin) throw source + ' pin does not exist !';
 
@@ -217,11 +220,11 @@ Context.prototype.activateSubs = function (): Context {
     const target = this.subs[i].target;
     const node = this.subs[i].node;
 
-    // if (target in node === false) {}
-    if (!(<any>node)[target]) throw target + ' is not a valid node prop !';
+    // if ((<any>node)[target] === undefined) {
+    if (!(target in node)) throw target + ' is not a valid node prop !';
 
     (<Observable<any>>this.subs[i].source).subscribe((value) => {
-      (<any>node)[target] = value;
+      node[target] = value;
     });
   }
   return this;

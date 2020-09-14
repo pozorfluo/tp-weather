@@ -55,7 +55,19 @@ describe('Context', () => {
     );
   });
 
-  it('throws when trying to muster an pin-less sub', () => {
+  it('can activate previously mustered subs', () => {
+    context.muster(element).activateSubs();
+    expect(context.pins.test.subscribers.length).toBe(3);
+  });
+
+  it('can trigger a refresh', () => {
+    context.muster(element).activateSubs().refresh();
+    expect((<HTMLInputElement>element.querySelector('input')).value).toBe(
+      'test string'
+    );
+  });
+
+  it('throws when trying to muster a pin-less sub', () => {
     element = document.createElement('div');
     element.innerHTML = `
       <span data-sub="pinDoesNotExist"></span>
@@ -65,13 +77,31 @@ describe('Context', () => {
     }).toThrow();
   });
 
+  it('throws when trying to muster a pin with an invalid data-prop', () => {
+    element = document.createElement('div');
+    element.innerHTML = `
+      <span data-pub="test" data-prop="invalidTarget"></span>
+    `;
+    expect(() => {
+      context.muster(element);
+    }).toThrow();
+  });
+
   it('throws when trying to activate a sub with an invalid data-prop', () => {
     element = document.createElement('div');
     element.innerHTML = `
-      <span data-sub="test" data-prop="invalidTarget"></span>
+      <span data-pub="test"></span>
     `;
+
     expect(() => {
-      context.muster(element).activateSubs();
+      context.muster(element);
+    }).not.toThrow();
+
+    /** @note brittle */
+    context.subs[0].target = 'invalidTarget';
+
+    expect(() => {
+      context.activateSubs();
     }).toThrow();
   });
 
@@ -131,7 +161,7 @@ describe('Context', () => {
   it('can merge pins from another given context', () => {
     context.muster(element);
 
-    const another_context = (new Context())
+    const another_context = new Context()
       .pub('test_string', new Observable('a string'))
       .pub('test_number', new Observable(1980));
 
@@ -149,7 +179,7 @@ describe('Context', () => {
   it('can merge pins from another given pin collection', () => {
     context.muster(element);
 
-    const another_context = (new Context())
+    const another_context = new Context()
       .pub('test_string', new Observable('a string'))
       .pub('test_number', new Observable(1980));
 
