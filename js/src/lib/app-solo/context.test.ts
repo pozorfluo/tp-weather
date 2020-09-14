@@ -55,13 +55,22 @@ describe('Context', () => {
     );
   });
 
-  it('can activate previously mustered subs', () => {
-    context.muster(element).activateSubs();
+  it('can activate all previously mustered subs', () => {
+    context.muster(element).activateAll();
     expect(context.pins.test.subscribers.length).toBe(3);
   });
 
+  it('can deactivate all previously mustered subs', () => {
+    context.muster(element).deactivateAll();
+    expect(context.pins.test.subscribers.length).toBe(0);
+  });
+  // it('can activate/deactive a single pin without messing activateAll/deactivateAll', () => {
+  //   context.muster(element).deactivateAll();
+  //   expect(context.pins.test.subscribers.length).toBe(0);
+  // });
+
   it('can trigger a refresh', () => {
-    context.muster(element).activateSubs().refresh();
+    context.muster(element).activateAll().refresh();
     expect((<HTMLInputElement>element.querySelector('input')).value).toBe(
       'test string'
     );
@@ -101,7 +110,7 @@ describe('Context', () => {
     context.subs[0].target = 'invalidTarget';
 
     expect(() => {
-      context.activateSubs();
+      context.activateAll();
     }).toThrow();
   });
 
@@ -135,13 +144,30 @@ describe('Context', () => {
         target_b = value + value;
       }
     );
-    // .activateSubs()
 
     expect(context.subs).toStrictEqual([]);
     context.pins.test_string.set('test');
 
     expect(target_a).toBe('test');
     expect(target_b).toBe('testtest');
+  });
+
+  it('can sub a callback to a pin given a pin name', () => {
+    let target = '';
+
+    context.muster(element).sub('test', (value) => {
+      target = value;
+    });
+    context.pins.test.set('test value');
+    expect(target).toBe('test value');
+  });
+
+  it('throws when trying to sub to an invalid pin', () => {
+    expect(() => {
+      context.sub('invalidPin', (value) => {
+        value = '';
+      });
+    }).toThrow();
   });
 
   it('can remove a pin given its name', () => {
@@ -156,7 +182,9 @@ describe('Context', () => {
     }).not.toThrow();
   });
 
-  // it('allows its methods to be passed as callbacks', () => {});
+  it('leaves no danglings subs after a remove', () => {
+    expect(context.pins).toStrictEqual({ fail: 'fail' });
+  });
 
   it('can merge pins from another given context', () => {
     context.muster(element);
@@ -192,11 +220,5 @@ describe('Context', () => {
         test: expect.any(Observable),
       })
     );
-  });
-
-  it('throws when trying to sub to an invalid pin', () => {});
-  it('return null when trying to sub to an invalid pin', () => {});
-  it('leaves no danglings subs after a clear', () => {
-    // expect(context.pins).toStrictEqual({});
   });
 });

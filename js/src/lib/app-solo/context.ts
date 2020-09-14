@@ -26,13 +26,11 @@ export interface Sub<T> {
  * @note Because Context relies on apply() to concatenate arrays it can only
  *       handle up to 65536 subs.
  * @note pub and merge will clobber existing entries.
- *
- * @todo Consider looking for memory efficient alternatives to
- *       observables_iterator.
- *       Object.is(app.observables.forecasts,
- *                 app.observables_iterator[0][1])) is true though.
- * @todo Add deactivateSubs method.
- * @todo Add clearSubs, clearPubs, clear.
+ * 
+ * @note When an Observable is pub-ed to a Context, it is considered to be 
+ *       managed by said Context. Context will mercilessly add or drop all 
+ *       subscribers from any Observable it manages wether or not one fiddled
+ *       with a managed Observable directly.
  */
 export interface Context {
   pins: { [name: string]: Observable<any> };
@@ -43,6 +41,10 @@ export interface Context {
     observable: Observable<any>,
     ...subscribers: Subscriber<any>[]
   ) => this;
+  sub: (
+    name: string,
+    ...subscribers: Subscriber<any>[]
+  ) => this;
   remove: (name: string) => this;
   merge: (
     another_context: Context | { [name: string]: Observable<any> }
@@ -51,7 +53,10 @@ export interface Context {
   musterSubs: (element: ParentNode) => this;
   muster: (element: ParentNode) => this;
   // setSubs: (pins: Sub<any>[]) => this;
-  activateSubs: () => this;
+  // activate: (name: string) => this;
+  // deactivate: (name: string) => this;
+  activateAll: () => this;
+  deactivateAll: () => this;
   refresh: () => this;
   // [extension: string]: any; // open for extension.
 }
@@ -75,7 +80,8 @@ export const Context = (function (this: Context): Context {
 } as any) as ContextCtor;
 
 /**
- * Register observable in this context.
+ * Register an observable as a pin in this context and optionally immediately 
+ * sub given Subscribers to it.
  */
 Context.prototype.pub = function (
   name: string,
@@ -91,13 +97,30 @@ Context.prototype.pub = function (
 };
 
 /**
+ * Subscribe given Subscribers to a known pin given its name.
+ */
+Context.prototype.sub = function (
+  name: string,
+  ...subscribers: Subscriber<any>[]
+): Context {
+
+  if (!(name in this.pins)) throw name + ' pin does not exist !';
+
+  for (let i = 0, length = subscribers.length; i < length; i++) {
+    this.pins[name].subscribe(subscribers[i]);
+  }
+  return this;
+};
+
+/**
  * Remove an observable pin from this context.
  *
  * @note Remove drops all subscribers from the removed Observable to avoid
  *       dangling subscriptions.
  */
 Context.prototype.remove = function (name: string): Context {
-  if (this.pins[name] !== undefined) {
+  // if (this.pins[name] !== undefined) {
+  if (name in this.pins) {
     this.pins[name].dropAll();
     delete this.pins[name];
     // this.pins[name] = undefined;
@@ -215,7 +238,7 @@ Context.prototype.muster = function (element: ParentNode): Context {
  *
  * @throws If sub target is NOT a property of sub node.
  */
-Context.prototype.activateSubs = function (): Context {
+Context.prototype.activateAll = function (): Context {
   for (let i = 0, length = this.subs.length; i < length; i++) {
     const target = this.subs[i].target;
     const node = this.subs[i].node;
