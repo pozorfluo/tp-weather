@@ -15,11 +15,11 @@ export interface OWMOneCallResponse {
 }
 
 export interface Daily {
-    timestamp: number;
-    temperature: string;
-    windSpeed: string;
-    windDeg: string;
-    icon: string;
+  timestamp: number;
+  temperature: string;
+  windSpeed: string;
+  windDeg: string;
+  icon: string;
 }
 
 export interface Forecast {
@@ -63,7 +63,7 @@ export function newForecast(loc: GeoInfo, owm: OWMOneCallResponse): Forecast {
     timezone: owm.timezone,
     timezoneOffset: owm.timezone_offset,
     current: {
-      timestamp : owm.current.dt * 1000,
+      timestamp: owm.current.dt * 1000,
       temperature: owm.current.temp,
       windSpeed: owm.current.wind_speed,
       windDeg: owm.current.wind_deg,
@@ -74,7 +74,7 @@ export function newForecast(loc: GeoInfo, owm: OWMOneCallResponse): Forecast {
 
   for (let i = 0, length = owm.daily.length; i < length; i++) {
     forecast.daily.push({
-      timestamp : owm.daily[i].dt * 1000,
+      timestamp: owm.daily[i].dt * 1000,
       temperature: owm.daily[i].temp.day,
       windSpeed: owm.daily[i].wind_speed,
       windDeg: owm.daily[i].wind_deg,
@@ -95,7 +95,7 @@ export async function getDailyForecasts(
     );
     if (response.status >= 400 && response.status < 600) {
       throw new Error(
-        "Something went wrong contacting 'api.openweathermap.org'."
+        "Something went wrong while contacting 'api.openweathermap.org'."
       );
     }
     return response.json();

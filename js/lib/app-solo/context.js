@@ -17,8 +17,16 @@ exports.Context.prototype.pub = function (name, pin, ...subscribers) {
     }
     return this;
 };
+exports.Context.prototype.sub = function (name, ...subscribers) {
+    if (!(name in this.pins))
+        throw name + ' pin does not exist !';
+    for (let i = 0, length = subscribers.length; i < length; i++) {
+        this.pins[name].subscribe(subscribers[i]);
+    }
+    return this;
+};
 exports.Context.prototype.remove = function (name) {
-    if (this.pins[name] !== undefined) {
+    if (name in this.pins) {
         this.pins[name].dropAll();
         delete this.pins[name];
     }
@@ -39,9 +47,8 @@ exports.Context.prototype.musterPubs = function (element) {
     for (let i = 0; i < length; i++) {
         const source = (_a = pub_nodes[i].getAttribute('data-pub')) !== null && _a !== void 0 ? _a : 'error';
         const target = (_b = pub_nodes[i].getAttribute('data-prop')) !== null && _b !== void 0 ? _b : 'textContent';
-        if (!pub_nodes[i][target]) {
+        if (!(target in pub_nodes[i]))
             throw target + ' is not a valid node prop !';
-        }
         const initial_value = pub_nodes[i][target];
         this.pub(source, new observable_1.Observable(initial_value));
         subs[i] = {
@@ -61,7 +68,7 @@ exports.Context.prototype.musterSubs = function (element) {
     const subs = Array(length);
     for (let i = 0; i < length; i++) {
         const source = (_a = sub_nodes[i].getAttribute('data-sub')) !== null && _a !== void 0 ? _a : 'data-sub or';
-        if (!this.pins[source])
+        if (!(source in this.pins))
             throw source + ' pin does not exist !';
         subs[i] = {
             source: this.pins[source],
@@ -76,11 +83,11 @@ exports.Context.prototype.musterSubs = function (element) {
 exports.Context.prototype.muster = function (element) {
     return this.musterPubs(element).musterSubs(element);
 };
-exports.Context.prototype.activateSubs = function () {
+exports.Context.prototype.activateAll = function () {
     for (let i = 0, length = this.subs.length; i < length; i++) {
         const target = this.subs[i].target;
         const node = this.subs[i].node;
-        if (!node[target])
+        if (!(target in node))
             throw target + ' is not a valid node prop !';
         this.subs[i].source.subscribe((value) => {
             node[target] = value;

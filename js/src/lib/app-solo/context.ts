@@ -14,7 +14,7 @@ import { Observable, Subscriber } from './observable';
  * @todo Add Tag / component / render function callback.
  */
 export interface Sub<T> {
-  source: Observable<T> | string;
+  source: Observable<T>;
   target: string;
   type: string;
   node: Node;
@@ -23,12 +23,15 @@ export interface Sub<T> {
 /**
  * Define Context object.
  *
+ * Help manage an heterogenous collection of Observables ?
+ * Provide a declarative way to pub/sub DOM element properties.
+ *
  * @note Because Context relies on apply() to concatenate arrays it can only
  *       handle up to 65536 subs.
  * @note pub and merge will clobber existing entries.
- * 
- * @note When an Observable is pub-ed to a Context, it is considered to be 
- *       managed by said Context. Context will mercilessly add or drop all 
+ *
+ * @note When an Observable is pub-ed to a Context, it is considered to be
+ *       managed by said Context. Context will mercilessly add or drop all
  *       subscribers from any Observable it manages wether or not one fiddled
  *       with a managed Observable directly.
  */
@@ -41,10 +44,7 @@ export interface Context {
     observable: Observable<any>,
     ...subscribers: Subscriber<any>[]
   ) => this;
-  sub: (
-    name: string,
-    ...subscribers: Subscriber<any>[]
-  ) => this;
+  sub: (name: string, ...subscribers: Subscriber<any>[]) => this;
   remove: (name: string) => this;
   merge: (
     another_context: Context | { [name: string]: Observable<any> }
@@ -58,6 +58,10 @@ export interface Context {
   activateAll: () => this;
   deactivateAll: () => this;
   refresh: () => this;
+  // set: <K extends keyof Context['pins']>(
+  //   name: K,
+  //   value: Context['pins'][K][value]
+  // ) => this;
   // [extension: string]: any; // open for extension.
 }
 
@@ -80,7 +84,7 @@ export const Context = (function (this: Context): Context {
 } as any) as ContextCtor;
 
 /**
- * Register an observable as a pin in this context and optionally immediately 
+ * Register an observable as a pin in this context and optionally immediately
  * sub given Subscribers to it.
  */
 Context.prototype.pub = function (
@@ -103,7 +107,6 @@ Context.prototype.sub = function (
   name: string,
   ...subscribers: Subscriber<any>[]
 ): Context {
-
   if (!(name in this.pins)) throw name + ' pin does not exist !';
 
   for (let i = 0, length = subscribers.length; i < length; i++) {
@@ -154,7 +157,7 @@ Context.prototype.merge = function (
  *       observable value.
  *
  * @note musterPubs is not idempotent.
- * 
+ *
  * @throws If sub target is NOT a property of sub node.
  */
 Context.prototype.musterPubs = function (element: ParentNode): Context {

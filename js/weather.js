@@ -54,7 +54,7 @@ async function getDailyForecasts(loc, api_keys) {
     try {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/onecall?lang=${loc.countryCode}&units=metric&lat=${loc.latitude}&lon=${loc.longitude}&exclude=minutely,hourly&appid=${api_keys.owm}`);
         if (response.status >= 400 && response.status < 600) {
-            throw new Error("Something went wrong contacting 'api.openweathermap.org'.");
+            throw new Error("Something went wrong while contacting 'api.openweathermap.org'.");
         }
         return response.json();
     }

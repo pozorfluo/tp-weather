@@ -19,7 +19,8 @@
         "removeComments": true
     },
     "files": [
-        "js/src/script.ts"
+        "js/src/script.ts",
+        "js/src/workers/weather.ts"
     ],
     "exclude": [
         "node_modules",

@@ -32,6 +32,24 @@
                 "cwd": "${workspaceFolder}"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "bundle weather worker",
+            "command": "watchify",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "isBackground": true,
+            "args": [
+                "js/workers/weather.js",
+                "-o",
+                "js/dist/workers/weather.js"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
         }
     ]
 }

@@ -182,6 +182,10 @@ describe('Context', () => {
     }).not.toThrow();
   });
 
+  // it('can set a pin value given an existing pin name', () => {
+  //   context.muster(element).set('test', )
+  // });
+
   it('leaves no danglings subs after a remove', () => {
     expect(context.pins).toStrictEqual({ fail: 'fail' });
   });
