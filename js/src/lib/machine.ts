@@ -49,6 +49,7 @@ export interface Rules {
     onEntry?: Action;
     onExit?: Action;
     [definition: string]: Action | Rules | undefined;
+    // states? : Rules;
   };
 }
 
@@ -89,7 +90,7 @@ export const Machine = (function (
   let initial = rules[initial_state[0]];
 
   for (let i = 1; i < depth; i++) {
-    initial = rule.rules[this._current[i]];
+    initial = initial.rules[this._current[i]];
   }
 
   this._rules = rules;
@@ -101,8 +102,17 @@ export const Machine = (function (
    * rule for given action name exists in current Machine State.
    * 
    * Transition to State returned by executed Action handler if any.
+   * 
+   * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
+   *       unintended match on prototype methods.
    */
   Machine.prototype.emit = function(action : string, ...payload : unknown[]) {
+
+    /** @todo Move to  _setCursor(state : State) or transition, throw on 
+     *        invalid state. 
+     * @todo Do not _setCursor here, just use wherever the _current is pointing
+     *       at.
+    */
     const depth = this._current.length;
     let rule = this.rules[this._current[0]];
 
@@ -114,6 +124,7 @@ export const Machine = (function (
       rule = rule.rules[this._current[i]];
     }
 
+    /** @todo Rewrite using (K in T) */
     if (rule) {
       const handler = rule[action];
       if (handler) {
