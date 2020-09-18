@@ -5,7 +5,13 @@ vanilla typescript web components with KOПЯΛD
 
 ## todo
 
-- [ ] Try moving non-UI stuff to a web worker
-- [ ] Extract komrad, app-solo updates
+- [x] Try moving non-UI stuff to a web worker
+- [x] Extract komrad, app-solo updates
   - [x] Add debounce
-  - [ ] Research how to deal with inconsistent read/glitch
+  - [x] Research how to deal with inconsistent read/glitch
+- [ ] Rename Observable to Feed
+- [ ] Allow passing (Source[]?, Subscriber[]?) in Stream ctor
+- [ ] Consider wrapping Source (elem, event_name, callback) from DomEvents
+- [ ] Consider other Source as regular callback returning value compatible
+      with observable type
+- [ ] Consider wrapping Generator Source
