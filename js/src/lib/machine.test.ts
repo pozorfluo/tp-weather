@@ -6,17 +6,21 @@ describe('Machine', () => {
   beforeEach(() => {
     rules = {
       a : {
-        doThis() {
-          return ['b'];
-        },
-        doThat() {
-          return ['invalid'];
-        }
+          actions : {
+              doThis() {
+                return ['b'];
+              },
+              doThat() {
+                return ['invalid'];
+              }
+          }
       },
       b : {
-        doThis() {
-          return ['a'];
-        }
+          actions : {
+              doThis() {
+                return ['a'];
+              }
+          }
       },
     }
   });
@@ -45,3 +49,11 @@ describe('Machine', () => {
 
 
 });
+
+
+const arr_a = [0, 1, 2];
+const id = (array) => array;
+const arr_b = id(arr_a);
+arr_b[1] = 999;
+console.log(arr_a);
+console.log(arr_b);

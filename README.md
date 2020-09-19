@@ -10,7 +10,7 @@ vanilla typescript web components with KOПЯΛD
   - [x] Add debounce
   - [x] Research how to deal with inconsistent read/glitch
 - [ ] Rename Observable to Feed
-- [ ] Allow passing (Source[]?, Subscriber[]?) in Stream ctor
+- [ ] Allow passing (Source[]?, Subscriber[]?) in Feed ctor
 - [ ] Consider wrapping Source (elem, event_name, callback) from DomEvents
 - [ ] Consider other Source as regular callback returning value compatible
       with observable type

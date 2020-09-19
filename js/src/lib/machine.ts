@@ -39,20 +39,39 @@ export type Action = (...payload: unknown[]) => Transition;
  * @note onEntry, onExit are special action automatically executed when the
  *       their parent state is entered/exited.
  *
- * @todo Consider ignoring onEntry, onExit returned value to forbid automatic
- *       transitions from these special actions.
+ * @note onExit returned value is ignored to forbid automatic transitions
+ *       from this special action.
+ *
  * @todo Check if typescript allows onEntry, onExit to be assigned a Rules type
  *       value. Hopefully not.
+ * 
+ * @todo Consider handling parallel states.
  */
 export interface Rules {
   [state: string]: {
     onEntry?: Action;
     onExit?: Action;
-    [definition: string]: Action | Rules | undefined;
-    // states? : Rules;
+    actions: {
+      [action: string]: Action;
+    };
+    states?: Rules;
   };
 }
 
+
+/**
+ * Define MachineEvent object.
+ * 
+ * @todo Consider how to log side-effects, especially non-deterministic ones.
+ */
+export interface MachineEvent {
+    action : Action;
+    payload : unknown[];
+    transition : Transition;
+    before : State;
+    after : State;
+    // side_effects : unknown[];
+}
 /**
  * Define Machine object.
  */
@@ -65,6 +84,8 @@ export interface Machine {
   emit: (action: string, ...payload: unknown[]) => void;
   // Should the outside world care about the Machine state ?
   getState: () => State;
+  /** Register an optional callback fired on Transition. */
+  onTransition : (event : MachineEvent) => void;
 }
 
 /**
@@ -83,62 +104,88 @@ export const Machine = (function (
   initial_state: State
 ): Machine {
   if (!new.target) {
-    throw 'Context() must be called with new !';
-  }
-
-  const depth = initial_state.length;
-  let initial = rules[initial_state[0]];
-
-  for (let i = 1; i < depth; i++) {
-    initial = initial.rules[this._current[i]];
+    throw 'Machine() must be called with new !';
   }
 
   this._rules = rules;
+  this._transition(initial_state);
   return this;
 } as any) as MachineCtor;
 
-  /**
-   * Execute Action handler passing along given payload as Action argument, if a
-   * rule for given action name exists in current Machine State.
-   * 
-   * Transition to State returned by executed Action handler if any.
-   * 
-   * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
-   *       unintended match on prototype methods.
-   */
-  Machine.prototype.emit = function(action : string, ...payload : unknown[]) {
+// const arr_a = [0, 1, 2];
+// const id = (array) => [...array];
+// const arr_b = id(arr_a);
+// arr_b[1] = 999;
+// console.log(arr_a);
+// console.log(arr_b);
 
-    /** @todo Move to  _setCursor(state : State) or transition, throw on 
-     *        invalid state. 
-     * @todo Do not _setCursor here, just use wherever the _current is pointing
-     *       at.
-    */
-    const depth = this._current.length;
-    let rule = this.rules[this._current[0]];
+/**
+ * @throws If target State does NOT exist on this Machine.
+ */
+Machine.prototype._transition = function (state: State) {
+  if ('onExit' in this._current) {
+    /** Forbid automatic transition onExit by ignoring returned value. */
+    this._current.onExit();
+  }
+//   const depth = this._current.length;
+//   let rule = this.rules[this._current[0]];
 
-    for (let i = 1; i < depth; i++) {
-      /** 
-       * @todo Retrieve previous compound state test
-       * @todo Decide if you nest state via using another rules key
-       */
-      rule = rule.rules[this._current[i]];
+//   for (let i = 1; i < depth; i++) {
+//     /**
+//      * @todo Retrieve previous compound state test
+//      * @todo Decide if you nest state via using another rules key
+//      */
+//     rule = rule.rules[this._current[i]];
+//   }
+  if ('onEntry' in this._current) {
+    const automatic_transition = this._current.onEntry();
+    if (automatic_transition) {
+      this._transition(automatic_transition);
     }
+  }
+};
 
-    /** @todo Rewrite using (K in T) */
-    if (rule) {
-      const handler = rule[action];
-      if (handler) {
-        const target = handler.apply(this, payload);
-        if(target) {
-          /** @todo Throw inside _transition if target is invalid. */
-          this._transition(target);
-        }
+/**
+ * Execute Action handler passing along given payload as Action argument, if a
+ * rule for given action name exists in current Machine State.
+ *
+ * Transition to State returned by executed Action handler if any.
+ *
+ * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
+ *       unintended match on {} prototype methods.
+ */
+Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
+  /** @todo Move to  _setCursor(state : State) or transition, throw on
+   *        invalid state.
+   * @todo Do not _setCursor here, just use wherever the _current is pointing
+   *       at.
+   */
+  const depth = this._current.length;
+  let rule = this.rules[this._current[0]];
+
+  for (let i = 1; i < depth; i++) {
+    /**
+     * @todo Retrieve previous compound state test
+     * @todo Decide if you nest state via using another rules key
+     */
+    rule = rule.rules[this._current[i]];
+  }
+
+  /** @todo Rewrite using (K in T) */
+  if (rule) {
+    const handler = rule[action];
+    if (handler) {
+      const target = handler.apply(this, payload);
+      if (target) {
+        /** @todo Throw inside _transition if target is invalid. */
+        this._transition(target);
       }
     }
-
-    /** @todo Consider logging invalid actions here. */
-    console.log(`${action} emitted.`, payload);
   }
+
+  /** @todo Consider logging invalid actions here. */
+  console.log(`${action} emitted.`, payload);
+};
 
 // export const configMachine = {
 //   /** Internal cursor */
