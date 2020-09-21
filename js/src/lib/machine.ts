@@ -77,7 +77,7 @@ export interface MachineEvent {
  */
 export interface Machine {
   /** Internal cursor */
-  _current: State;
+  _current: Rules;
   _transition: (state: State) => void;
   _rules: Rules;
   //emitter should NOT care about => State;
@@ -107,17 +107,13 @@ export const Machine = (function (
     throw 'Machine() must be called with new !';
   }
 
-  this._rules = rules;
+  /** @todo Freeze object and nested properties completely or drop freeze. */
+  this._rules = Object.freeze(rules);
+  /** @note Bootstrap _current to minimum viable rule. */
+  this._current = {init : {actions : {}}};
   this._transition(initial_state);
   return this;
 } as any) as MachineCtor;
-
-// const arr_a = [0, 1, 2];
-// const id = (array) => [...array];
-// const arr_b = id(arr_a);
-// arr_b[1] = 999;
-// console.log(arr_a);
-// console.log(arr_b);
 
 /**
  * @throws If target State does NOT exist on this Machine.
