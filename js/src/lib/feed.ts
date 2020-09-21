@@ -1,6 +1,4 @@
-// import { Trait } from '../komrad';
-
-//-------------------------------------------------------------- app-solo.ts ---
+//------------------------------------------------------------------------- feed
 /**
  *
  */
@@ -13,9 +11,9 @@ export interface Subscriber<T> {
 }
 
 /**
- * Define Observable object.
+ * Define Feed object.
  */
-export interface Observable<T> {
+export interface Feed<T> {
   subscribers: Subscriber<T>[];
   value: T;
   _pending: number;
@@ -25,15 +23,14 @@ export interface Observable<T> {
   drop: (subscriber: Subscriber<T>) => this;
   dropAll: () => this;
   get: () => T;
-  set: (value: T) => this;
+  push: (value: T) => this;
   setUnbound: (value: T) => this;
   setDebounced: (value: T) => this;
   setThrottled: (value: T) => this;
-  //   [extension: string]: any; // open for extension.
 }
 
 /**
- * Define ObservableOptions object used in Observable constructor.
+ * Define FeedOptions object used in Feed constructor.
  */
 export enum RateLimit {
   none = 'none',
@@ -42,14 +39,14 @@ export enum RateLimit {
 }
 
 /**
- * Define Observable constructor.
+ * Define Feed constructor.
  */
-export type ObservableCtor = {
-  new <T>(value: T, rateLimit?: RateLimit): Observable<T>;
+export type FeedCtor = {
+  new <T>(value: T, rateLimit?: RateLimit): Feed<T>;
 };
 
 /**
- * Create a new Observable object.
+ * Create a new Feed object.
  *
  * @note To resolve notifications according to subscribers priority and
  *       insertion order, notify() Awaits each subscriber's callback in
@@ -57,13 +54,13 @@ export type ObservableCtor = {
  *
  * @todo Add unsubscribe method.
  */
-export const Observable = (function <T>(
-  this: Observable<T>,
+export const Feed = (function <T>(
+  this: Feed<T>,
   value: T,
   rateLimit: RateLimit = RateLimit.throttle
-): Observable<T> {
+): Feed<T> {
   if (!new.target) {
-    throw 'Observable() must be called with new !';
+    throw 'Feed() must be called with new !';
   }
   this.subscribers = [];
   this.value = value;
@@ -72,10 +69,10 @@ export const Observable = (function <T>(
   this._timeout = 0;
 
   // const instance = this;
-  this.set = ((rateLimit: RateLimit) => {
+  this.push = ((rateLimit: RateLimit) => {
     switch (rateLimit) {
       case RateLimit.none:
-        return (value: T): Observable<T> => {
+        return (value: T): Feed<T> => {
           /* The buck stops here. */
           if (value !== this.value) {
             this.value = value;
@@ -86,7 +83,7 @@ export const Observable = (function <T>(
       // return this.setUnbound.bind(this);
       case RateLimit.debounce:
         // return this.setDebounced.bind(this);
-        return (value: T): Observable<T> => {
+        return (value: T): Feed<T> => {
           // console.log('set', this._pending, this.value);
           /* The buck stops here. */
           if (value !== this.value) {
@@ -109,7 +106,7 @@ export const Observable = (function <T>(
           return this;
         };
       case RateLimit.throttle:
-        return (value: T): Observable<T> => {
+        return (value: T): Feed<T> => {
           /* The buck stops here. */
           if (value !== this.value) {
             this.value = value;
@@ -152,12 +149,12 @@ export const Observable = (function <T>(
     }
   })(rateLimit);
   return this;
-} as any) as ObservableCtor;
+} as any) as FeedCtor;
 
 /**
  *
  */
-Observable.prototype.notify = function <T>(): Observable<T> {
+Feed.prototype.notify = function <T>(): Feed<T> {
   // const length = this.subscribers.length;
   // const tasks = new Array(length);
   // console.log(this.subscribers);
@@ -174,14 +171,16 @@ Observable.prototype.notify = function <T>(): Observable<T> {
 };
 
 /**
+ * Register a Subscriber to this Feed.
+ * 
  * @param priority Optional parameter priority is the index where given
  *                 Subscriber is going to be 'spliced' in the subscribers list.
  *                 If no paramater is supplied, given Subscriber is appended.
  */
-Observable.prototype.subscribe = function <T>(
+Feed.prototype.subscribe = function <T>(
   subscriber: Subscriber<T>,
   priority?: number
-): Observable<T> {
+): Feed<T> {
   if (priority === undefined) {
     this.subscribers.push(subscriber);
   } else {
@@ -193,9 +192,9 @@ Observable.prototype.subscribe = function <T>(
 /**
  * Drop a specific subscriber given its reference.
  */
-Observable.prototype.drop = function <T>(
+Feed.prototype.drop = function <T>(
   subscriber: Subscriber<T>
-): Observable<T> {
+): Feed<T> {
   this.subscribers = this.subscribers.filter(
     (s: Subscriber<T>) => s !== subscriber
   );
@@ -205,28 +204,15 @@ Observable.prototype.drop = function <T>(
 /**
  * Drop all subscribers.
  */
-Observable.prototype.dropAll = function <T>(): Observable<T> {
+Feed.prototype.dropAll = function <T>(): Feed<T> {
   this.subscribers = [];
   return this;
 };
 
 /**
- *
+ * Get Feed latest/current value.
  */
-Observable.prototype.get = function <T>(): T {
+Feed.prototype.get = function <T>(): T {
   /* Notify that a read is happening here if necessary. */
   return this.value;
 };
-
-
-// /**
-//  * Define Observable trait.
-//  */
-// export function withObservable<T>(
-//   name: string,
-//   value: T
-// ): Observable<T> & Trait {
-//   const trait: any = { observable: {} }; //  Record<string, Observable<T>>
-//   trait.observable[name] = newObservable<T>(value);
-//   return <Observable<T> & Trait>trait;
-// }

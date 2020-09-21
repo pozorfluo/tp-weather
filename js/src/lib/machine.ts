@@ -1,5 +1,5 @@
-// import store from '../store';
-import  {deepFreeze} from './deepFreeze';
+//---------------------------------------------------------------------- machine
+import  {deepFreeze} from './deep-freeze';
 
 // namespace Machine {
 
@@ -172,8 +172,8 @@ Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
   // }
 
   /** @todo Rewrite using (K in T) */
-  if (rule) {
-    const handler = rule[action];
+  if (action in this._current) {
+    const handler = this._current[action];
     if (handler) {
       const target = handler.apply(this, payload);
       if (target) {

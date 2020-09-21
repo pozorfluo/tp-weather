@@ -1,4 +1,4 @@
-import { Context, Observable } from '.';
+import { Context, Feed } from '.';
 
 it('uses jsdom in this test file', () => {
   const element = document.createElement('div');
@@ -36,7 +36,7 @@ describe('Context', () => {
     context.muster(element);
     expect(context.pins).toEqual(
       expect.objectContaining({
-        test: expect.any(Observable),
+        test: expect.any(Feed),
       })
     );
     expect(context.subs.length).toBe(3);
@@ -114,29 +114,29 @@ describe('Context', () => {
     }).toThrow();
   });
 
-  it('can pub Observable of any type', () => {
+  it('can pub Feed of any type', () => {
     context
-      .pub('test_string', new Observable('a string'))
-      .pub('test_number', new Observable(1980))
+      .pub('test_string', new Feed('a string'))
+      .pub('test_number', new Feed(1980))
       .pub(
         'test_object',
-        new Observable<Object>({ test: 'a value' })
+        new Feed<Object>({ test: 'a value' })
       );
     expect(context.pins).toEqual(
       expect.objectContaining({
-        test_string: expect.any(Observable),
-        test_number: expect.any(Observable),
-        test_object: expect.any(Observable),
+        test_string: expect.any(Feed),
+        test_number: expect.any(Feed),
+        test_object: expect.any(Feed),
       })
     );
   });
 
-  it('can pub Observable of any type with optional subscribers', () => {
+  it('can pub Feed of any type with optional subscribers', () => {
     let target_a = '';
     let target_b = '';
     context.pub(
       'test_string',
-      new Observable('a string'),
+      new Feed('a string'),
       (value) => {
         target_a = value;
       },
@@ -146,7 +146,7 @@ describe('Context', () => {
     );
 
     expect(context.subs).toStrictEqual([]);
-    context.pins.test_string.set('test');
+    context.pins.test_string.push('test');
 
     expect(target_a).toBe('test');
     expect(target_b).toBe('testtest');
@@ -158,7 +158,7 @@ describe('Context', () => {
     context.muster(element).sub('test', (value) => {
       target = value;
     });
-    context.pins.test.set('test value');
+    context.pins.test.push('test value');
     expect(target).toBe('test value');
   });
 
@@ -172,9 +172,9 @@ describe('Context', () => {
 
   it('can remove a pin given its name', () => {
     const pin_name = 'test_pin';
-    context.pub(pin_name, new Observable('a string'));
+    context.pub(pin_name, new Feed('a string'));
 
-    expect(context.pins[pin_name]).toEqual(expect.any(Observable));
+    expect(context.pins[pin_name]).toEqual(expect.any(Feed));
     context.remove(pin_name);
     expect(context.pins[pin_name]).toBeUndefined();
     expect(() => {
@@ -182,8 +182,8 @@ describe('Context', () => {
     }).not.toThrow();
   });
 
-  // it('can set a pin value given an existing pin name', () => {
-  //   context.muster(element).set('test', )
+  // it('can push to a pin given an existing pin name', () => {
+  //   context.muster(element).push('test', )
   // });
 
   it('leaves no danglings subs after a remove', () => {
@@ -194,16 +194,16 @@ describe('Context', () => {
     context.muster(element);
 
     const another_context = new Context()
-      .pub('test_string', new Observable('a string'))
-      .pub('test_number', new Observable(1980));
+      .pub('test_string', new Feed('a string'))
+      .pub('test_number', new Feed(1980));
 
     context.merge(another_context);
 
     expect(context.pins).toEqual(
       expect.objectContaining({
-        test_string: expect.any(Observable),
-        test_number: expect.any(Observable),
-        test: expect.any(Observable),
+        test_string: expect.any(Feed),
+        test_number: expect.any(Feed),
+        test: expect.any(Feed),
       })
     );
   });
@@ -212,16 +212,16 @@ describe('Context', () => {
     context.muster(element);
 
     const another_context = new Context()
-      .pub('test_string', new Observable('a string'))
-      .pub('test_number', new Observable(1980));
+      .pub('test_string', new Feed('a string'))
+      .pub('test_number', new Feed(1980));
 
     context.merge(another_context.pins);
 
     expect(context.pins).toEqual(
       expect.objectContaining({
-        test_string: expect.any(Observable),
-        test_number: expect.any(Observable),
-        test: expect.any(Observable),
+        test_string: expect.any(Feed),
+        test_number: expect.any(Feed),
+        test: expect.any(Feed),
       })
     );
   });

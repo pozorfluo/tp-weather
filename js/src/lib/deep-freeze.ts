@@ -1,6 +1,7 @@
+//------------------------------------------------------------------ deep-freeze
 /**
- * Freeze recursively enumerable and non-enumerable properties found directly
- * on given object.
+ * Freeze own enumerable and non-enumerable properties of given object 
+ * recursively.
  */
 export const deepFreeze = function (obj: object): object {
   const props = Object.getOwnPropertyNames(obj);
@@ -12,7 +13,6 @@ export const deepFreeze = function (obj: object): object {
     const value = (<any>obj)[props[i]];
     if (value) {
       const type = typeof value;
-      /** @todo Check if isFrozen() is enough to avoid circular refs. */
       if (
         (type === 'object' || type === 'function') &&
         !Object.isFrozen(value)

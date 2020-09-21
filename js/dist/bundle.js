@@ -109,7 +109,7 @@ customElements.define('weather-nav', WeatherNav);
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Context = void 0;
-const observable_1 = require("./observable");
+const feed_1 = require("./feed");
 exports.Context = function () {
     if (!new.target) {
         throw 'Context() must be called with new !';
@@ -158,7 +158,7 @@ exports.Context.prototype.musterPubs = function (element) {
         if (!(target in pub_nodes[i]))
             throw target + ' is not a valid node prop !';
         const initial_value = pub_nodes[i][target];
-        this.pub(source, new observable_1.Observable(initial_value));
+        this.pub(source, new feed_1.Feed(initial_value));
         subs[i] = {
             source: this.pins[source],
             target: target,
@@ -210,41 +210,46 @@ exports.Context.prototype.refresh = function () {
     return this;
 };
 
-},{"./observable":5}],4:[function(require,module,exports){
+},{"./feed":5}],4:[function(require,module,exports){
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !exports.hasOwnProperty(p)) __createBinding(exports, m, p);
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deepFreeze = void 0;
+exports.deepFreeze = function (obj) {
+    const props = Object.getOwnPropertyNames(obj);
+    const length = props.length;
+    Object.freeze(obj);
+    for (let i = 0; i < length; i++) {
+        const value = obj[props[i]];
+        if (value) {
+            const type = typeof value;
+            if ((type === 'object' || type === 'function') &&
+                !Object.isFrozen(value)) {
+                exports.deepFreeze(value);
+            }
+        }
+    }
+    return obj;
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./observable"), exports);
-__exportStar(require("./context"), exports);
 
-},{"./context":3,"./observable":5}],5:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Observable = exports.RateLimit = void 0;
+exports.Feed = exports.RateLimit = void 0;
 var RateLimit;
 (function (RateLimit) {
     RateLimit["none"] = "none";
     RateLimit["debounce"] = "debounce";
     RateLimit["throttle"] = "throttle";
 })(RateLimit = exports.RateLimit || (exports.RateLimit = {}));
-exports.Observable = function (value, rateLimit = RateLimit.throttle) {
+exports.Feed = function (value, rateLimit = RateLimit.throttle) {
     if (!new.target) {
-        throw 'Observable() must be called with new !';
+        throw 'Feed() must be called with new !';
     }
     this.subscribers = [];
     this.value = value;
     this._pending = 0;
     this._timeout = 0;
-    this.set = ((rateLimit) => {
+    this.push = ((rateLimit) => {
         switch (rateLimit) {
             case RateLimit.none:
                 return (value) => {
@@ -292,13 +297,13 @@ exports.Observable = function (value, rateLimit = RateLimit.throttle) {
     })(rateLimit);
     return this;
 };
-exports.Observable.prototype.notify = function () {
+exports.Feed.prototype.notify = function () {
     for (let i = 0, length = this.subscribers.length; i < length; i++) {
         this.subscribers[i](this.value);
     }
     return this;
 };
-exports.Observable.prototype.subscribe = function (subscriber, priority) {
+exports.Feed.prototype.subscribe = function (subscriber, priority) {
     if (priority === undefined) {
         this.subscribers.push(subscriber);
     }
@@ -307,22 +312,106 @@ exports.Observable.prototype.subscribe = function (subscriber, priority) {
     }
     return this;
 };
-exports.Observable.prototype.drop = function (subscriber) {
+exports.Feed.prototype.drop = function (subscriber) {
     this.subscribers = this.subscribers.filter((s) => s !== subscriber);
     return this;
 };
-exports.Observable.prototype.dropAll = function () {
+exports.Feed.prototype.dropAll = function () {
     this.subscribers = [];
     return this;
 };
-exports.Observable.prototype.get = function () {
+exports.Feed.prototype.get = function () {
     return this.value;
 };
 
 },{}],6:[function(require,module,exports){
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !exports.hasOwnProperty(p)) __createBinding(exports, m, p);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_solo_1 = require("./lib/app-solo");
+__exportStar(require("./machine"), exports);
+__exportStar(require("./sequencer"), exports);
+__exportStar(require("./deep-freeze"), exports);
+__exportStar(require("./feed"), exports);
+__exportStar(require("./context"), exports);
+
+},{"./context":3,"./deep-freeze":4,"./feed":5,"./machine":7,"./sequencer":8}],7:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Machine = void 0;
+const deep_freeze_1 = require("./deep-freeze");
+exports.Machine = function (rules, initial_state) {
+    if (!new.target) {
+        throw 'Machine() must be called with new !';
+    }
+    this._rules = deep_freeze_1.deepFreeze(rules);
+    this._current = { init: { actions: {} } };
+    this._transition(initial_state);
+    return this;
+};
+exports.Machine.prototype._transition = function (state) {
+    if ('onExit' in this._current) {
+        this._current.onExit();
+    }
+    const depth = state.length;
+    let target = this._rules[state[0]];
+    for (let i = 1; i < depth; i++) {
+        const nested_state = state[i];
+        if (nested_state in target.states) {
+            target = target.states[nested_state];
+        }
+        else {
+            throw nested_state + ' does not exist in ' + state[i - 1] + ' !';
+        }
+    }
+    if ('onEntry' in this._current) {
+        const automatic_transition = this._current.onEntry();
+        if (automatic_transition) {
+            this._transition(automatic_transition);
+        }
+    }
+};
+exports.Machine.prototype.emit = function (action, ...payload) {
+    if (action in this._current) {
+        const handler = this._current[action];
+        if (handler) {
+            const target = handler.apply(this, payload);
+            if (target) {
+                this._transition(target);
+            }
+        }
+    }
+    console.log(`${action} emitted.`, payload);
+};
+
+},{"./deep-freeze":4}],8:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sequencer = void 0;
+exports.sequencer = function* (steps) {
+    const length = steps.length;
+    for (let i = 0;;) {
+        if (i >= length) {
+            i = 0;
+        }
+        const requested = yield steps[i];
+        const requested_index = requested !== undefined ? steps.indexOf(requested) : -1;
+        i = requested_index !== -1 ? requested_index : i + 1;
+    }
+};
+
+},{}],9:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const lib_1 = require("./lib");
 require("./components/weather-nav");
 require("./components/img-spinner");
 function main() {
@@ -330,49 +419,49 @@ function main() {
         const weather_worker = new Worker('js/dist/workers/weather.js');
         weather_worker.onmessage = (e) => {
             console.log('test_worker said : ', e.data);
-            app.pins.forecasts.set(e.data.forecasts);
-            app.pins.day.set(0);
+            app.pins.forecasts.push(e.data.forecasts);
+            app.pins.day.push(0);
         };
         weather_worker.postMessage([]);
         console.log(weather_worker);
         const day_count = 5;
         const renderForecast = function (f, day) {
             const d = day === 0 ? f.current : f.daily[Math.min(day, day_count)];
-            view.pins.city.set(f.city);
-            view.pins.icon.set('icons/' + d.icon);
-            view.pins.temp.set(`${d.temperature}°`);
-            view.pins.wind.set(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
-            view.pins.date.set(new Date(d.timestamp).toLocaleDateString(navigator.language));
-            view.pins.loading.set('');
+            view.pins.city.push(f.city);
+            view.pins.icon.push('icons/' + d.icon);
+            view.pins.temp.push(`${d.temperature}°`);
+            view.pins.wind.push(`Vent ${d.windSpeed}km/h (${d.windDeg}°)`);
+            view.pins.date.push(new Date(d.timestamp).toLocaleDateString(navigator.language));
+            view.pins.loading.push('');
         };
         const weather_nav = document.querySelector('weather-nav');
         const weather = document.getElementById('Weather');
         weather_nav.renderPlaceholder(day_count, '...');
-        const app = new app_solo_1.Context();
+        const app = new lib_1.Context();
         app
-            .pub('forecasts', new app_solo_1.Observable(null), (f) => {
+            .pub('forecasts', new lib_1.Feed(null), (f) => {
             renderForecast(f, 0);
-            weather_nav.setOnClick(app.pins.day.set);
+            weather_nav.setOnClick(app.pins.day.push);
             weather_nav.render(f.daily.map((d) => d.timestamp), day_count);
         })
-            .pub('day', new app_solo_1.Observable(0), (d) => {
+            .pub('day', new lib_1.Feed(0), (d) => {
             renderForecast(app.pins.forecasts.value, d);
         });
-        const view = new app_solo_1.Context();
+        const view = new lib_1.Context();
         view
-            .pub('icon', new app_solo_1.Observable(''))
-            .pub('date', new app_solo_1.Observable(''))
-            .pub('loading', new app_solo_1.Observable('loading'))
+            .pub('icon', new lib_1.Feed(''))
+            .pub('date', new lib_1.Feed(''))
+            .pub('loading', new lib_1.Feed('loading'))
             .muster(weather)
             .activateAll();
         const rate_limit_test = document.getElementById('RateLimit');
         const rate_limit_btn = document.getElementById('RateLimitBtn');
-        const rate_limit = new app_solo_1.Context();
+        const rate_limit = new lib_1.Context();
         rate_limit.muster(rate_limit_test).activateAll();
         rate_limit_btn.addEventListener('click', (e) => {
             console.log('click ----------------');
             for (let i = 0; i < 1000; i++) {
-                rate_limit.pins.mouse_x.set(i);
+                rate_limit.pins.mouse_x.push(i);
             }
         });
     }
@@ -384,4 +473,4 @@ document.readyState === 'loading'
     ? window.addEventListener('DOMContentLoaded', main)
     : main();
 
-},{"./components/img-spinner":1,"./components/weather-nav":2,"./lib/app-solo":4}]},{},[6]);
+},{"./components/img-spinner":1,"./components/weather-nav":2,"./lib":6}]},{},[9]);

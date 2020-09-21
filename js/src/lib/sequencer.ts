@@ -1,3 +1,4 @@
+//-------------------------------------------------------------------- sequencer
 /**
  * Return a generator that wraps around a given array of steps.
  *
@@ -11,9 +12,6 @@ export const sequencer = function* <T>(steps: T[]): Generator<T, never, T> {
     if (i >= length) {
       i = 0;
     }
-    // } else if (i < 0) {
-    //   i = length - 1;
-    // }
     const requested = yield steps[i];
     const requested_index =
       requested !== undefined ? steps.indexOf(requested) : -1;

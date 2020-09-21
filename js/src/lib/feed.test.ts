@@ -1,26 +1,26 @@
-import { Observable, RateLimit, Subscriber } from '.';
+import { Feed, RateLimit, Subscriber } from '.';
 
 it('uses jsdom in this test file', () => {
   const element = document.createElement('div');
   expect(element).not.toBeNull();
 });
 
-describe('Observable', () => {
+describe('Feed', () => {
   it('throws if its constructor is not called with new', () => {
     expect(() => {
-      (Observable as any)();
+      (Feed as any)();
     }).toThrow();
   });
 
-  it('can create a new Observable of any type', () => {
-    expect(new Observable<string>('a string')).toEqual(expect.any(Observable));
-    expect(new Observable<number>(2020)).toEqual(expect.any(Observable));
+  it('can create a new Feed of any type', () => {
+    expect(new Feed<string>('a string')).toEqual(expect.any(Feed));
+    expect(new Feed<number>(2020)).toEqual(expect.any(Feed));
     expect(
-      new Observable<Object>({ test: 'a value' })
-    ).toEqual(expect.any(Observable));
+      new Feed<Object>({ test: 'a value' })
+    ).toEqual(expect.any(Feed));
     expect(
-      new Observable<string[]>(['test', 'a value'])
-    ).toEqual(expect.any(Observable));
+      new Feed<string[]>(['test', 'a value'])
+    ).toEqual(expect.any(Feed));
   });
 
   // it.each([
@@ -29,74 +29,74 @@ describe('Observable', () => {
   //   ['Object', { test: 'a value' }],
   //   ['string[]', ['test', 'a value']],
   //   ['function', () => 'value'],
-  // ])('can create a new Observable of type %s', (type, value) => {
-  //   expect(new Observable(value)).toEqual(expect.any(Observable));
+  // ])('can create a new Feed of type %s', (type, value) => {
+  //   expect(new Feed(value)).toEqual(expect.any(Feed));
   // });
 
   it('can return its value', () => {
-    const observable = new Observable('a string');
-    expect(observable.get()).toBe('a string');
+    const feed = new Feed('a string');
+    expect(feed.get()).toBe('a string');
   });
 
-  it('can have its set method passed as a callback safely', () => {
-    const observable = new Observable('a string', RateLimit.none);
+  it('can have its push method passed as a callback safely', () => {
+    const feed = new Feed('a string', RateLimit.none);
     let target = '';
-    observable.subscribe((value) => {
+    feed.subscribe((value) => {
       target = value;
     });
 
-    observable.set('regular call');
+    feed.push('regular call');
     expect(target).toBe('regular call');
 
-    const another_context = observable.set;
+    const another_context = feed.push;
     another_context('from another context');
     expect(target).toBe('from another context');
   });
 
   describe('subscribers', () => {
-    let observable: Observable<any>;
+    let feed: Feed<any>;
     let subscribers: Subscriber<any>[];
     let targets: string[];
 
     beforeEach(() => {
-      observable = new Observable('a string', RateLimit.none);
+      feed = new Feed('a string', RateLimit.none);
       subscribers = [];
       targets = ['', '', ''];
       targets.forEach((v, i) => {
         subscribers.push((value) => {
           targets[i] = value;
         });
-        observable.subscribe(subscribers[i]);
+        feed.subscribe(subscribers[i]);
       });
     });
 
     it('can subscribe callbacks', () => {
-      observable.set('test');
+      feed.push('test');
       targets.forEach((v) => expect(v).toBe('test'));
     });
 
     it('can subscribe callbacks with a specific priority', () => {
       let me_first = '';
-      observable.subscribe((v) => {
+      feed.subscribe((v) => {
         me_first = targets[0] === 'test' ? 'fail' : 'success';
       }, 0);
-      observable.set('test');
+      feed.push('test');
       expect(me_first).toBe('success');
     });
 
     it('can drop all subscribers', () => {
-      observable.dropAll();
-      observable.set('test');
+      feed.dropAll();
+      feed.push('test');
       targets.forEach((v) => expect(v).toBe(''));
     });
 
     it('can drop a specific subscriber given its reference', () => {
-      observable.set('test');
+      feed.push('test');
       subscribers.forEach((s, i) => {
-        observable.drop(s);
-        observable.set('test' + i);
+        feed.drop(s);
+        feed.push('test' + i);
         expect(targets[i]).toBe('test');
-        observable.set('test');
+        feed.push('test');
       });
     });
   });
@@ -105,36 +105,36 @@ describe('Observable', () => {
     it('can debounce notifications', (done) => {
       let count = 0;
       let target = 0;
-      const observable = new Observable(0, RateLimit.debounce);
-      observable.subscribe((v) => {
+      const feed = new Feed(0, RateLimit.debounce);
+      feed.subscribe((v) => {
         target = v;
         count++;
       });
       for (let i = 0; i < 1000; i++) {
-        observable.set(i);
+        feed.push(i);
       }
       window.requestAnimationFrame(() => {
         done();
         expect(count).toBe(1);
-        expect(target).toBe(observable.get());
+        expect(target).toBe(feed.get());
       });
     });
 
     it('can throttle notifications', (done) => {
       let count = 0;
       let target = 0;
-      const observable = new Observable(0, RateLimit.throttle);
-      observable.subscribe((v) => {
+      const feed = new Feed(0, RateLimit.throttle);
+      feed.subscribe((v) => {
         target = v;
         count++;
       });
       for (let i = 0; i < 1000; i++) {
-        observable.set(i);
+        feed.push(i);
       }
       window.requestAnimationFrame(() => {
         done();
         expect(count).toBe(2);
-        expect(target).toBe(observable.get());
+        expect(target).toBe(feed.get());
       });
     });
   });

@@ -1,20 +1,20 @@
-//-------------------------------------------------------------- app-solo.ts ---
+//---------------------------------------------------------------------- context
 /**
  *
  */
-import { Observable, Subscriber } from './observable';
+import { Feed, Subscriber } from './feed';
 
 /**
  * Define Sub object.
  *
- * @var source Observed source.
+ * @var source Source feed.
  * @var target Property to target with update inside the downstream Node.
- * @var type Observed value type.
+ * @var type Feed value type.
  *
  * @todo Add Tag / component / render function callback.
  */
 export interface Sub<T> {
-  source: Observable<T>;
+  source: Feed<T>;
   target: string;
   type: string;
   node: Node;
@@ -23,31 +23,31 @@ export interface Sub<T> {
 /**
  * Define Context object.
  *
- * Help manage an heterogenous collection of Observables ?
+ * Help manage an heterogenous collection of Feeds ?
  * Provide a declarative way to pub/sub DOM element properties.
  *
  * @note Because Context relies on apply() to concatenate arrays it can only
  *       handle up to 65536 subs.
  * @note pub and merge will clobber existing entries.
  *
- * @note When an Observable is pub-ed to a Context, it is considered to be
+ * @note When an Feed is pub-ed to a Context, it is considered to be
  *       managed by said Context. Context will mercilessly add or drop all
- *       subscribers from any Observable it manages wether or not one fiddled
- *       with a managed Observable directly.
+ *       subscribers from any Feed it manages wether or not one fiddled
+ *       with a managed Feed directly.
  */
 export interface Context {
-  pins: { [name: string]: Observable<any> };
-  // pins: Map<string, Observable<any>>;
+  pins: { [name: string]: Feed<any> };
+  // pins: Map<string, Feed<any>>;
   subs: Sub<any>[];
   pub: (
     name: string,
-    observable: Observable<any>,
+    feed: Feed<any>,
     ...subscribers: Subscriber<any>[]
   ) => this;
   sub: (name: string, ...subscribers: Subscriber<any>[]) => this;
   remove: (name: string) => this;
   merge: (
-    another_context: Context | { [name: string]: Observable<any> }
+    another_context: Context | { [name: string]: Feed<any> }
   ) => Context;
   musterPubs: (element: ParentNode) => this;
   musterSubs: (element: ParentNode) => this;
@@ -84,16 +84,16 @@ export const Context = (function (this: Context): Context {
 } as any) as ContextCtor;
 
 /**
- * Register an observable as a pin in this context and optionally immediately
+ * Register a Feed as a pin in this context and optionally immediately
  * sub given Subscribers to it.
  */
 Context.prototype.pub = function (
   name: string,
-  pin: Observable<any>,
+  pin: Feed<any>,
   ...subscribers: Subscriber<any>[]
 ): Context {
   this.pins[name] = pin;
-  // this.pins.set(name, pin);
+  // this.pins.push(name, pin);
   for (let i = 0, length = subscribers.length; i < length; i++) {
     pin.subscribe(subscribers[i]);
   }
@@ -116,9 +116,9 @@ Context.prototype.sub = function (
 };
 
 /**
- * Remove an observable pin from this context.
+ * Remove a Feed pin from this context.
  *
- * @note Remove drops all subscribers from the removed Observable to avoid
+ * @note Remove drops all subscribers from the removed Feed to avoid
  *       dangling subscriptions.
  */
 Context.prototype.remove = function (name: string): Context {
@@ -137,10 +137,10 @@ Context.prototype.remove = function (name: string): Context {
 };
 
 /**
- * Merge observables from another given context.
+ * Merge Feeds from another given context.
  */
 Context.prototype.merge = function (
-  another_context: Context | { [name: string]: Observable<any> }
+  another_context: Context | { [name: string]: Feed<any> }
 ): Context {
   if (another_context.pins !== undefined) {
     another_context = <any>another_context.pins;
@@ -152,9 +152,9 @@ Context.prototype.merge = function (
 /**
  * Collect data pubs declared in given element for this Context.
  *
- * @note A pub is a sub that publishes its initial value as an observable to
+ * @note A pub is a sub that publishes its initial value as an Feed to
  *       a context, i.e., it is immediately subscribed to this new
- *       observable value.
+ *       Feed value.
  *
  * @note musterPubs is not idempotent.
  *
@@ -174,7 +174,7 @@ Context.prototype.musterPubs = function (element: ParentNode): Context {
     if (!(target in pub_nodes[i])) throw target + ' is not a valid node prop !';
 
     const initial_value = pub_nodes[i][target as keyof Element];
-    this.pub(source, new Observable<typeof initial_value>(initial_value));
+    this.pub(source, new Feed<typeof initial_value>(initial_value));
     subs[i] = {
       source: this.pins[source],
       // source: this.pins.get(source),
@@ -190,7 +190,7 @@ Context.prototype.musterPubs = function (element: ParentNode): Context {
 /**
  * Collect data subs declared in given element for this Context.
  *
- * @throws If requested observable source is NOT found.
+ * @throws If requested Feed source is NOT found.
  *
  * @todo Consider using a dictionnary and an identifier per sub.
  */
@@ -249,7 +249,7 @@ Context.prototype.activateAll = function (): Context {
     // if ((<any>node)[target] === undefined) {
     if (!(target in node)) throw target + ' is not a valid node prop !';
 
-    (<Observable<any>>this.subs[i].source).subscribe((value) => {
+    (<Feed<any>>this.subs[i].source).subscribe((value) => {
       node[target] = value;
     });
   }
@@ -258,7 +258,7 @@ Context.prototype.activateAll = function (): Context {
 
 Context.prototype.refresh = function (): Context {
   for (const pin of Object.values(this.pins)) {
-    (<Observable<any>>pin).notify();
+    (<Feed<any>>pin).notify();
   }
   // for(let [, pin] of this.pins) {
   //   pin.notify();

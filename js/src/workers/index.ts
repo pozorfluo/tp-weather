@@ -2,7 +2,7 @@
 /**
  * 
  */
-// export * from './observable';
+// export * from './feed';
 // export * from './context';
 
 // import {Context} from './context';

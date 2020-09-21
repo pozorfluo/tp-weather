@@ -1,4 +1,4 @@
-import { deepFreeze } from './deepFreeze';
+import { deepFreeze } from './deep-freeze';
 
 describe('deepFreeze', () => {
   it('freezes enumerable own properties of given object', () => {
