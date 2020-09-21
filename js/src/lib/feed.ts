@@ -52,7 +52,8 @@ export type FeedCtor = {
  *       insertion order, notify() Awaits each subscriber's callback in
  *       turn. -> not used right now.
  *
- * @todo Add unsubscribe method.
+ * @todo Consider returning a function that drop the just registered subscriber
+ *       from subscribe method.
  */
 export const Feed = (function <T>(
   this: Feed<T>,

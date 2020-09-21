@@ -65,6 +65,8 @@ export interface Rules {
  * Define MachineEvent object.
  *
  * @todo Consider how to log side-effects, especially non-deterministic ones.
+ * @todo Consider that if the callback needs a timestamp it can generate one by
+ *       itself.
  */
 export interface MachineEvent {
   action: Action;
