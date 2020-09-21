@@ -14,8 +14,8 @@ export const deepFreeze = function (obj: object): object {
     if (value) {
       const type = typeof value;
       if (
-        // (type === 'object' || type === 'function') &&
-        type === 'object' &&
+        (type === 'object' || type === 'function') &&
+        // type === 'object' &&
         !Object.isFrozen(value)
       ) {
         deepFreeze(value);

@@ -28,15 +28,27 @@ describe('deepFreeze', () => {
     const obj: any = {
       a: {
         nested: 0,
+      },
+    };
+
+    deepFreeze(obj);
+
+    expect(Object.isFrozen(obj.a.nested)).toBe(true);
+    expect(() => {
+      obj.a.nested = 1;
+    }).toThrow();
+  });
+  it('freezes nested properties of given object whose value is a function', () => {
+    const obj: any = {
+      a: {
         func: () => 1,
       },
     };
 
     deepFreeze(obj);
 
-    expect(() => {
-      obj.a.nested = 1;
-    }).toThrow();
+    expect(Object.isFrozen(obj.a.func)).toBe(true);
+    
     expect(() => {
       obj.a.func = 0;
     }).toThrow();
