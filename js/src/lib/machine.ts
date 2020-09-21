@@ -42,10 +42,12 @@ export type Action = (...payload: unknown[]) => Transition;
  * @note onExit returned value is ignored to forbid automatic transitions
  *       from this special action.
  *
+ *
  * @todo Check if typescript allows onEntry, onExit to be assigned a Rules type
  *       value. Hopefully not.
- * 
  * @todo Consider handling parallel states.
+ * @todo Consider requiring that properties on Rules MUST be enumerable and
+ *       simplifying deepFreeze().
  */
 export interface Rules {
   [state: string]: {
@@ -58,19 +60,18 @@ export interface Rules {
   };
 }
 
-
 /**
  * Define MachineEvent object.
- * 
+ *
  * @todo Consider how to log side-effects, especially non-deterministic ones.
  */
 export interface MachineEvent {
-    action : Action;
-    payload : unknown[];
-    transition : Transition;
-    before : State;
-    after : State;
-    // side_effects : unknown[];
+  action: Action;
+  payload: unknown[];
+  transition: Transition;
+  before: State;
+  after: State;
+  // side_effects : unknown[];
 }
 /**
  * Define Machine object.
@@ -85,7 +86,7 @@ export interface Machine {
   // Should the outside world care about the Machine state ?
   getState: () => State;
   /** Register an optional callback fired on Transition. */
-  onTransition : (event : MachineEvent) => void;
+  onTransition: (event: MachineEvent) => void;
 }
 
 /**
@@ -108,9 +109,9 @@ export const Machine = (function (
   }
 
   /** @todo Freeze object and nested properties completely or drop freeze. */
-  this._rules = Object.freeze(rules);
+  this._rules = deepFreeze(rules) as Rules;
   /** @note Bootstrap _current to minimum viable rule. */
-  this._current = {init : {actions : {}}};
+  this._current = { init: { actions: {} } };
   this._transition(initial_state);
   return this;
 } as any) as MachineCtor;
@@ -123,16 +124,19 @@ Machine.prototype._transition = function (state: State) {
     /** Forbid automatic transition onExit by ignoring returned value. */
     this._current.onExit();
   }
-//   const depth = this._current.length;
-//   let rule = this.rules[this._current[0]];
 
-//   for (let i = 1; i < depth; i++) {
-//     /**
-//      * @todo Retrieve previous compound state test
-//      * @todo Decide if you nest state via using another rules key
-//      */
-//     rule = rule.rules[this._current[i]];
-//   }
+  const depth = state.length;
+  let target = this._rules[state[0]];
+
+  for (let i = 1; i < depth; i++) {
+    const nested_state = state[i];
+    if (nested_state in target.states) {
+      target = target.states[nested_state];
+    } else {
+      throw nested_state + ' does not exist in ' + state[i - 1] + ' !';
+    }
+  }
+
   if ('onEntry' in this._current) {
     const automatic_transition = this._current.onEntry();
     if (automatic_transition) {
@@ -183,6 +187,29 @@ Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
   console.log(`${action} emitted.`, payload);
 };
 
+/**
+ * Freeze recursively enumerable and non-enumerable properties found directly
+ * on given object.
+ */
+const deepFreeze = function (obj: object): object {
+  const props = Object.getOwnPropertyNames(obj);
+  const length = props.length;
+
+  for (let i = 0; i < length; i++) {
+    const value = (<any>obj)[props[i]];
+    if (value) {
+      const type = typeof value;
+      /** @todo Check if isFrozen() is enough to avoid circurlar refs. */
+      if (
+        (type === 'object' || type === 'function') &&
+        !Object.isFrozen(value)
+      ) {
+        deepFreeze(value);
+      }
+    }
+  }
+  return Object.freeze(obj);
+};
 // export const configMachine = {
 //   /** Internal cursor */
 //   _current: ['version'],
