@@ -62,6 +62,8 @@ describe('Machine', () => {
       machine._rules.a.actions.doThis = () => ['test_state'];
     }).toThrow();
   });
+
+
 });
 
 // const arr_a = [0, 1, 2];

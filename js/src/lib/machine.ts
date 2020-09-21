@@ -1,4 +1,5 @@
 // import store from '../store';
+import  {deepFreeze} from './deepFreeze';
 
 // namespace Machine {
 
@@ -108,9 +109,8 @@ export const Machine = (function (
     throw 'Machine() must be called with new !';
   }
 
-  /** @todo Freeze object and nested properties completely or drop freeze. */
   this._rules = deepFreeze(rules) as Rules;
-  /** @note Bootstrap _current to minimum viable rule. */
+  /** @note Bootstrap _current to a mock minimum viable rule. */
   this._current = { init: { actions: {} } };
   this._transition(initial_state);
   return this;
@@ -155,21 +155,21 @@ Machine.prototype._transition = function (state: State) {
  *       unintended match on {} prototype methods.
  */
 Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
-  /** @todo Move to  _setCursor(state : State) or transition, throw on
-   *        invalid state.
-   * @todo Do not _setCursor here, just use wherever the _current is pointing
-   *       at.
-   */
-  const depth = this._current.length;
-  let rule = this.rules[this._current[0]];
+  // /** @todo Move to  _setCursor(state : State) or transition, throw on
+  //  *        invalid state.
+  //  * @todo Do not _setCursor here, just use wherever the _current is pointing
+  //  *       at.
+  //  */
+  // const depth = this._current.length;
+  // let rule = this.rules[this._current[0]];
 
-  for (let i = 1; i < depth; i++) {
-    /**
-     * @todo Retrieve previous compound state test
-     * @todo Decide if you nest state via using another rules key
-     */
-    rule = rule.rules[this._current[i]];
-  }
+  // for (let i = 1; i < depth; i++) {
+  //   /**
+  //    * @todo Retrieve previous compound state test
+  //    * @todo Decide if you nest state via using another rules key
+  //    */
+  //   rule = rule.rules[this._current[i]];
+  // }
 
   /** @todo Rewrite using (K in T) */
   if (rule) {
@@ -187,29 +187,6 @@ Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
   console.log(`${action} emitted.`, payload);
 };
 
-/**
- * Freeze recursively enumerable and non-enumerable properties found directly
- * on given object.
- */
-const deepFreeze = function (obj: object): object {
-  const props = Object.getOwnPropertyNames(obj);
-  const length = props.length;
-
-  for (let i = 0; i < length; i++) {
-    const value = (<any>obj)[props[i]];
-    if (value) {
-      const type = typeof value;
-      /** @todo Check if isFrozen() is enough to avoid circurlar refs. */
-      if (
-        (type === 'object' || type === 'function') &&
-        !Object.isFrozen(value)
-      ) {
-        deepFreeze(value);
-      }
-    }
-  }
-  return Object.freeze(obj);
-};
 // export const configMachine = {
 //   /** Internal cursor */
 //   _current: ['version'],
