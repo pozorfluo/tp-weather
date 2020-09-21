@@ -1,6 +1,6 @@
 //------------------------------------------------------------------ deep-freeze
 /**
- * Freeze own enumerable and non-enumerable properties of given object 
+ * Freeze own enumerable and non-enumerable properties of given object
  * recursively.
  */
 export const deepFreeze = function (obj: object): object {
@@ -14,7 +14,8 @@ export const deepFreeze = function (obj: object): object {
     if (value) {
       const type = typeof value;
       if (
-        (type === 'object' || type === 'function') &&
+        // (type === 'object' || type === 'function') &&
+        type === 'object' &&
         !Object.isFrozen(value)
       ) {
         deepFreeze(value);
