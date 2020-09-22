@@ -43,5 +43,4 @@ exports.Machine.prototype.emit = function (action, ...payload) {
             }
         }
     }
-    console.log(`${action} emitted.`, payload);
 };

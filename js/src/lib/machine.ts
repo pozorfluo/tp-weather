@@ -1,9 +1,11 @@
 //---------------------------------------------------------------------- machine
+/**
+ * @note Footguns :
+ *         - Trying to execute onEntry, onExit directly
+ *             -> they are not treated like regular user definable actions,
+ *                use with care.
+ */
 import  {deepFreeze} from './deep-freeze';
-
-// namespace Machine {
-
-// }
 
 /**
  * Define State of a Machine.
@@ -157,36 +159,15 @@ Machine.prototype._transition = function (state: State) {
  *       unintended match on {} prototype methods.
  */
 Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
-  // /** @todo Move to  _setCursor(state : State) or transition, throw on
-  //  *        invalid state.
-  //  * @todo Do not _setCursor here, just use wherever the _current is pointing
-  //  *       at.
-  //  */
-  // const depth = this._current.length;
-  // let rule = this.rules[this._current[0]];
-
-  // for (let i = 1; i < depth; i++) {
-  //   /**
-  //    * @todo Retrieve previous compound state test
-  //    * @todo Decide if you nest state via using another rules key
-  //    */
-  //   rule = rule.rules[this._current[i]];
-  // }
-
-  /** @todo Rewrite using (K in T) */
   if (action in this._current) {
     const handler = this._current[action];
     if (handler) {
       const target = handler.apply(this, payload);
       if (target) {
-        /** @todo Throw inside _transition if target is invalid. */
         this._transition(target);
       }
     }
   }
-
-  /** @todo Consider logging invalid actions here. */
-  console.log(`${action} emitted.`, payload);
 };
 
 // export const configMachine = {

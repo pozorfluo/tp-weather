@@ -62,6 +62,8 @@ describe('sequencer', () => {
 
     it('yields references to given objects, not new objects', () => {
       expect(sequencer_obj.next().value).toBe(objects[0]);
+      objects[1] = { mutated : true} as any;
+      expect(sequencer_obj.next().value).toEqual({ mutated : true});
     });
   });
 });

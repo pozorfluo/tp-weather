@@ -389,7 +389,6 @@ exports.Machine.prototype.emit = function (action, ...payload) {
             }
         }
     }
-    console.log(`${action} emitted.`, payload);
 };
 
 },{"./deep-freeze":4}],8:[function(require,module,exports){
