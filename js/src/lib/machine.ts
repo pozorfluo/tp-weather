@@ -5,7 +5,7 @@
  *             -> they are not treated like regular user definable actions,
  *                use with care.
  */
-import  {deepFreeze} from './deep-freeze';
+import { deepFreeze } from './deep-freeze';
 
 /**
  * Define State of a Machine.
@@ -84,8 +84,10 @@ export interface MachineEvent {
 export interface Machine {
   /** Internal cursor */
   _current: Rules;
-  _transition: (state: State) => void;
+  /** Track State in its unrolled string[] form */
+  _latest_transition : State;
   _rules: Rules;
+  _transition: (state: State) => void;
   //emitter should NOT care about => State;
   emit: (action: string, ...payload: unknown[]) => void;
   // Should the outside world care about the Machine state ?
@@ -141,6 +143,9 @@ Machine.prototype._transition = function (state: State) {
     }
   }
 
+  this._current = target;
+  this._latest_transition = state;
+
   if ('onEntry' in this._current) {
     const automatic_transition = this._current.onEntry();
     if (automatic_transition) {
@@ -168,6 +173,13 @@ Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
       }
     }
   }
+};
+
+/**
+ * Return a copy of this Machine State in its unrolled string[] form.
+ */
+Machine.prototype.getState = function () {
+  return [...this._latest_transition];
 };
 
 // export const configMachine = {

@@ -372,6 +372,8 @@ exports.Machine.prototype._transition = function (state) {
             throw nested_state + ' does not exist in ' + state[i - 1] + ' !';
         }
     }
+    this._current = target;
+    this._latest_transition = state;
     if ('onEntry' in this._current) {
         const automatic_transition = this._current.onEntry();
         if (automatic_transition) {
@@ -389,6 +391,9 @@ exports.Machine.prototype.emit = function (action, ...payload) {
             }
         }
     }
+};
+exports.Machine.prototype.getState = function () {
+    return [...this._latest_transition];
 };
 
 },{"./deep-freeze":4}],8:[function(require,module,exports){

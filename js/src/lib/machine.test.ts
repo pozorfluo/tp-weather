@@ -77,18 +77,23 @@ describe('Machine', () => {
       (Machine as any)();
     }).toThrow();
   });
-  
-    it('throws if its constructor is called with an invalid initial state', () => {
-      expect(() => {
-        new Machine(rules, ['invalid']);
-      }).toThrow();
-    });
+
+  it('throws if its constructor is called with an invalid initial state', () => {
+    expect(() => {
+      new Machine(rules, ['invalid']);
+    }).toThrow();
+  });
+
+  it.only('can create a Machine that does nothing', () => {
+    const empty_machine = new Machine({ empty_rule: { actions: {} } }, ['empty_rule']);
+    expect(empty_machine.getState()).toEqual(['empty_rule']);
+  });
 
   it('can have its emit method passed as a callback safely', () => {
     expect(true).toBe(false);
   });
 
-  it.only('does not allow the content of its rules to be changed after creation', () => {
+  it('does not allow the content of its rules to be changed after creation', () => {
     expect(() => {
       machine._rules.a.actions.doThis = () => ['test_state'];
     }).toThrow();
@@ -96,7 +101,7 @@ describe('Machine', () => {
 
   describe('Actions', () => {
     it('can execute actions passing along given payload', () => {
-      expect(true).toBe(false);
+
     });
 
     it('does nothing and stay in the same state for undefined actions', () => {
@@ -113,8 +118,6 @@ describe('Machine', () => {
       }).toThrow();
     });
   });
-
-
 });
 
 // const arr_a = [0, 1, 2];
