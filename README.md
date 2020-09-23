@@ -18,7 +18,7 @@ vanilla typescript web components with KOПЯΛD
 
 ## mvp-machine
 
-Simple, declarative state machines inspired by statecharts.
+Simple, declarative-ish state machines inspired by statecharts.
 
 handles :
 
@@ -34,6 +34,7 @@ allows :
 - guards
 - transient states
 - final states
+- raised events
 
 does not handle :
 

@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------- feed
 /**
- *
+ * @note Feed relies on requestAnimationFrame for rate limiting, if it is not
+ *       available, consider a polyfill like https://www.npmjs.com/package/raf
  */
 
 /**

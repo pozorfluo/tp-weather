@@ -124,6 +124,31 @@ export const Machine = (function (
   }
 
   this._rules = deepFreeze(rules) as Rules;
+  // this.emit = Machine.prototype.emit.bind(this);
+  /**
+ * Execute Action handler if a rule for given action name exists in current
+ * Machine State, passing along given payload as Action arguments.
+ *
+ * Transition to State returned by executed Action handler if any.
+ *
+ * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
+ *       unintended match on {} prototype methods.
+ */
+  this.emit = (() => {
+    return (action: string, ...payload: unknown[]) => {
+      if (action in this._current.actions) {
+        const handler = (<any>this._current.actions)[action];
+        if (payload.length !== handler.length) {
+          throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
+        }
+        const target = handler.apply(this, payload);
+    
+        if (target) {
+          this._transition(target);
+        }
+      }
+    };
+  })();
   /** @note Bootstrap _current to a mock minimum viable rule. */
   this._current = { init: { actions: {} } };
   this._transition(initial_state);
@@ -162,30 +187,30 @@ Machine.prototype._transition = function (state: State) {
   }
 };
 
-/**
- * Execute Action handler if a rule for given action name exists in current
- * Machine State, passing along given payload as Action arguments.
- *
- * Transition to State returned by executed Action handler if any.
- *
- * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
- *       unintended match on {} prototype methods.
- */
-Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
-  if (action in this._current.actions) {
-    const handler = this._current.actions[action];
-    // if (handler) {
-    if (payload.length !== handler.length) {
-      throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
-    }
-    const target = handler.apply(this, payload);
+// /**
+//  * Execute Action handler if a rule for given action name exists in current
+//  * Machine State, passing along given payload as Action arguments.
+//  *
+//  * Transition to State returned by executed Action handler if any.
+//  *
+//  * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
+//  *       unintended match on {} prototype methods.
+//  */
+// Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
+//   if (action in this._current.actions) {
+//     const handler = this._current.actions[action];
+//     // if (handler) {
+//     if (payload.length !== handler.length) {
+//       throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
+//     }
+//     const target = handler.apply(this, payload);
 
-    if (target) {
-      this._transition(target);
-    }
-  }
-  // }
-};
+//     if (target) {
+//       this._transition(target);
+//     }
+//   }
+//   // }
+// };
 
 /**
  * Return a copy of this Machine State in its unrolled string[] form.
@@ -196,219 +221,3 @@ Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
 Machine.prototype.peek = function () {
   return [...this._latest_transition];
 };
-
-// /**
-//  * Execute Action handler if arule for given action name exists in current
-//  * Machine State, passing along given payload as Action argument and optionally
-//  * action name if required by the Action handler.
-//  *
-//  * Transition to State returned by executed Action handler if any.
-//  *
-//  * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
-//  *       unintended match on {} prototype methods.
-//  */
-// Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
-//   if (action in this._current) {
-//     const handler = this._current[action];
-//     if (handler) {
-//       const target =
-//       /**
-//        *  @todo Consider skipping handler's argument count check and always
-//        *        applying with both payload and action string.
-//        *        Alternatively consider making the action string part of the
-//        *        payload.
-//        */
-//         handler.length === 2
-//           ? handler.apply(this, payload, action)
-//           : handler.apply(this, payload);
-//       if (target) {
-//         this._transition(target);
-//       }
-//     }
-//   }
-// };
-
-// export const configMachine = {
-//   /** Internal cursor */
-//   _current: ['version'],
-//   //---------------------------------------------------------- machine rules ---
-//   states: {
-//     version: {
-//       /**
-//        * Update config with initial version preset.
-//        */
-//       select(version) {
-//         store.dispatch({
-//           type: 'UPDATE_CONFIG',
-//           config: { version: [version] },
-//         });
-//       },
-//       /**
-//        * Transition to settings edition for selected version if any.
-//        */
-//       next() {
-//         const context = store.getState();
-//         if (context.config.version.length) {
-//           store.dispatch({
-//             type: 'SET_STEP',
-//             step: context.settingSequencer.next('color').value,
-//           });
-//           this._current = ['settings'];
-//         }
-//       },
-//     },
-//     settings: {
-//       /**
-//        *
-//        */
-//       select(item) {
-//         const context = store.getState();
-//         store.dispatch({
-//           type: 'UPDATE_CONFIG',
-//           config: { [context.step]: [item] },
-//         });
-//       },
-//       /**
-//        *
-//        */
-//       add(item) {
-//         const context = store.getState();
-//         store.dispatch({
-//           type: 'UPDATE_CONFIG',
-//           config: { [context.step]: [...context.config[context.step], item] },
-//         });
-//       },
-//       /**
-//        *
-//        */
-//       next() {
-//         const context = store.getState();
-//         store.dispatch({
-//           type: 'SET_STEP',
-//           step: context.settingSequencer.next().value,
-//         });
-
-//         if (this.isConfigDone(context.config)) {
-//           this._current = ['summary'];
-//         }
-//       },
-//       /**
-//        *
-//        */
-//       nav(path) {
-//         const context = store.getState();
-//         if (path !== context.step) {
-//           store.dispatch({
-//             type: 'SET_STEP',
-//             step: context.settingSequencer.next(path).value,
-//           });
-//           this._current = ['settings'];
-//         }
-//       },
-//       /**
-//        *
-//        */
-//       reset() {
-//         this._current = ['reset'];
-//       },
-//       /**
-//        *
-//        */
-//       down() {
-//         this._current = [...this._current, 'test'];
-//       },
-//     },
-//     summary: {
-//       /**
-//        *
-//        */
-//       submit() {
-//         /** @todo Send config by email. */
-//         this._current = ['done'];
-//       },
-//       /**
-//        *
-//        */
-//       reset(origin) {
-//         this._current = ['reset'];
-//       },
-//     },
-//     reset: {
-//       /**
-//        *
-//        */
-//       confirm() {
-//         store.dispatch({ type: 'RESET_CONFIG' });
-//         store.dispatch({
-//           type: 'SET_STEP',
-//           step: 'version',
-//         });
-
-//         this._current = ['version'];
-//       },
-//       /**
-//        *
-//        */
-//       cancel() {
-//         this._current = ['summary'];
-//       },
-//     },
-//     done: {
-//       /**
-//        *
-//        */
-//       reset(origin) {
-//         this._current = ['reset'];
-//       },
-//     },
-//   },
-//   //-------------------------------------------------------- machine helpers ---
-//   /**
-//    *
-//    */
-//   isConfigDone(config) {
-//     let isDone = false;
-//     if (config === Object(config)) {
-//       isDone = true;
-//       Object.keys(config).forEach(function (key) {
-//         isDone = isDone && Array.isArray(config[key]) && config[key].length;
-//       });
-//     }
-//     return isDone;
-//   },
-//   //-------------------------------------------------------------------- API ---
-//   /**
-//    * Execute action associated with given event if the latter exists in current
-//    * machine state, passing along given payload as action argument.
-//    */
-//   emit(event, ...payload) {
-//     const depth = this._current.length;
-//     let state = this.states[this._current[0]];
-
-//     for (let i = 1; i < depth; i++) {
-//       state = state.states[this._current[i]];
-//     }
-
-//     if (state) {
-//       const handler = state[event];
-//       if (handler) {
-//         handler.apply(configMachine, payload);
-//       }
-//     }
-
-//     /** @todo Consider logging invalid actions here. */
-//     console.log(`${event} emitted.`, payload);
-//   },
-//   /**
-//    * Return a copy of this machine internal cursor.
-//    */
-//   getState() {
-//     return [...this._current];
-//   },
-// };
-
-// /**
-//  * Define a react hook to access configMachine emit method.
-//  */
-//   return configMachine.emit.bind(configMachine);
-// };

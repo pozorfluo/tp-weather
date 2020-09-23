@@ -15,7 +15,7 @@ describe('Machine', () => {
             effect(withThat);
             return ['b'];
           },
-          doThat() {
+          doInvalidTransition() {
             effect();
             return ['invalid'];
           },
@@ -95,6 +95,12 @@ describe('Machine', () => {
     }).toThrow();
   });
 
+  it('throws when trying to change its rules after creation', () => {
+    expect(() => {
+      machine._rules.a.actions.doThis = () => ['test_state'];
+    }).toThrow();
+  });
+
   it('can create a Machine that does nothing', () => {
     const empty_machine = new Machine({ empty_rule: { actions: {} } }, [
       'empty_rule',
@@ -102,14 +108,17 @@ describe('Machine', () => {
     expect(empty_machine.peek()).toEqual(['empty_rule']);
   });
 
-  it('can have its emit method passed as a callback safely', () => {
-    expect(true).toBe(false);
-  });
+  it('can have its emit method safely passed as a callback', (done) => {
+    const emit_from_another_context = machine.emit;
+    emit_from_another_context('doThis', 'expected');
+    expect(machine.peek()).toEqual(['b']);
 
-  it('throws when trying to change its rules after creation', () => {
-    expect(() => {
-      machine._rules.a.actions.doThis = () => ['test_state'];
-    }).toThrow();
+    setTimeout(machine.emit, 0, 'toA');
+    setTimeout(() => {
+      done();
+      expect(machine.peek()).toEqual(['a']);
+    }, 0);
+    // machine.emit('toA');
   });
 
   describe('Actions', () => {
@@ -132,7 +141,7 @@ describe('Machine', () => {
       }).toThrow();
     });
 
-    it.only('allows optional action arguments using default values', () => {
+    it('allows optional action arguments using default values', () => {
       const payload = ['expected', 'expected'];
       expect(() => {
         machine.emit('doWithArgs', ...payload);
@@ -143,7 +152,7 @@ describe('Machine', () => {
       expect(effect).toHaveBeenCalledWith(...payload, 'IamOptional');
     });
 
-    it.only('does nothing and stay in the same state for undefined actions', () => {
+    it('does nothing and stay in the same state for undefined actions', () => {
       machine.emit('invalid_action');
       expect(effect).toHaveBeenCalledTimes(0);
       expect(machine.peek()).toEqual(['a']);
@@ -153,7 +162,7 @@ describe('Machine', () => {
   describe('Transitions', () => {
     it('throws when trying to transition to an invalid state', () => {
       expect(() => {
-        (Machine as any)();
+        machine.emit('doInvalidTransition');
       }).toThrow();
     });
   });

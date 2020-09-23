@@ -38,7 +38,7 @@ describe('Feed', () => {
     expect(feed.get()).toBe('a string');
   });
 
-  it('can have its push method passed as a callback safely', () => {
+  it('can have its push method safely passed as a callback', () => {
     const feed = new Feed('a string', RateLimit.none);
     let target = '';
     feed.subscribe((value) => {
@@ -48,8 +48,8 @@ describe('Feed', () => {
     feed.push('regular call');
     expect(target).toBe('regular call');
 
-    const another_context = feed.push;
-    another_context('from another context');
+    const push_from_another_context = feed.push;
+    push_from_another_context('from another context');
     expect(target).toBe('from another context');
   });
 

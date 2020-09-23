@@ -7,6 +7,20 @@ exports.Machine = function (rules, initial_state) {
         throw 'Machine() must be called with new !';
     }
     this._rules = deep_freeze_1.deepFreeze(rules);
+    this.emit = (() => {
+        return (action, ...payload) => {
+            if (action in this._current.actions) {
+                const handler = this._current.actions[action];
+                if (payload.length !== handler.length) {
+                    throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
+                }
+                const target = handler.apply(this, payload);
+                if (target) {
+                    this._transition(target);
+                }
+            }
+        };
+    })();
     this._current = { init: { actions: {} } };
     this._transition(initial_state);
     return this;
@@ -32,18 +46,6 @@ exports.Machine.prototype._transition = function (state) {
         const automatic_transition = this._current.onEntry();
         if (automatic_transition) {
             this._transition(automatic_transition);
-        }
-    }
-};
-exports.Machine.prototype.emit = function (action, ...payload) {
-    if (action in this._current.actions) {
-        const handler = this._current.actions[action];
-        if (payload.length !== handler.length) {
-            throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
-        }
-        const target = handler.apply(this, payload);
-        if (target) {
-            this._transition(target);
         }
     }
 };
