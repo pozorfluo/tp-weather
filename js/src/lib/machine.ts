@@ -96,7 +96,6 @@ export interface Machine {
   _latest_transition: State;
   states: Rules;
   _transition: (state: State) => void;
-  //emitter should NOT care about => State;
   emit: (action: string, ...payload: unknown[]) => void;
   peek: () => State;
   // /** Register an optional callback fired on Transition. */
@@ -125,7 +124,6 @@ export const Machine = (function (
   }
 
   this.states = deepFreeze(rules) as Rules;
-  // this.emit = Machine.prototype.emit.bind(this);
   /**
  * Execute Action handler if a rule for given action name exists in current
  * Machine State, passing along given payload as Action arguments.
@@ -165,13 +163,7 @@ Machine.prototype._transition = function (state: State) {
     this._current.onExit();
   }
 
-//   const top_state = state[0];
   let target = this;
-//   if (top_state in this._rules) {
-//     target = this._rules[state[0]];
-//   } else {
-//     throw top_state + ' does not exist !';
-//   }
 
   const depth = state.length;
   for (let i = 0; i < depth; i++) {
@@ -179,7 +171,6 @@ Machine.prototype._transition = function (state: State) {
     if (s in target.states) {
       target = target.states[s];
     } else {
-    //   throw s + ' does not exist in ' + state[i - 1] + ' !';
       throw `${s} does not exist in ${i ? state[i - 1] : 'top level'} !`
     }
   }
@@ -194,31 +185,6 @@ Machine.prototype._transition = function (state: State) {
     }
   }
 };
-
-// /**
-//  * Execute Action handler if a rule for given action name exists in current
-//  * Machine State, passing along given payload as Action arguments.
-//  *
-//  * Transition to State returned by executed Action handler if any.
-//  *
-//  * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
-//  *       unintended match on {} prototype methods.
-//  */
-// Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
-//   if (action in this._current.actions) {
-//     const handler = this._current.actions[action];
-//     // if (handler) {
-//     if (payload.length !== handler.length) {
-//       throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
-//     }
-//     const target = handler.apply(this, payload);
-
-//     if (target) {
-//       this._transition(target);
-//     }
-//   }
-//   // }
-// };
 
 /**
  * Return a copy of this Machine State in its unrolled string[] form.

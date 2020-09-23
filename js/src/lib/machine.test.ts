@@ -163,13 +163,11 @@ describe('Machine', () => {
       done();
       expect(machine.peek()).toEqual(['a']);
     }, 0);
-    // machine.emit('toA');
   });
 
   describe('Action', () => {
     it('can execute actions passing along given payload', () => {
       const payload = 'string arg';
-      // expect(machine.peek()).toEqual(['a']);
       machine.emit('doThis', payload);
       expect(effect).toHaveBeenCalledWith(payload);
     });
@@ -272,7 +270,7 @@ describe('Machine', () => {
       expect(machine.peek()).toEqual(['b', 'nested_b_3']);
     });
 
-    it('can navigate between layers of compound state', () => {
+    it('can navigate between layers of compound states', () => {
       machine.emit('toB');
       machine.emit('goDown');
       machine.emit('next');
