@@ -15,9 +15,13 @@ describe('Machine', () => {
             effect(withThat);
             return ['b'];
           },
-          doInvalidTransition() {
+          transitionToInvalid() {
             effect();
             return ['invalid'];
+          },
+          transitionToNestedInvalid() {
+            effect();
+            return ['b', 'invalid'];
           },
           doWithArgs(first, second, third) {
             effect(first, second, third);
@@ -134,7 +138,7 @@ describe('Machine', () => {
 
   it('throws when trying to change its rules after creation', () => {
     expect(() => {
-      machine._rules.a.actions.doThis = () => ['test_state'];
+      machine.states.a.actions.doThis = () => ['test_state'];
     }).toThrow();
   });
 
@@ -203,7 +207,10 @@ describe('Machine', () => {
   describe('Transition', () => {
     it('throws when trying to transition to an invalid state', () => {
       expect(() => {
-        machine.emit('doInvalidTransition');
+        machine.emit('transitionToInvalid');
+      }).toThrow();
+      expect(() => {
+        machine.emit('transitionToNestedInvalid');
       }).toThrow();
     });
 

@@ -94,7 +94,7 @@ export interface Machine {
   _current: Rules;
   /** Track State in its unrolled string[] form */
   _latest_transition: State;
-  _rules: Rules;
+  states: Rules;
   _transition: (state: State) => void;
   //emitter should NOT care about => State;
   emit: (action: string, ...payload: unknown[]) => void;
@@ -124,7 +124,7 @@ export const Machine = (function (
     throw 'Machine() must be called with new !';
   }
 
-  this._rules = deepFreeze(rules) as Rules;
+  this.states = deepFreeze(rules) as Rules;
   // this.emit = Machine.prototype.emit.bind(this);
   /**
  * Execute Action handler if a rule for given action name exists in current
@@ -165,21 +165,22 @@ Machine.prototype._transition = function (state: State) {
     this._current.onExit();
   }
 
-  const top_state = state[0];
-  let target;
-  if (top_state in this._rules) {
-    target = this._rules[state[0]];
-  } else {
-    throw top_state + ' does not exist !';
-  }
+//   const top_state = state[0];
+  let target = this;
+//   if (top_state in this._rules) {
+//     target = this._rules[state[0]];
+//   } else {
+//     throw top_state + ' does not exist !';
+//   }
 
   const depth = state.length;
-  for (let i = 1; i < depth; i++) {
-    const nested_state = state[i];
-    if (nested_state in target.states) {
-      target = target.states[nested_state];
+  for (let i = 0; i < depth; i++) {
+    const s = state[i];
+    if (s in target.states) {
+      target = target.states[s];
     } else {
-      throw nested_state + ' does not exist in ' + state[i - 1] + ' !';
+    //   throw s + ' does not exist in ' + state[i - 1] + ' !';
+      throw `${s} does not exist in ${i ? state[i - 1] : 'top level'} !`
     }
   }
 

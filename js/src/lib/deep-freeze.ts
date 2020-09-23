@@ -2,6 +2,8 @@
 /**
  * Freeze own enumerable and non-enumerable properties of given object
  * recursively.
+ * 
+ * @note Based on https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze
  */
 export const deepFreeze = function (obj: object): object {
   const props = Object.getOwnPropertyNames(obj);
@@ -15,7 +17,6 @@ export const deepFreeze = function (obj: object): object {
       const type = typeof value;
       if (
         (type === 'object' || type === 'function') &&
-        // type === 'object' &&
         !Object.isFrozen(value)
       ) {
         deepFreeze(value);
