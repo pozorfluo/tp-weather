@@ -19,6 +19,14 @@ describe('Machine', () => {
             effect();
             return ['invalid'];
           },
+          doWithArgs(first, second, third) {
+            effect(first, second, third);
+            return null;
+          },
+          doWithArgsAndDefaultValue(first, second, third = 'IamOptional') {
+            effect(first, second, third);
+            return null;
+          },
         },
       },
       b: {
@@ -70,6 +78,9 @@ describe('Machine', () => {
       },
     };
     machine = new Machine(rules, ['a']);
+    effect.mockClear();
+    on_entry.mockClear();
+    on_exit.mockClear();
   });
 
   it('throws if its constructor is not called with new', () => {
@@ -84,16 +95,18 @@ describe('Machine', () => {
     }).toThrow();
   });
 
-  it.only('can create a Machine that does nothing', () => {
-    const empty_machine = new Machine({ empty_rule: { actions: {} } }, ['empty_rule']);
-    expect(empty_machine.getState()).toEqual(['empty_rule']);
+  it('can create a Machine that does nothing', () => {
+    const empty_machine = new Machine({ empty_rule: { actions: {} } }, [
+      'empty_rule',
+    ]);
+    expect(empty_machine.peek()).toEqual(['empty_rule']);
   });
 
   it('can have its emit method passed as a callback safely', () => {
     expect(true).toBe(false);
   });
 
-  it('does not allow the content of its rules to be changed after creation', () => {
+  it('throws when trying to change its rules after creation', () => {
     expect(() => {
       machine._rules.a.actions.doThis = () => ['test_state'];
     }).toThrow();
@@ -101,13 +114,39 @@ describe('Machine', () => {
 
   describe('Actions', () => {
     it('can execute actions passing along given payload', () => {
-
+      const payload = 'string arg';
+      // expect(machine.peek()).toEqual(['a']);
+      machine.emit('doThis', payload);
+      expect(effect).toHaveBeenCalledWith(payload);
     });
 
-    it('does nothing and stay in the same state for undefined actions', () => {
+    it('throws if given payload does not match action required number of arguments', () => {
+      expect(() => {
+        machine.emit('doThis');
+      }).toThrow();
+      expect(() => {
+        machine.emit('doThis', 'expected', 'extraneous');
+      }).toThrow();
+      expect(() => {
+        machine.emit('doWithArgs', 'expected', 'expected');
+      }).toThrow();
+    });
+
+    it.only('allows optional action arguments using default values', () => {
+      const payload = ['expected', 'expected'];
+      expect(() => {
+        machine.emit('doWithArgs', ...payload);
+      }).toThrow();
+      expect(() => {
+        machine.emit('doWithArgsAndDefaultValue', ...payload);
+      }).not.toThrow();
+      expect(effect).toHaveBeenCalledWith(...payload, 'IamOptional');
+    });
+
+    it.only('does nothing and stay in the same state for undefined actions', () => {
       machine.emit('invalid_action');
       expect(effect).toHaveBeenCalledTimes(0);
-      expect(machine.getState()).toEqual(['a']);
+      expect(machine.peek()).toEqual(['a']);
     });
   });
 

@@ -69,14 +69,21 @@ export interface Rules {
  * @todo Consider how to log side-effects, especially non-deterministic ones.
  * @todo Consider that if the callback needs a timestamp it can generate one by
  *       itself.
+ * @todo Consider
  */
 export interface MachineEvent {
+  /**
+   * @todo Consider using actionHandler.name if the action string name is
+   *       enough.
+   * @todo Consider implementing a ctor helper for MachineEvent, leaving it to
+   *       the user to build a MachineEvent and uses as he sees fit.
+   */
   action: Action;
   payload: unknown[];
   transition: Transition;
   before: State;
   after: State;
-  // side_effects : unknown[];
+  side_effects: unknown[];
 }
 /**
  * Define Machine object.
@@ -85,15 +92,16 @@ export interface Machine {
   /** Internal cursor */
   _current: Rules;
   /** Track State in its unrolled string[] form */
-  _latest_transition : State;
+  _latest_transition: State;
   _rules: Rules;
   _transition: (state: State) => void;
   //emitter should NOT care about => State;
   emit: (action: string, ...payload: unknown[]) => void;
-  // Should the outside world care about the Machine state ?
-  getState: () => State;
-  /** Register an optional callback fired on Transition. */
-  onTransition: (event: MachineEvent) => void;
+  peek: () => State;
+  // /** Register an optional callback fired on Transition. */
+  // onTransition: (event: MachineEvent) => void;
+  // /** Register an optional callback fired on reaching Final state. */
+  // onFinished: (event: MachineEvent) => void;
 }
 
 /**
@@ -155,8 +163,8 @@ Machine.prototype._transition = function (state: State) {
 };
 
 /**
- * Execute Action handler passing along given payload as Action argument, if a
- * rule for given action name exists in current Machine State.
+ * Execute Action handler if a rule for given action name exists in current
+ * Machine State, passing along given payload as Action arguments.
  *
  * Transition to State returned by executed Action handler if any.
  *
@@ -164,23 +172,61 @@ Machine.prototype._transition = function (state: State) {
  *       unintended match on {} prototype methods.
  */
 Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
-  if (action in this._current) {
-    const handler = this._current[action];
-    if (handler) {
-      const target = handler.apply(this, payload);
-      if (target) {
-        this._transition(target);
-      }
+  if (action in this._current.actions) {
+    const handler = this._current.actions[action];
+    // if (handler) {
+    if (payload.length !== handler.length) {
+      throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
+    }
+    const target = handler.apply(this, payload);
+
+    if (target) {
+      this._transition(target);
     }
   }
+  // }
 };
 
 /**
  * Return a copy of this Machine State in its unrolled string[] form.
+ *
+ * @note Use to check a Machine current State or to initialize a new Machine
+ *       with identical or compatible Rules to
  */
-Machine.prototype.getState = function () {
+Machine.prototype.peek = function () {
   return [...this._latest_transition];
 };
+
+// /**
+//  * Execute Action handler if arule for given action name exists in current
+//  * Machine State, passing along given payload as Action argument and optionally
+//  * action name if required by the Action handler.
+//  *
+//  * Transition to State returned by executed Action handler if any.
+//  *
+//  * @todo Consider using hasOwnProperty or not inheriting from Object to avoid
+//  *       unintended match on {} prototype methods.
+//  */
+// Machine.prototype.emit = function (action: string, ...payload: unknown[]) {
+//   if (action in this._current) {
+//     const handler = this._current[action];
+//     if (handler) {
+//       const target =
+//       /**
+//        *  @todo Consider skipping handler's argument count check and always
+//        *        applying with both payload and action string.
+//        *        Alternatively consider making the action string part of the
+//        *        payload.
+//        */
+//         handler.length === 2
+//           ? handler.apply(this, payload, action)
+//           : handler.apply(this, payload);
+//       if (target) {
+//         this._transition(target);
+//       }
+//     }
+//   }
+// };
 
 // export const configMachine = {
 //   /** Internal cursor */
@@ -364,6 +410,5 @@ Machine.prototype.getState = function () {
 // /**
 //  * Define a react hook to access configMachine emit method.
 //  */
-// export const useConfigMachineEmit = function () {
 //   return configMachine.emit.bind(configMachine);
 // };

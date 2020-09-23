@@ -9,9 +9,32 @@ vanilla typescript web components with KOПЯΛD
 - [x] Extract komrad, app-solo updates
   - [x] Add debounce
   - [x] Research how to deal with inconsistent read/glitch
-- [ ] Rename Observable to Feed
+- [x] Rename Observable to Feed
 - [ ] Allow passing (Source[]?, Subscriber[]?) in Feed ctor
 - [ ] Consider wrapping Source (elem, event_name, callback) from DomEvents
 - [ ] Consider other Source as regular callback returning value compatible
       with observable type
 - [ ] Consider wrapping Generator Source
+
+## mvp-machine
+
+Simple, declarative state machines inspired by statecharts.
+
+handles :
+
+- actions
+- automatic transitions
+- nested/compound states
+- self transitions
+- internal transitions
+- state entry/exit events
+
+allows :
+
+- guards
+- transient states
+- final states
+
+does not handle :
+
+- parallel states

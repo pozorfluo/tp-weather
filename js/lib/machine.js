@@ -36,16 +36,17 @@ exports.Machine.prototype._transition = function (state) {
     }
 };
 exports.Machine.prototype.emit = function (action, ...payload) {
-    if (action in this._current) {
-        const handler = this._current[action];
-        if (handler) {
-            const target = handler.apply(this, payload);
-            if (target) {
-                this._transition(target);
-            }
+    if (action in this._current.actions) {
+        const handler = this._current.actions[action];
+        if (payload.length !== handler.length) {
+            throw `${action} expects ${handler.length} arguments, ${payload.length} given !`;
+        }
+        const target = handler.apply(this, payload);
+        if (target) {
+            this._transition(target);
         }
     }
 };
-exports.Machine.prototype.getState = function () {
+exports.Machine.prototype.peek = function () {
     return [...this._latest_transition];
 };
