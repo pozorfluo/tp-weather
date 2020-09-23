@@ -137,5 +137,20 @@ describe('Feed', () => {
         expect(target).toBe(feed.get());
       });
     });
+
+    it('does not trigger notifications on repeat pushes of the same value', () => {
+      let count = 0;
+      let target = 0;
+      const feed = new Feed(0, RateLimit.none);
+      feed.subscribe((v) => {
+        target = v;
+        count++;
+      });
+      for (let i = 0; i < 100; i++) {
+        feed.push(1);
+      }
+      expect(count).toBe(1);
+      expect(target).toBe(feed.get());
+    });
   });
 });
