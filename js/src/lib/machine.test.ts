@@ -27,6 +27,10 @@ describe('Machine', () => {
             effect(first, second, third);
             return null;
           },
+          toB() {
+            effect();
+            return ['b'];
+          },
         },
       },
       b: {
@@ -42,11 +46,15 @@ describe('Machine', () => {
         },
         states: {
           nested_b_1: {
+            onEntry() {
+              on_entry();
+              return null;
+            },
+            onExit() {
+              on_exit();
+              return null;
+            },
             actions: {
-              onExit() {
-                on_exit();
-                return null;
-              },
               next() {
                 effect();
                 return ['b', 'nested_b_2'];
@@ -55,22 +63,51 @@ describe('Machine', () => {
                 effect();
                 return ['b'];
               },
+              stay() {
+                effect();
+                return null;
+              },
+              self() {
+                effect();
+                return ['b', 'nested_b_1'];
+              },
             },
           },
           nested_b_2: {
+            onEntry() {
+              on_entry();
+              return ['b', 'nested_b_3'];
+            },
+            actions: {},
+          },
+          nested_b_3: {
+            onExit() {
+              on_exit();
+              /** @note Used to check that onExit return value  is ignored */
+              return ['a'];
+            },
             actions: {
-              onEntry() {
-                on_entry();
-                return ['b'];
-              },
-              onExit() {
-                on_exit();
-                /** @note Used to check that onExit return value  is ignored */
-                return ['a'];
-              },
               goUp() {
                 effect();
                 return ['b'];
+              },
+              goDown() {
+                effect();
+                return ['b', 'nested_b_3', 'nested_b_3_sub'];
+              },
+            },
+            states: {
+              nested_b_3_sub: {
+                actions: {
+                  goUp() {
+                    effect();
+                    return ['b', 'nested_b_3'];
+                  },
+                  toB() {
+                    effect();
+                    return ['b'];
+                  },
+                },
               },
             },
           },
@@ -101,6 +138,10 @@ describe('Machine', () => {
     }).toThrow();
   });
 
+  it('can return its current state', () => {
+    expect(machine.peek()).toEqual(['a']);
+  });
+
   it('can create a Machine that does nothing', () => {
     const empty_machine = new Machine({ empty_rule: { actions: {} } }, [
       'empty_rule',
@@ -121,7 +162,7 @@ describe('Machine', () => {
     // machine.emit('toA');
   });
 
-  describe('Actions', () => {
+  describe('Action', () => {
     it('can execute actions passing along given payload', () => {
       const payload = 'string arg';
       // expect(machine.peek()).toEqual(['a']);
@@ -159,18 +200,83 @@ describe('Machine', () => {
     });
   });
 
-  describe('Transitions', () => {
+  describe('Transition', () => {
     it('throws when trying to transition to an invalid state', () => {
       expect(() => {
         machine.emit('doInvalidTransition');
       }).toThrow();
     });
+
+    it('can transition as specified by an action return value', () => {
+      machine.emit('doThis', 'expected');
+      expect(machine.peek()).toEqual(['b']);
+    });
+
+    it('triggers onEntry, if it exists, when entering a state', () => {
+      machine.emit('toB');
+      machine.emit('goDown');
+      expect(effect).toHaveBeenCalledTimes(2);
+      expect(on_entry).toHaveBeenCalledTimes(1);
+    });
+
+    it('triggers onExit, if it exists, when exiting a state', () => {
+      machine.emit('toB');
+      machine.emit('goDown');
+      machine.emit('goUp');
+      expect(effect).toHaveBeenCalledTimes(3);
+      expect(on_entry).toHaveBeenCalledTimes(1);
+      expect(on_exit).toHaveBeenCalledTimes(1);
+    });
+
+    it('can do internal transitions to same state that do not trigger onEntry, onExit', () => {
+      machine.emit('toB');
+      machine.emit('goDown');
+
+      expect(effect).toHaveBeenCalledTimes(2);
+      expect(on_entry).toHaveBeenCalledTimes(1);
+      expect(on_exit).toHaveBeenCalledTimes(0);
+
+      machine.emit('stay');
+      expect(machine.peek()).toEqual(['b', 'nested_b_1']);
+      expect(effect).toHaveBeenCalledTimes(3);
+      expect(on_entry).toHaveBeenCalledTimes(1);
+      expect(on_exit).toHaveBeenCalledTimes(0);
+    });
+
+    it('can do self transitions to same state that trigger onEntry, onExit', () => {
+      machine.emit('toB');
+      machine.emit('goDown');
+
+      expect(effect).toHaveBeenCalledTimes(2);
+      expect(on_entry).toHaveBeenCalledTimes(1);
+      expect(on_exit).toHaveBeenCalledTimes(0);
+
+      machine.emit('self');
+      expect(machine.peek()).toEqual(['b', 'nested_b_1']);
+      expect(effect).toHaveBeenCalledTimes(3);
+      expect(on_entry).toHaveBeenCalledTimes(2);
+      expect(on_exit).toHaveBeenCalledTimes(1);
+    });
+
+    it('can automatically transition when entering a state', () => {
+      machine.emit('toB');
+      machine.emit('goDown');
+      machine.emit('next');
+      expect(machine.peek()).toEqual(['b', 'nested_b_3']);
+    });
+
+    it('can navigate between layers of compound state', () => {
+      machine.emit('toB');
+      machine.emit('goDown');
+      machine.emit('next');
+      machine.emit('goDown');
+      expect(machine.peek()).toEqual(['b', 'nested_b_3', 'nested_b_3_sub']);
+      machine.emit('goUp');
+      expect(machine.peek()).toEqual(['b', 'nested_b_3']);
+      machine.emit('goDown');
+      expect(machine.peek()).toEqual(['b', 'nested_b_3', 'nested_b_3_sub']);
+      machine.emit('toB');
+      expect(machine.peek()).toEqual(['b']);
+    });
   });
 });
-
-// const arr_a = [0, 1, 2];
-// const id = (array) => array;
-// const arr_b = id(arr_a);
-// arr_b[1] = 999;
-// console.log(arr_a);
-// console.log(arr_b);

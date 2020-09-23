@@ -1,9 +1,32 @@
 //---------------------------------------------------------------------- machine
 /**
+ * # mvp-machine
+ * 
+ * Simple, declarative-ish state machines inspired by statecharts.
+ * 
+ * handles :
+ * 
+ * - actions
+ * - automatic transitions
+ * - nested/compound states
+ * - self transitions
+ * - internal transitions
+ * - state entry/exit events
+ * 
+ * allows :
+ * 
+ * - guards
+ * - transient states
+ * - final states
+ * - raised events
+ * 
+ * does not handle :
+ * 
+ * - parallel states
+ * - internal transitions to children compound states
+ * 
  * @note Footguns :
- *         - Trying to execute onEntry, onExit directly
- *             -> they are not treated like regular user definable actions,
- *                use with care.
+ *         - Infinite automatic transition loops
  */
 import { deepFreeze } from './deep-freeze';
 
@@ -63,28 +86,6 @@ export interface Rules {
   };
 }
 
-/**
- * Define MachineEvent object.
- *
- * @todo Consider how to log side-effects, especially non-deterministic ones.
- * @todo Consider that if the callback needs a timestamp it can generate one by
- *       itself.
- * @todo Consider
- */
-export interface MachineEvent {
-  /**
-   * @todo Consider using actionHandler.name if the action string name is
-   *       enough.
-   * @todo Consider implementing a ctor helper for MachineEvent, leaving it to
-   *       the user to build a MachineEvent and uses as he sees fit.
-   */
-  action: Action;
-  payload: unknown[];
-  transition: Transition;
-  before: State;
-  after: State;
-  side_effects: unknown[];
-}
 /**
  * Define Machine object.
  */
@@ -164,9 +165,15 @@ Machine.prototype._transition = function (state: State) {
     this._current.onExit();
   }
 
-  const depth = state.length;
-  let target = this._rules[state[0]];
+  const top_state = state[0];
+  let target;
+  if (top_state in this._rules) {
+    target = this._rules[state[0]];
+  } else {
+    throw top_state + ' does not exist !';
+  }
 
+  const depth = state.length;
   for (let i = 1; i < depth; i++) {
     const nested_state = state[i];
     if (nested_state in target.states) {

@@ -29,8 +29,15 @@ exports.Machine.prototype._transition = function (state) {
     if ('onExit' in this._current) {
         this._current.onExit();
     }
+    const top_state = state[0];
+    let target;
+    if (top_state in this._rules) {
+        target = this._rules[state[0]];
+    }
+    else {
+        throw top_state + ' does not exist !';
+    }
     const depth = state.length;
-    let target = this._rules[state[0]];
     for (let i = 1; i < depth; i++) {
         const nested_state = state[i];
         if (nested_state in target.states) {
