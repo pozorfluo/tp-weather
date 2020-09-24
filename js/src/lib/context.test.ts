@@ -1,11 +1,11 @@
 import { Context, Feed } from '.';
 import { RateLimit } from './feed';
-
+//------------------------------------------------------------------------------
 it('uses jsdom in this test file', () => {
   const element = document.createElement('div');
   expect(element).not.toBeNull();
 });
-
+//------------------------------------------------------------------------------
 describe('Context', () => {
   let context: Context;
   let element: HTMLElement;
@@ -21,18 +21,18 @@ describe('Context', () => {
       <input type="text" data-sub="test" data-prop="value" />
     `;
   });
-
+  //----------------------------------------------------------------------------
   it('throws if its constructor is not called with new', () => {
     expect(() => {
       (Context as any)();
     }).toThrow();
   });
-
+  //----------------------------------------------------------------------------
   it('can create a new Context', () => {
     expect(context).toEqual(expect.any(Context));
     // expect(context.pins).toStrictEqual({});
   });
-
+  //----------------------------------------------------------------------------
   it('can muster pubs and subs from a parent Node', () => {
     context.muster(element);
     expect(context.pins).toEqual(
@@ -55,12 +55,12 @@ describe('Context', () => {
       )
     );
   });
-
+  //----------------------------------------------------------------------------
   it('can activate all previously mustered subs', () => {
     context.muster(element).activateAll();
     expect(context.pins.test.subscribers.length).toBe(3);
   });
-
+  //----------------------------------------------------------------------------
   it('can deactivate all previously mustered subs', () => {
     context.muster(element).deactivateAll();
     expect(context.pins.test.subscribers.length).toBe(0);
@@ -69,14 +69,14 @@ describe('Context', () => {
   //   context.muster(element).deactivateAll();
   //   expect(context.pins.test.subscribers.length).toBe(0);
   // });
-
+  //----------------------------------------------------------------------------
   it('can trigger a refresh', () => {
     context.muster(element).activateAll().refresh();
     expect((<HTMLInputElement>element.querySelector('input')).value).toBe(
       'test string'
     );
   });
-
+  //----------------------------------------------------------------------------
   it('throws when trying to muster a pin-less sub', () => {
     element = document.createElement('div');
     element.innerHTML = `
@@ -86,7 +86,7 @@ describe('Context', () => {
       context.muster(element);
     }).toThrow();
   });
-
+  //----------------------------------------------------------------------------
   it('throws when trying to muster a pin with an invalid data-prop', () => {
     element = document.createElement('div');
     element.innerHTML = `
@@ -96,7 +96,7 @@ describe('Context', () => {
       context.muster(element);
     }).toThrow();
   });
-
+  //----------------------------------------------------------------------------
   it('throws when trying to activate a sub with an invalid data-prop', () => {
     element = document.createElement('div');
     element.innerHTML = `
@@ -114,7 +114,7 @@ describe('Context', () => {
       context.activateAll();
     }).toThrow();
   });
-
+  //----------------------------------------------------------------------------
   it('can pub Feed of any type', () => {
     context
       .pub('test_string', new Feed('a string'))
@@ -131,7 +131,7 @@ describe('Context', () => {
       })
     );
   });
-
+  //----------------------------------------------------------------------------
   it('can pub Feed of any type with optional subscribers', () => {
     let target_a = '';
     let target_b = '';
@@ -152,7 +152,7 @@ describe('Context', () => {
     expect(target_a).toBe('test');
     expect(target_b).toBe('testtest');
   });
-
+  //----------------------------------------------------------------------------
   it('can sub a callback to a pin given a pin name', () => {
     let target = '';
 
@@ -162,7 +162,7 @@ describe('Context', () => {
     context.pins.test.push('test value');
     expect(target).toBe('test value');
   });
-
+  //----------------------------------------------------------------------------
   it('throws when trying to sub to an invalid pin', () => {
     expect(() => {
       context.sub('invalidPin', (value) => {
@@ -170,7 +170,7 @@ describe('Context', () => {
       });
     }).toThrow();
   });
-
+  //----------------------------------------------------------------------------
   it('can remove a pin given its name', () => {
     const pin_name = 'test_pin';
     context.pub(pin_name, new Feed('a string'));
@@ -186,22 +186,19 @@ describe('Context', () => {
   // it('can push to a pin given an existing pin name', () => {
   //   context.muster(element).push('test', )
   // });
-
-  it.only('leaves no danglings subs after a remove', () => {
-    let subscriber = jest.fn( (v : string) => {});
+  //----------------------------------------------------------------------------
+  it('leaves no danglings subs after a remove', () => {
+    let subscriber = jest.fn((v: string) => {});
     context.pub('test', new Feed('a string', RateLimit.none), subscriber);
     context.pins.test.push('first').push('second');
     expect(subscriber).toHaveBeenCalledTimes(2);
-
 
     const feed = context.pins.test;
     context.remove('test');
     feed.push('third');
     expect(subscriber).toHaveBeenCalledTimes(2);
-
-
   });
-
+  //----------------------------------------------------------------------------
   it('can merge pins from another given context', () => {
     context.muster(element);
 
@@ -219,7 +216,7 @@ describe('Context', () => {
       })
     );
   });
-
+  //----------------------------------------------------------------------------
   it('can merge pins from another given pin collection', () => {
     context.muster(element);
 

@@ -1,5 +1,5 @@
 import { deepFreeze } from './deep-freeze';
-
+//------------------------------------------------------------------------------
 describe('deepFreeze', () => {
   it('freezes enumerable own properties of given object', () => {
     const obj: any = {
@@ -7,15 +7,15 @@ describe('deepFreeze', () => {
     };
 
     deepFreeze(obj);
-    
+
     expect(() => {
       obj.a = 1;
     }).toThrow();
   });
-
+  //----------------------------------------------------------------------------
   it('freezes non-enumerable own properties of given object', () => {
     const obj: any = {};
-    Object.defineProperty(obj, 'a', {value : 0, enumerable : false});
+    Object.defineProperty(obj, 'a', { value: 0, enumerable: false });
 
     deepFreeze(obj);
 
@@ -23,7 +23,7 @@ describe('deepFreeze', () => {
       obj.a = 1;
     }).toThrow();
   });
-
+  //----------------------------------------------------------------------------
   it('freezes nested properties of given object', () => {
     const obj: any = {
       a: {
@@ -38,6 +38,7 @@ describe('deepFreeze', () => {
       obj.a.nested = 1;
     }).toThrow();
   });
+  //----------------------------------------------------------------------------
   it('freezes nested properties of given object whose value is a function', () => {
     const obj: any = {
       a: {
@@ -48,7 +49,7 @@ describe('deepFreeze', () => {
     deepFreeze(obj);
 
     expect(Object.isFrozen(obj.a.func)).toBe(true);
-    
+
     expect(() => {
       obj.a.func = 0;
     }).toThrow();
@@ -66,7 +67,7 @@ describe('deepFreeze', () => {
   //     instance.proto_prop = 1;
   //   }).not.toThrow();
   // });
-
+  //----------------------------------------------------------------------------
   it('does not trip on circular references', () => {
     const obj: any = {
       a: {},
@@ -76,8 +77,6 @@ describe('deepFreeze', () => {
     expect(Object.isFrozen(deepFreeze(obj))).toBe(true);
   });
 });
-
-
 
 // const obj = function test(){};
 // obj.prototype.proto_prop = 0;
