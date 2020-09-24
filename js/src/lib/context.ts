@@ -1,6 +1,7 @@
 //---------------------------------------------------------------------- context
 /**
- *
+ * Help manage an heterogenous collection of Feeds.
+ * Provide a declarative way to pub/sub DOM element properties.
  */
 import { Feed, Subscriber } from './feed';
 
@@ -22,9 +23,6 @@ export interface Sub<T> {
 
 /**
  * Define Context object.
- *
- * Help manage an heterogenous collection of Feeds ?
- * Provide a declarative way to pub/sub DOM element properties.
  *
  * @note Because Context relies on apply() to concatenate arrays it can only
  *       handle up to 65536 subs.
@@ -153,7 +151,7 @@ Context.prototype.merge = function (
  * Collect data pubs declared in given element for this Context.
  *
  * @note A pub is a sub that publishes its initial value as an Feed to
- *       a context, i.e., it is immediately subscribed to this new
+ *       a Context, i.e., it is immediately subscribed to this new
  *       Feed value.
  *
  * @note musterPubs is not idempotent.
@@ -236,6 +234,7 @@ Context.prototype.muster = function (element: ParentNode): Context {
 //   this.subs = subs;
 //   return this;
 // };
+
 /**
  * Activate this context sub collection.
  *
@@ -246,7 +245,6 @@ Context.prototype.activateAll = function (): Context {
     const target = this.subs[i].target;
     const node = this.subs[i].node;
 
-    // if ((<any>node)[target] === undefined) {
     if (!(target in node)) throw target + ' is not a valid node prop !';
 
     (<Feed<any>>this.subs[i].source).subscribe((value) => {

@@ -352,7 +352,7 @@ exports.Machine = function (rules, initial_state) {
     if (!new.target) {
         throw 'Machine() must be called with new !';
     }
-    this._rules = deep_freeze_1.deepFreeze(rules);
+    this.states = deep_freeze_1.deepFreeze(rules);
     this.emit = (() => {
         return (action, ...payload) => {
             if (action in this._current.actions) {
@@ -375,22 +375,15 @@ exports.Machine.prototype._transition = function (state) {
     if ('onExit' in this._current) {
         this._current.onExit();
     }
-    const top_state = state[0];
-    let target;
-    if (top_state in this._rules) {
-        target = this._rules[state[0]];
-    }
-    else {
-        throw top_state + ' does not exist !';
-    }
+    let target = this;
     const depth = state.length;
-    for (let i = 1; i < depth; i++) {
-        const nested_state = state[i];
-        if (nested_state in target.states) {
-            target = target.states[nested_state];
+    for (let i = 0; i < depth; i++) {
+        const s = state[i];
+        if (s in target.states) {
+            target = target.states[s];
         }
         else {
-            throw nested_state + ' does not exist in ' + state[i - 1] + ' !';
+            throw `${s} does not exist in ${i ? state[i - 1] : 'top level'} !`;
         }
     }
     this._current = target;

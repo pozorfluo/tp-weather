@@ -1,4 +1,5 @@
 import { Context, Feed } from '.';
+import { RateLimit } from './feed';
 
 it('uses jsdom in this test file', () => {
   const element = document.createElement('div');
@@ -186,8 +187,19 @@ describe('Context', () => {
   //   context.muster(element).push('test', )
   // });
 
-  it('leaves no danglings subs after a remove', () => {
-    expect(context.pins).toStrictEqual({ fail: 'fail' });
+  it.only('leaves no danglings subs after a remove', () => {
+    let subscriber = jest.fn( (v : string) => {});
+    context.pub('test', new Feed('a string', RateLimit.none), subscriber);
+    context.pins.test.push('first').push('second');
+    expect(subscriber).toHaveBeenCalledTimes(2);
+
+
+    const feed = context.pins.test;
+    context.remove('test');
+    feed.push('third');
+    expect(subscriber).toHaveBeenCalledTimes(2);
+
+
   });
 
   it('can merge pins from another given context', () => {
